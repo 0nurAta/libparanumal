@@ -30,7 +30,7 @@ SOFTWARE.
 void bns_t::PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName){
 
   FILE *fp;
-
+  dfloat KE=0.0;
   fp = fopen(fileName.c_str(), "w");
 
   fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"BigEndian\">\n");
@@ -82,6 +82,8 @@ void bns_t::PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileNam
   memory<dfloat> Iv(mesh.plotNp);
   memory<dfloat> Iw(mesh.plotNp);
 
+  
+
   if (Q.length()!=0) {
     // write out density
     fprintf(fp, "      <PointData Scalars=\"scalars\">\n");
@@ -105,7 +107,15 @@ void bns_t::PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileNam
         v[n] = c*Q[e*mesh.Np*Nfields+n+mesh.Np*2]/rm;
         if(mesh.dim==3)
           w[n] = c*Q[e*mesh.Np*Nfields+n+mesh.Np*3]/rm;
+
+      for (int m = 0; m < mesh.Np; ++m){
+         //KE += u[n]*mesh.MM[m*mesh.Np + n]*u[m]*(6.28318530718*6.28318530718/(4*mesh.Nelements));
+         KE += u[n]*mesh.MM[m*mesh.Np + n]*u[m]*(6.28318530718*6.28318530718*6.28318530718/(4*mesh.Nelements));
       }
+      }
+
+
+
 
       mesh.PlotInterp(u, Iu, scratch);
       mesh.PlotInterp(v, Iv, scratch);
@@ -122,6 +132,8 @@ void bns_t::PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileNam
       }
     }
     fprintf(fp, "       </DataArray>\n");
+
+    KE = 0.5*KE/(6.28318530718*6.28318530718*6.28318530718);
 
     // write out pressure
     fprintf(fp, "        <DataArray type=\"Float32\" Name=\"Pressure\" Format=\"ascii\">\n");
@@ -206,4 +218,6 @@ void bns_t::PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileNam
   fprintf(fp, "  </UnstructuredGrid>\n");
   fprintf(fp, "</VTKFile>\n");
   fclose(fp);
+
+  std::cout << "Total Kinetic Energy " << KE << std::endl;
 }
