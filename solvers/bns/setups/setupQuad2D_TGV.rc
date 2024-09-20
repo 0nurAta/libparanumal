@@ -14,10 +14,10 @@ BOX
 4
 
 [BOX NX]
-32
+16
 
 [BOX NY]
-32
+16
 
 [BOX NZ]
 1
@@ -32,7 +32,7 @@ BOX
 -1
 
 [POLYNOMIAL DEGREE]
-4
+3
 
 [THREAD MODEL]
 CUDA
