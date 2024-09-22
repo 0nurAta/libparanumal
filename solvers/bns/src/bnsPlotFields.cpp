@@ -109,7 +109,7 @@ void bns_t::PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileNam
           w[n] = c*Q[e*mesh.Np*Nfields+n+mesh.Np*3]/rm;
 
         // write kinetic energy
-        KE += mesh.wJ[mesh.Np*e+n]*(u[n]*u[n]+v[n]*v[n]+w[n]*w[n]);
+        KE += mesh.wJ[mesh.Np*e+n]*(u[n]*u[n]+v[n]*v[n]+w[n]*w[n])/rm;
 
       }
 
@@ -219,5 +219,5 @@ void bns_t::PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileNam
   fprintf(fp, "</VTKFile>\n");
   fclose(fp);
 
-  std::cout << "Total Kinetic Energy " << KE << std::endl;
+  std::cout << KE << std::endl;
 }

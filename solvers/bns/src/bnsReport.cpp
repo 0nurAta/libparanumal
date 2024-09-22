@@ -39,6 +39,7 @@ void bns_t::Report(dfloat time, int tstep){
   o_Mq.free();
 
   if(mesh.rank==0)
+    //printf("%5.2f ", time);
     printf("%5.2f (%d), %5.2f (time, timestep, norm)\n", time, tstep, norm2);
 
   if (settings.compareSetting("OUTPUT TO FILE","TRUE")) {
@@ -57,10 +58,14 @@ void bns_t::Report(dfloat time, int tstep){
     std::string name;
     settings.getSetting("OUTPUT FILE NAME", name);
     char fname[BUFSIZ];
-    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    //sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    sprintf(fname, "%s.txt", name.c_str());
 
-    PlotFields(q, Vort, std::string(fname));
+    //PlotFields(q, Vort, std::string(fname));
+    PlotTGV3D(q, Vort,std::string(fname), time);
   }
+
+
 
   /*
   if(bns->dim==3){
