@@ -47,21 +47,35 @@ void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName
         const dfloat rm = Q[e*mesh.Np*Nfields+n];
         u[n] = c*Q[e*mesh.Np*Nfields+n+mesh.Np*1]/rm;
         v[n] = c*Q[e*mesh.Np*Nfields+n+mesh.Np*2]/rm;
-        if(mesh.dim==3)
+        if(mesh.dim==3){
           w[n] = c*Q[e*mesh.Np*Nfields+n+mesh.Np*3]/rm;
-        
+                
         // write kinetic energy
-        KE += mesh.wJ[mesh.Np*e+n]*(u[n]*u[n]+v[n]*v[n]+w[n]*w[n])/rm;
+        KE += mesh.wJ[mesh.Np*e+n]*(u[n]*u[n]+v[n]*v[n]+w[n]*w[n]);
         // write enstrophy
-        Eps += mesh.wJ[mesh.Np*e+n]*(V[e*mesh.Np+n+mesh.Np*0]*V[e*mesh.Np+n+mesh.Np*0]
-        +V[e*mesh.Np+n+mesh.Np*1]*V[e*mesh.Np+n+mesh.Np*1]
-        +V[e*mesh.Np+n+mesh.Np*2]*V[e*mesh.Np+n+mesh.Np*2])/rm; 
+        Eps += mesh.wJ[mesh.Np*e+n]*(V[e*mesh.Np*3+n+mesh.Np*0]*V[e*mesh.Np*3+n+mesh.Np*0]
+              +V[e*mesh.Np*3+n+mesh.Np*1]*V[e*mesh.Np*3+n+mesh.Np*1]
+              +V[e*mesh.Np*3+n+mesh.Np*2]*V[e*mesh.Np*3+n+mesh.Np*2]); 
+
+      } else {
+
+                // write kinetic energy
+        KE += mesh.wJ[mesh.Np*e+n]*(u[n]*u[n]);
+                // write enstrophy
+        Eps += mesh.wJ[mesh.Np*e+n]*(V[e*mesh.Np+n]*V[e*mesh.Np+n]); 
+
+      }
       }
     }
 
+if(mesh.dim==3){
+  KE = 0.5*KE/(6.28318530718*6.28318530718*6.28318530718);
+  Eps = 0.5*Eps/(6.28318530718*6.28318530718*6.28318530718);
+} else {
+  KE = 0.5*KE/(6.28318530718*6.28318530718);
+  Eps = 0.5*Eps/(6.28318530718*6.28318530718);
+}
 
-KE = 0.5*KE/(6.28318530718*6.28318530718*6.28318530718);
-Eps = 0.5*Eps/(6.28318530718*6.28318530718*6.28318530718);
   fprintf(fp,"%5.2f %lf %lf\n",time, KE, Eps);
   fclose(fp);
   //std::cout << KE << std::endl;
