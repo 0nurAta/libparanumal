@@ -51,11 +51,11 @@ void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName
           w[n] = c*Q[e*mesh.Np*Nfields+n+mesh.Np*3]/rm;
                 
         // write kinetic energy
-        KE += mesh.wJ[mesh.Np*e+n]*(u[n]*u[n]+v[n]*v[n]+w[n]*w[n]);
+        KE += mesh.wJ[mesh.Np*e+n]*(u[n]*u[n]+v[n]*v[n]+w[n]*w[n])*rm;
         // write enstrophy
         Eps += mesh.wJ[mesh.Np*e+n]*(V[e*mesh.Np*3+n+mesh.Np*0]*V[e*mesh.Np*3+n+mesh.Np*0]
               +V[e*mesh.Np*3+n+mesh.Np*1]*V[e*mesh.Np*3+n+mesh.Np*1]
-              +V[e*mesh.Np*3+n+mesh.Np*2]*V[e*mesh.Np*3+n+mesh.Np*2]); 
+              +V[e*mesh.Np*3+n+mesh.Np*2]*V[e*mesh.Np*3+n+mesh.Np*2])*rm; 
 
       } else {
 
