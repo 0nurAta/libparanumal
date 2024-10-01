@@ -52,6 +52,7 @@ void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName
                 
         // write kinetic energy
         KE += mesh.wJ[mesh.Np*e+n]*(u[n]*u[n]+v[n]*v[n]+w[n]*w[n])*rm;
+
         // write enstrophy
         Eps += mesh.wJ[mesh.Np*e+n]*(V[e*mesh.Np*3+n+mesh.Np*0]*V[e*mesh.Np*3+n+mesh.Np*0]
               +V[e*mesh.Np*3+n+mesh.Np*1]*V[e*mesh.Np*3+n+mesh.Np*1]
@@ -68,14 +69,22 @@ void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName
       }
     }
 
-if(mesh.dim==3){
-  KE = 0.5*KE/(6.28318530718*6.28318530718*6.28318530718);
-  Eps = 0.5*Eps/(6.28318530718*6.28318530718*6.28318530718);
-} else {
-  KE = 0.5*KE/(6.28318530718*6.28318530718);
-  Eps = 0.5*Eps/(6.28318530718*6.28318530718);
-}
+comm.Allreduce(KE, Comm::Sum);
+comm.Allreduce(Eps, Comm::Sum);
+dfloat scale=0.0;
 
+  if(mesh.dim==3){
+    scale = 0.5/(6.28318530718*6.28318530718*6.28318530718);
+    KE = KE*scale;
+    Eps = Eps*scale;
+  } else {
+    scale = 0.5/(6.28318530718*6.28318530718);
+    KE = KE*scale;
+    Eps = Eps*scale;
+  }
+
+
+  if(mesh.rank==0)
   fprintf(fp,"%5.2f %lf %lf\n",time, KE, Eps);
   fclose(fp);
   //std::cout << KE << std::endl;

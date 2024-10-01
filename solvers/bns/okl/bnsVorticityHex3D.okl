@@ -113,6 +113,7 @@ SOFTWARE.
           Vort[id+0*p_Np] = wy-vz;
           Vort[id+1*p_Np] = uz-wx;
           Vort[id+2*p_Np] = vx-uy;
+
         }
       }
     }

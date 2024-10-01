@@ -53,7 +53,7 @@ void bns_t::Report(dfloat time, int tstep){
     // copy data back to host
     o_q.copyTo(q);
     o_Vort.copyTo(Vort);
-
+    o_Vort.free();
     // output field files
     std::string name;
     settings.getSetting("OUTPUT FILE NAME", name);
@@ -62,15 +62,15 @@ void bns_t::Report(dfloat time, int tstep){
    
     sprintf(fname1, "%s.txt", name.c_str());
     
-    if(time<(8+1e-04)&&time>(8-1e-04)){
+    //if(time<(8+1e-04)&&time>(8-1e-04)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, Vort, std::string(fname));
-    }
+    //}
 
-    if(time<(12.11+1e-04)&&time>(12.11-1e-04)){
-    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
-    PlotFields(q, Vort, std::string(fname));
-    }
+    //if(time<(12.11+1e-04)&&time>(12.11-1e-04)){
+    //sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    //PlotFields(q, Vort, std::string(fname));
+    //}
     
     PlotTGV3D(q, Vort,std::string(fname1), time);
   }

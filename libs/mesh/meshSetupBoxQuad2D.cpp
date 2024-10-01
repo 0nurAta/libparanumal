@@ -83,10 +83,10 @@ void mesh_t::SetupBoxQuad2D(){
   //bottom corner of physical domain
   //dfloat X0 = -DIMX/2.0 + offset_x*dx;
   //dfloat Y0 = -DIMY/2.0 + offset_y*dy;
-
+ 
   //bottom corner of physical domain
-  dfloat X0 = 0;
-  dfloat Y0 = 0;
+  dfloat X0 = offset_x*dx;
+  dfloat Y0 = offset_y*dy;
 
   //global number of nodes in each dimension
   hlong NnX = periodicFlag ? NX : NX+1; //lose a node when periodic (repeated node)

@@ -2,40 +2,31 @@
 2.0
 
 [DATA FILE]
-data/bnsTGV3D.h
+data/bnsUniform2D_SC.h
 
 [MESH FILE]
-BOX
+../../meshes/boltzmannSquareCylinderPMLStructuredQuad2D_9840.msh
 
 [MESH DIMENSION]
-3
+2
 
 [ELEMENT TYPE] # number of edges
-12
+4
 
-[BOX NX]
-8
+#[BOX NX]
+#20
 
-[BOX NY]
-8
+#[BOX NY]
+#20
 
-[BOX NZ]
-8
+#[BOX NZ]
+#20
 
-[BOX DIMX]
-6.28318530718
-
-[BOX DIMY]
-6.28318530718
-
-[BOX DIMZ]
-6.28318530718
-
-[BOX BOUNDARY FLAG]
--1
+#[BOX BOUNDARY FLAG]
+#1
 
 [POLYNOMIAL DEGREE]
-4
+2
 
 [THREAD MODEL]
 CUDA
@@ -47,10 +38,10 @@ CUDA
 0
 
 [VISCOSITY]
-0.000625
+0.000005
 
 [SPEED OF SOUND]
-10.0
+1.0
 
 [PML PROFILE ORDER]
 4
@@ -62,7 +53,7 @@ CUDA
 50
 
 [PML INTEGRATION]
-COLLOCATION
+CUBATURE
 
 [TIME INTEGRATOR]
 SARK4
@@ -71,14 +62,14 @@ SARK4
 0
 
 [FINAL TIME]
-20
+4000
 
 [OUTPUT INTERVAL]
-0.1
+20.0
 
 [OUTPUT TO FILE]
 TRUE
 
 [OUTPUT FILE NAME]
 bns
-
+#/media/onur/Elements/ONUR/SquareCylinder_Bns_Outputs/Quad/bns

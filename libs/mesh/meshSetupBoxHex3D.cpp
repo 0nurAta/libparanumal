@@ -89,14 +89,14 @@ void mesh_t::SetupBoxHex3D(){
   dlong offset_z = rank_z*(NZ/size_z) + std::min(rank_z, (NZ % size_z));
 
   //bottom corner of physical domain
-  //dfloat X0 = -DIMX/2.0 + offset_x*dx;
-  //dfloat Y0 = -DIMY/2.0 + offset_y*dy;
-  //dfloat Z0 = -DIMZ/2.0 + offset_z*dz;
+  dfloat X0 = -DIMX/2.0 + offset_x*dx;
+  dfloat Y0 = -DIMY/2.0 + offset_y*dy;
+  dfloat Z0 = -DIMZ/2.0 + offset_z*dz;
 
   //bottom corner of physical domain
-  dfloat X0 = 0;
-  dfloat Y0 = 0;
-  dfloat Z0 = 0;
+  //dfloat X0 = 0;
+  //dfloat Y0 = 0;
+  //dfloat Z0 = 0;
 
   //global number of nodes in each dimension
   hlong NnX = periodicFlag ? NX : NX+1; //lose a node when periodic (repeated node)
