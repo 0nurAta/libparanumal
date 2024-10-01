@@ -32,7 +32,9 @@ void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName
   FILE *fp;
   dfloat KE=0.0;
   dfloat Eps=0.0;
-  fp = fopen("KE.txt", "a+");
+
+  if(mesh.rank==0)
+    fp = fopen("KE.txt", "a+");
 
   //fprintf(fp, "\n Kinetic Energy>\n");
 
@@ -69,24 +71,20 @@ void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName
       }
     }
 
+<<<<<<< HEAD
 comm.Allreduce(KE, Comm::Sum);
 comm.Allreduce(Eps, Comm::Sum);
-dfloat scale=0.0;
-
-  if(mesh.dim==3){
-    scale = 0.5/(6.28318530718*6.28318530718*6.28318530718);
-    KE = KE*scale;
-    Eps = Eps*scale;
-  } else {
-    scale = 0.5/(6.28318530718*6.28318530718);
-    KE = KE*scale;
-    Eps = Eps*scale;
-  }
 
 
-  if(mesh.rank==0)
+const dfloat scale = mesh.dim==2 ? 0.5/(6.28318530718*6.28318530718): 0.5/(6.28318530718*6.28318530718*6.28318530718); 
+
+
+KE *= scale; Eps *= scale;  
+
+if(mesh.rank==0){
   fprintf(fp,"%5.2f %lf %lf\n",time, KE, Eps);
   fclose(fp);
+}
   //std::cout << KE << std::endl;
   //std::cout << "Total Kinetic Energy " << KE << std::endl;
 }
