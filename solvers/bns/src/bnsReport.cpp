@@ -61,16 +61,26 @@ void bns_t::Report(dfloat time, int tstep){
     char fname1[BUFSIZ];
    
     sprintf(fname1, "%s.txt", name.c_str());
-    
-    //if(time<(8+1e-04)&&time>(8-1e-04)){
+
+    if(time<(0+1e-04)&&time>(0-1e-04)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, Vort, std::string(fname));
-    //}
+    }
 
-    //if(time<(12.11+1e-04)&&time>(12.11-1e-04)){
-    //sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
-    //PlotFields(q, Vort, std::string(fname));
-    //}
+    if(time<(4+1e-04)&&time>(4-1e-04)){
+    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    PlotFields(q, Vort, std::string(fname));
+    }
+    
+    if(time<(8+1e-04)&&time>(8-1e-04)){
+    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    PlotFields(q, Vort, std::string(fname));
+    }
+
+    if(time<(12.11+1e-04)&&time>(12.11-1e-04)){
+    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    PlotFields(q, Vort, std::string(fname));
+    }
     
     PlotTGV3D(q, Vort,std::string(fname1), time);
   }

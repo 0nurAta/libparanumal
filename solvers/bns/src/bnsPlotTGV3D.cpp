@@ -71,7 +71,7 @@ void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName
       }
     }
 
-<<<<<<< HEAD
+
 comm.Allreduce(KE, Comm::Sum);
 comm.Allreduce(Eps, Comm::Sum);
 
