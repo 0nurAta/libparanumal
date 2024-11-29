@@ -1,8 +1,8 @@
 cl__1 = 1;
 
-r_0 = DefineNumber[0.25];
-r_1 = DefineNumber[0.025];
-r_2 = DefineNumber[4.0];
+r_0 = DefineNumber[1];
+r_1 = DefineNumber[0.1];
+r_2 = DefineNumber[16.0];
 
 xmin = DefineNumber[-5.4];
 xmax = DefineNumber[ 9.4];

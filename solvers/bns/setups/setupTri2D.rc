@@ -2,10 +2,10 @@
 2.0
 
 [DATA FILE]
-data/bnsGaussian2D.h
+data/bnsUniform2D.h
 
 [MESH FILE]
-PMLBOX
+../../meshes/boltzmannSquareCylinderPML2D_v2.msh
 
 [MESH DIMENSION]
 2
@@ -38,7 +38,7 @@ CUDA
 0
 
 [VISCOSITY]
-0.001
+0.000005
 
 [SPEED OF SOUND]
 1.0
@@ -56,7 +56,7 @@ CUDA
 COLLOCATION
 
 [TIME INTEGRATOR]
-SARK4
+MRSAAB3
 
 [START TIME]
 0
