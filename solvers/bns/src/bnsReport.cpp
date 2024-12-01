@@ -65,6 +65,7 @@ void bns_t::Report(dfloat time, int tstep){
     if(time<(0+1e-04)&&time>(0-1e-04)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, Vort, std::string(fname));
+    WriteFieldsTxt(q, std::string(fname1), time);
     }
 
     if(time<(4+1e-04)&&time>(4-1e-04)){
@@ -83,6 +84,7 @@ void bns_t::Report(dfloat time, int tstep){
     }
     
     PlotTGV3D(q, Vort,std::string(fname1), time);
+
   }
 
 

@@ -113,6 +113,8 @@ public:
 
   void PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V,std::string fileName, dfloat time);
 
+  void WriteFieldsTxt(memory<dfloat>& Q, std::string fileName, dfloat time);
+
   dfloat MaxWaveSpeed();
 
   void rhsf_pml(deviceMemory<dfloat>& o_Q, deviceMemory<dfloat>& o_pmlQ,
