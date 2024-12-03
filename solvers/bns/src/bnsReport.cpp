@@ -72,8 +72,13 @@ void bns_t::Report(dfloat time, int tstep){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, Vort, std::string(fname));
     }
-    
+
     if(time<(8+1e-06)&&time>(8-1e-06)){
+    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    PlotFields(q, Vort, std::string(fname));
+    }
+    
+    if(time<(9+1e-06)&&time>(9-1e-06)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, Vort, std::string(fname));
     sprintf(fname1, "%s_%04d.txt", name1, mesh.rank);
