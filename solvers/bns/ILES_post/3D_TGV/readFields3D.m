@@ -6,9 +6,6 @@ function gs_data = readFields3D(filename)
 % 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
-clear
-clc
-
 % Read the data into a matrix
 data = readmatrix(filename);
 

@@ -82,7 +82,7 @@ const dfloat scale = mesh.dim==2 ? 0.5/(6.28318530718*6.28318530718): 0.5/(6.283
 KE *= scale; Eps *= scale;  
 
 if(mesh.rank==0){
-  fprintf(fp,"%5.2f %lf %lf\n",time, KE, Eps);
+  fprintf(fp,"%5.4f %lf %lf\n",time, KE, Eps);
   fclose(fp);
 }
   //std::cout << KE << std::endl;

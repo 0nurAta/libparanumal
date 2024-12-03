@@ -40,7 +40,7 @@ void bns_t::Report(dfloat time, int tstep){
 
   if(mesh.rank==0)
     //printf("%5.2f ", time);
-    printf("%5.2f (%d), %5.2f (time, timestep, norm)\n", time, tstep, norm2);
+    printf("%5.4f (%d), %5.4f (time, timestep, norm)\n", time, tstep, norm2);
 
   if (settings.compareSetting("OUTPUT TO FILE","TRUE")) {
 
@@ -59,26 +59,28 @@ void bns_t::Report(dfloat time, int tstep){
     settings.getSetting("OUTPUT FILE NAME", name);
     char fname[BUFSIZ];
     char fname1[BUFSIZ];
-   
+    char name1[] = "fields" ;  
+
     sprintf(fname1, "%s.txt", name.c_str());
 
-    if(time<(0+1e-04)&&time>(0-1e-04)){
+    if(time<(0+1e-06)&&time>(0-1e-06)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, Vort, std::string(fname));
-    WriteFieldsTxt(q, std::string(fname1), time);
     }
 
-    if(time<(4+1e-04)&&time>(4-1e-04)){
+    if(time<(4+1e-06)&&time>(4-1e-06)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, Vort, std::string(fname));
     }
     
-    if(time<(8+1e-04)&&time>(8-1e-04)){
+    if(time<(8+1e-06)&&time>(8-1e-06)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, Vort, std::string(fname));
+    sprintf(fname1, "%s_%04d.txt", name1, mesh.rank);
+    WriteFieldsTxt(q,std::string(fname1), time);
     }
 
-    if(time<(12.11+1e-04)&&time>(12.11-1e-04)){
+    if(time<(12.11+1e-06)&&time>(12.11-1e-06)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, Vort, std::string(fname));
     }

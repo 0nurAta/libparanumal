@@ -107,10 +107,6 @@ void bns_t::PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileNam
         v[n] = c*Q[e*mesh.Np*Nfields+n+mesh.Np*2]/rm;
         if(mesh.dim==3)
           w[n] = c*Q[e*mesh.Np*Nfields+n+mesh.Np*3]/rm;
-
-        // write kinetic energy
-        //KE += mesh.wJ[mesh.Np*e+n]*(u[n]*u[n]+v[n]*v[n]+w[n]*w[n])/rm;
-
       }
 
 
@@ -132,8 +128,6 @@ void bns_t::PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileNam
     }
     fprintf(fp, "       </DataArray>\n");
 
-    //KE = 0.5*KE/(6.28318530718*6.28318530718);
-    //KE = 0.5*KE/(6.28318530718*6.28318530718*6.28318530718);
 
     // write out pressure
     fprintf(fp, "        <DataArray type=\"Float32\" Name=\"Pressure\" Format=\"ascii\">\n");
@@ -219,5 +213,4 @@ void bns_t::PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileNam
   fprintf(fp, "</VTKFile>\n");
   fclose(fp);
 
-  //std::cout << KE << std::endl;
 }

@@ -31,8 +31,8 @@ void bns_t::WriteFieldsTxt(memory<dfloat>& Q, std::string fileName, dfloat time)
 
 	FILE *fp;
 
-  if(mesh.rank==0)
-	  fp = fopen("fields.txt", "w");
+
+	  fp = fopen(fileName.c_str(), "w");
 
 	for(dlong e=0;e<mesh.Nelements;++e){
 		for(int n=0;n<mesh.Np;++n){

@@ -50,7 +50,7 @@ u_soln3 = -gradient(u_soln3, T);
 
 % Plot
 hfig = figure;  % save the figure handle in a variable
-
+figure
 plot(t_ref1,u_ref1,'k-','LineWidth',1.5,'DisplayName','$\Omega(t)$');
 hold on;
 plot(T,u_soln,'r-','LineWidth',1.5,'DisplayName','$\Omega(t)$');
