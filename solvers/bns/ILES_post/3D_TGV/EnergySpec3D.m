@@ -20,18 +20,20 @@ u = zeros(n,n,n);
 v = zeros(n,n,n);
 w = zeros(n,n,n);
 
-k = 1;
-for i = 1:n
-    for j = 1:n
-        for l = 1:n
-    u(i,j,l) = u_soln(k);
-    v(i,j,l) = v_soln(k); 
-    w(i,j,l) = w_soln(k); 
-    k = k+1;
-        end
-    end
-end
-
+% k = 1;
+% for i = 1:n
+%     for j = 1:n
+%         for l = 1:n
+%     u(i,j,l) = u_soln(k);
+%     v(i,j,l) = v_soln(k); 
+%     w(i,j,l) = w_soln(k); 
+%     k = k+1;
+%         end
+%     end
+% end
+u = reshape(u_soln, n, n, n);
+v = reshape(v_soln, n, n, n);
+w = reshape(w_soln, n, n, n);
 % u_k = fft2(u) / (n * n);  % Normalize
 % v_k = fft2(v) / (n * n);  % Normalize
 
@@ -83,8 +85,7 @@ k_x = [zeros(1,1) ,k_x];
 k_x = k_x(1,1:n);
 [k_X, k_Y, k_Z] = ndgrid(k_x, k_x, k_x);
 k_mag = sqrt(k_X.^2 + k_Y.^2+ k_Z.^2);
-% k_mag=zeros(n,n);
-kMag = zeros(n);
+
  for j = 1:n
     for i = 1:n
         for l = 1:n

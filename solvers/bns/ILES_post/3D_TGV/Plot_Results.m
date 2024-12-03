@@ -9,17 +9,17 @@ k_ref  = table2array(k_ref(:,1));
 Ek_ref  = table2array(Ek_ref(:,1));
 
 % Read Result Data
-[k1,E_K1] = EnergySpec3D("fields_8x8_3.txt");
-[k2,E_K2] = EnergySpec3D("fields_mpi.txt");
-[k3,E_K3] = EnergySpec3D("fields_16x16_4.txt");
+[k1,E_K1] = EnergySpec3D("fields_32x32_4.txt");
+[k2,E_K2] = EnergySpec3D("fields_24x24_4.txt");
+[k3,E_K3] = EnergySpec3D("fields_24x24_41.txt");
 % [k4,E_K4] = EnergySpec3D("fields_16x16_3.txt");
 % [k5,E_K5] = EnergySpec3D("fields_8x8_3.txt");
 
 % Plot
 hfig = figure;  % save the figure handle in a variable
-loglog(k1, E_K1, 'LineWidth', 1.5);
+loglog(k1, E_K1,'r-', 'LineWidth', 1.5);
 hold on;
-loglog(k2, E_K2, 'LineWidth', 1.5);
+loglog(k2, E_K2,'b-', 'LineWidth', 1.5);
 loglog(k3, E_K3, 'LineWidth', 1.5);
 % loglog(k4, E_K4, 'LineWidth', 1.5);
 % loglog(k5, E_K5, 'LineWidth', 1.5);
