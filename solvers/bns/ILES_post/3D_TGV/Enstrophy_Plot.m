@@ -3,59 +3,66 @@ clear
 format long
 
 % Import Reference 1 Solution Data
-u_ref1  = readtable("Ref_Solution.csv",Range="G3:G2002",ReadVariableNames=false);
-t_ref1  = readtable("Ref_Solution.csv",Range="D3:D2002",ReadVariableNames=false);
-u_ref1  = table2array(u_ref1);
-t_ref1  = table2array(t_ref1);
-
-% % Import Reference 2 Solution Data
-% u_soln = readtable("Ref_Solution.csv",Range="I25:I45",ReadVariableNames=false);
-% t_soln = readtable("Ref_Solution.csv",Range="J25:J45",ReadVariableNames=false);
-% u_soln = table2array(u_soln);
-% t_soln = table2array(t_soln);
+t_ref  = readtable("DATA.csv",Range="A3:A2002",ReadVariableNames=false);
+u_ref  = readtable("DATA.csv",Range="C3:C2002",ReadVariableNames=false);
+u_ref  = table2array(u_ref);
+t_ref  = table2array(t_ref);
 
 % Import BNS Solution Data
-u_soln = readtable("Ref_Solution.csv",Range="AM3:AM202",ReadVariableNames=false);
-t_soln = readtable("Ref_Solution.csv",Range="AJ3:AJ202",ReadVariableNames=false);
-u_soln = table2array(u_soln);
-t_soln = table2array(t_soln);
+t_soln = readtable("DATA.csv",Range="G3:G2002",ReadVariableNames=false);
+u_soln = readtable("DATA.csv",Range="I3:I2002",ReadVariableNames=false);
+u_soln  = table2array(u_soln);
+t_soln  = table2array(t_soln);
 
 % Import BNS Solution Data
-u_soln1 = readtable("Ref_Solution.csv",Range="AR3:AR2002",ReadVariableNames=false);
-t_soln1 = readtable("Ref_Solution.csv",Range="AP3:AP2002",ReadVariableNames=false);
-u_soln1 = table2array(u_soln1);
-t_soln1 = table2array(t_soln1);
-% 
-%Import BNS Solution Data
-u_soln2 = readtable("Ref_Solution.csv",Range="AV3:AV2002",ReadVariableNames=false);
-t_soln2 = readtable("Ref_Solution.csv",Range="AT3:AT2002",ReadVariableNames=false);
-u_soln2 = table2array(u_soln2);
-t_soln2 = table2array(t_soln2);
+t_soln1 = readtable("DATA.csv",Range="K3:K2002",ReadVariableNames=false);
+u_soln1 = readtable("DATA.csv",Range="M3:M2002",ReadVariableNames=false);
+u_soln1  = table2array(u_soln1);
+t_soln1  = table2array(t_soln1);
+ 
+% Import BNS Solution Data
+t_soln2 = readtable("DATA.csv",Range="O3:O2002",ReadVariableNames=false);
+u_soln2 = readtable("DATA.csv",Range="R3:R2002",ReadVariableNames=false);
+u_soln2  = table2array(u_soln2);
+t_soln2  = table2array(t_soln2);
 
-%Import BNS Solution Data
-u_soln3 = readtable("Ref_Solution.csv",Range="BD3:BD2002",ReadVariableNames=false);
-t_soln3 = readtable("Ref_Solution.csv",Range="BB3:BB2002",ReadVariableNames=false);
-u_soln3 = table2array(u_soln3);
-t_soln3 = table2array(t_soln3);
+% Import BNS Solution Data
+t_soln3 = readtable("DATA.csv",Range="AM3:AM2002",ReadVariableNames=false);
+u_soln3 = readtable("DATA.csv",Range="AO3:AO2002",ReadVariableNames=false);
+u_soln3  = table2array(u_soln3);
+t_soln3  = table2array(t_soln3);
+
+% Import BNS Solution Data
+t_soln4 = readtable("DATA.csv",Range="AE3:AE2002",ReadVariableNames=false);
+u_soln4 = readtable("DATA.csv",Range="AG3:AG2002",ReadVariableNames=false);
+u_soln4  = table2array(u_soln4);
+t_soln4  = table2array(t_soln4);
+
+% Import BNS Solution Data
+t_soln5 = readtable("DATA.csv",Range="AI3:AI2002",ReadVariableNames=false);
+u_soln5 = readtable("DATA.csv",Range="AK3:AK2002",ReadVariableNames=false);
+u_soln5  = table2array(u_soln5);
+t_soln5  = table2array(t_soln5);
 
 % Plot
 hfig = figure;  % save the figure handle in a variable
 
-plot(t_ref1,u_ref1,'k-','LineWidth',2.5,'DisplayName','$\Omega(t)$');
+plot(t_ref,u_ref,'k-','LineWidth',2.3,'DisplayName','$\Omega(t)$');
 hold on;
-grid on;
-plot(t_soln,u_soln,'r-','LineWidth',2.5,'DisplayName','$\Omega(t)$');
-plot(t_soln1,u_soln1,'g-','LineWidth',2.5,'DisplayName','$\Omega(t)$');
-plot(t_soln2,u_soln2,'b-','LineWidth',2.5,'DisplayName','$\Omega(t)$');
-plot(t_soln3,u_soln3,'m-','LineWidth',2.5,'DisplayName','$\Omega(t)$');
-% plot(K,E3,'k-','LineWidth',1.5,'DisplayName','$\Omega(t)$');
+% plot(t_soln,u_soln,'r-','LineWidth',2.3,'DisplayName','$\Omega(t)$');
+plot(t_soln1,u_soln1,'g-','LineWidth',2.3,'DisplayName','$\Omega(t)$');
+% plot(t_soln2,u_soln2,'b-','LineWidth',2.3,'DisplayName','$\Omega(t)$');
+plot(t_soln3,u_soln3,'m-','LineWidth',2.3,'DisplayName','$\Omega(t)$');
+% plot(t_soln4,u_soln4,'b-','LineWidth',2.3,'DisplayName','$\Omega(t)$');
+plot(t_soln5,u_soln5,'b-','LineWidth',2.3,'DisplayName','$\Omega(t)$');
 
-legend('DNS','BNS-8x8','BNS-16x16','BNS-24x24', 'BNS-32x32')
+
+legend('DNS','BNS-8x4','BNS-16x4','BNS-32x4')
 
 
 xlabel('t*')
-ylabel('Enstrophy')
-fname = 'Enstrophy';
+ylabel('$E_{k}$')
+fname = 'Uvelocity';
 
 picturewidth = 20; % set this parameter and keep it forever
 hw_ratio = 0.65; % feel free to play with this ratio
@@ -69,3 +76,5 @@ pos = get(hfig,'Position');
 set(hfig,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)])
 %print(hfig,fname,'-dpdf','-painters','-fillpage')
 print(hfig,fname,'-dpng','-painters')
+hold off
+

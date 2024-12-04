@@ -59,7 +59,9 @@ void bns_t::Report(dfloat time, int tstep){
     settings.getSetting("OUTPUT FILE NAME", name);
     char fname[BUFSIZ];
     char fname1[BUFSIZ];
+    char fname2[BUFSIZ];
     char name1[] = "fields" ;  
+    char name2[] = "KE" ; 
 
     sprintf(fname1, "%s.txt", name.c_str());
 
@@ -81,7 +83,7 @@ void bns_t::Report(dfloat time, int tstep){
     if(time<(9+1e-06)&&time>(9-1e-06)){
     //sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
    // PlotFields(q, Vort, std::string(fname));
-    sprintf(fname1, "%s_%04d.txt", name1, mesh.rank);
+    sprintf(fname1, "%s_%04d_%04d.txt", name1, mesh.rank, mesh.Np);
     WriteFieldsTxt(q,std::string(fname1), time);
     }
 
@@ -89,8 +91,8 @@ void bns_t::Report(dfloat time, int tstep){
    // sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
    // PlotFields(q, Vort, std::string(fname));
    // }
-    
-    PlotTGV3D(q, Vort,std::string(fname1), time);
+    sprintf(fname2, "%s_%04d_%04d.txt", name2, mesh.rank, mesh.Np);
+    PlotTGV3D(q, Vort,std::string(fname2), time);
 
   }
 

@@ -34,7 +34,7 @@ void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName
   dfloat Eps=0.0;
 
   if(mesh.rank==0)
-    fp = fopen("KE.txt", "a+");
+    fp = fopen(fileName.c_str(), "a+");
 
   //fprintf(fp, "\n Kinetic Energy>\n");
 
