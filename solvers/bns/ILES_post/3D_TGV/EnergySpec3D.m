@@ -11,9 +11,10 @@ L  = 2*pi;
 
 % Read Solution Data
 soln_data = readFields3D(filename);
-u_soln = soln_data(:, 5);
-v_soln = soln_data(:, 6);
-w_soln = soln_data(:, 7);
+%soln_data = readmatrix(filename);
+u_soln = soln_data(:, 4);
+v_soln = soln_data(:, 5);
+w_soln = soln_data(:, 6);
 
 n = round((size(u_soln,1))^(1/3));
 u = zeros(n,n,n);
@@ -50,12 +51,10 @@ w = reshape(w_soln, n, n, n);
 u_k = fftn(u) / (n^3);
 v_k = fftn(v) / (n^3);
 w_k = fftn(w) / (n^3);
-% Compute energy spectrum
-E_k = 0.5 * (u_k.*conj(u_k) + v_k.*conj(v_k)+ w_k.*conj(w_k));
-E_K = zeros(n, 1);  % Correct size for energy bins
+
 
 % Compute Wave Numbers
-k_x =  fftfreq(n,(L/(n-1)));
+k_x =  fftfreq(n,(L/(n-1))).*(2*pi);
 k_y =  fftfreq(n,(L/(n-1)));
 k_z =  fftfreq(n,(L/(n-1)));
 % % 
@@ -79,24 +78,49 @@ k_z =  fftfreq(n,(L/(n-1)));
 % k_Z2(i,:,:) = k_Z;
 % end
 % Wave number calculation
-k_x = (0:n-1) - floor(n/2);
-k_x = (2*pi/L) * fftshift(k_x);
-k_x = [zeros(1,1) ,k_x];
-k_x = k_x(1,1:n);
+% k_x = (0:n-1) - floor(n/2);
+% k_x = (2*pi/L) * fftshift(k_x);
+% k_x = [zeros(1,1) ,k_x];
+% k_x = k_x(1,1:n);
+
+
 [k_X, k_Y, k_Z] = ndgrid(k_x, k_x, k_x);
 k_mag = sqrt(k_X.^2 + k_Y.^2+ k_Z.^2);
+dk = k_x(2)-k_x(1);
+% Compute energy spectrum
+% E_k = 0.5 * (u_k.*conj(u_k) + v_k.*conj(v_k)+ w_k.*conj(w_k))/dk;
+% E_ku = u_k.*conj(u_k);
+% E_kv = v_k.*conj(v_k);
+% E_kw = w_k.*conj(w_k);
+E_ku = fftshift(u_k.*conj(u_k));
+E_kv = fftshift(v_k.*conj(v_k));
+E_kw = fftshift(w_k.*conj(w_k));
+
+E_K = zeros(n, 1);  % Correct size for energy bins
+E_Ku = zeros(n, 1);  % Correct size for energy bins
+E_Kv = zeros(n, 1);  % Correct size for energy bins
+E_Kw = zeros(n, 1);  % Correct size for energy bins
+
+centerx = floor(n/2);
+centery = floor(n/2);
+centerz = floor(n/2);
 
  for j = 1:n
     for i = 1:n
         for l = 1:n
-        k_id = round(k_mag(i,j,l))+1;
+        % k_id = round(k_mag(i,j,l))+1;
+        k_id =  round(sqrt((i-centerx)^2+(j-centery)^2+(l-centerz)^2))+1;
             if k_id <= n  % Prevent overflow
-            E_K(k_id) = E_K(k_id) + E_k(i, j,l);  % Accumulate enery
+            % E_K(k_id) = E_K(k_id) + E_k(i, j,l);  % Accumulate enery
+            E_Ku(k_id) = E_Ku(k_id) + E_ku(i, j,l);  % Accumulate enery
+            E_Kv(k_id) = E_Kv(k_id) + E_kv(i, j,l);  % Accumulate enery
+            E_Kw(k_id) = E_Kw(k_id) + E_kw(i, j,l);  % Accumulate enery
             end
         end
     end
  end
-k = ((0:n-1))*(2*pi/L);  % Wavenumber range
+E_K = 0.5 * (E_Ku+E_Kv+E_Kw)/dk;
+k = (((0:n-1))*(2*pi)/L);  % Wavenumber range
 % Plot the energy spectrum
 
 % % Plot
