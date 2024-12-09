@@ -1,5 +1,6 @@
 function [k,E_K] = EnergySpec3D(filename)
   format long
+  
 % Solution Information
 L  = 2*pi;
 
@@ -100,11 +101,12 @@ centerx = floor(n/2.);
 centery = floor(n/2.);
 centerz = floor(n/2.);
 rad_sphere = ceil(sqrt((3*(n*n)))/2.+1);
-% epsilon = 1*e-50;
-E_K = zeros(n, 1);  % Correct size for energy bins
-E_Ku = zeros(rad_sphere, 1)+(1e-50);  % Correct size for energy bins
-E_Kv = zeros(rad_sphere, 1)+(1e-50);  % Correct size for energy bins
-E_Kw = zeros(rad_sphere, 1)+(1e-50);  % Correct size for energy bins
+
+epsilon = 1e-50;
+
+E_Ku = zeros(rad_sphere, 1)+epsilon;  % Correct size for energy bins
+E_Kv = zeros(rad_sphere, 1)+epsilon;  % Correct size for energy bins
+E_Kw = zeros(rad_sphere, 1)+epsilon;  % Correct size for energy bins
 
 
 
@@ -113,7 +115,7 @@ E_Kw = zeros(rad_sphere, 1)+(1e-50);  % Correct size for energy bins
     for i = 1:rad_sphere
         for l = 1:rad_sphere
         % k_id = round(k_mag(i,j,l))+1;
-        k_id =  floor(sqrt((i-centerx)^2+(j-centery)^2+(l-centerz)^2))+1;
+        k_id =  round(sqrt((i-centerx)^2+(j-centery)^2+(l-centerz)^2))+1;
              if k_id <= rad_sphere %&& k_id > 0.1  % Prevent overflow
             % E_K(k_id) = E_K(k_id) + E_k(i, j,l);  % Accumulate enery
             E_Ku(k_id) = E_Ku(k_id) + E_ku(i, j,l);  % Accumulate enery
@@ -123,30 +125,10 @@ E_Kw = zeros(rad_sphere, 1)+(1e-50);  % Correct size for energy bins
         end
     end
  end
+
 E_K = 0.5 * (E_Ku+E_Kv+E_Kw)/dk;
 k = (((0:rad_sphere-1))*(2*pi)/L);  % Wavenumber range
-% Plot the energy spectrum
 
-% % Plot
-% hfig = figure;  % save the figure handle in a variable
-% loglog(k, E_K, 'LineWidth', 1.5);
-% hold on;
-% loglog(k_ref, Ek_ref, 'LineWidth', 1.5);
-% xlabel('Wavenumber k');
-% ylabel('Energy Spectrum E(k)');
-% title('Energy Spectrum');
-% grid on;
-% fname = 'Energy_Spectrum';
-% picturewidth = 20; % set this parameter and keep it forever
-% hw_ratio = 0.65; % feel free to play with this ratio
-% set(findall(hfig,'-property','FontSize'),'FontSize',15) % adjust fontsize to your document
-% set(findall(hfig,'-property','Box'),'Box','off') % optional
-% set(findall(hfig,'-property','Interpreter'),'Interpreter','latex') 
-% set(findall(hfig,'-property','TickLabelInterpreter'),'TickLabelInterpreter','latex')
-% set(hfig,'Units','centimeters','Position',[3 3 picturewidth hw_ratio*picturewidth])
-% pos = get(hfig,'Position');
-% set(hfig,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)])
-% %print(hfig,fname,'-dpdf','-painters','-fillpage')
-% print(hfig,fname,'-dpng','-painters')
-
+E_K = E_K(3:rad_sphere-4,1);
+k = k(1,3:rad_sphere-4);
 end
