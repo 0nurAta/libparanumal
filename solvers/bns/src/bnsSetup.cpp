@@ -224,7 +224,7 @@ void bns_t::Setup(platform_t& _platform, mesh_t& _mesh,
 
   // kernels from relaxation file
   fileName   = oklFilePrefix + "bnsRelaxation" + suffix + oklFileSuffix;
-  kernelName = "bnsRelaxation" + suffix;
+  kernelName = "bnsRelaxationCol" + suffix;
   relaxationKernel = platform.buildKernel(fileName, kernelName,
                                          kernelInfo);
   if (pmlcubature) {
