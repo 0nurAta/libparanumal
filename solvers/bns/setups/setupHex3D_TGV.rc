@@ -1,8 +1,7 @@
 # Cases
-# 32x32x32 orders=5,6,7,8
-# 64x64x64 orders=4,5
-# vtu files: only required for 64x64x64 order=5 case
-# KE.txt: required for all cases. should be renamed before each run
+# 32x32x32 orders=4,5
+# vtu files only required for 32x32x32 order=5 case
+
 
 [FORMAT]
 2.0
@@ -20,13 +19,13 @@ BOX
 12
 
 [BOX GLOBAL NX]
-32
+24
 
 [BOX GLOBAL NY]
-32
+24
 
 [BOX GLOBAL NZ]
-32
+24
 
 [BOX DIMX]
 6.28318530718

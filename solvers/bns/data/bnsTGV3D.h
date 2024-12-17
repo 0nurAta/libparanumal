@@ -37,7 +37,7 @@ SOFTWARE.
                                s11, s12, s13,     \
                                s22, s23, s33)     \
 {                                         \
-  *(r) = RBAR;                            \
+  *(r) = 1 + (1.0/(16.0*100))*(cos(2*x) + cos(2*y))*(cos(2*z) + 2); \
   *(u) = 1.0*sin(x)*cos(y)*cos(z);               \
   *(v) = -1.0*sin(y)*cos(x)*cos(z);              \
   *(w) = 0;                               \

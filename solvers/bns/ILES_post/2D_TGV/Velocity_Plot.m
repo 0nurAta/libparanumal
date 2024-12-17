@@ -39,7 +39,7 @@ y_soln = table2array(y_soln);
 
 % Relative Error of Maximum Velocity
 
-Epsilon = abs(max(vexact)-max(v_soln))/max(vexact)
+Epsilon = abs(max(uexact)-max(v_soln))/max(uexact)
 
 
 % Plot
@@ -50,22 +50,32 @@ plot(y_soln,v_soln,'r:','LineWidth',2.5,'DisplayName','$\Omega(t)$');
 
 % plot(K,E3,'k-','LineWidth',1.5,'DisplayName','$\Omega(t)$');
 
-legend('Analytical','BNS','Location','northwest')
+legend('','BNS','Location','northwest')
+% xlim([10,20]);
+% Set Legends
+string1 = '$$Analytical$$';
+string2 = '$$BNS$$';
+leg1 = legend( string1,string2);
 
-
-xlabel('x')
-ylabel('u')
-fname = 'Vvelocity_TGV2D';
+fs=18;
+set(leg1,'interpreter','latex','fontsize',fs+2,'Location','NorthWest','box','on');
+xlabel('$$x$$','interpreter','latex','fontsize',fs+4);
+ylabel('$$u$$','interpreter','latex','fontsize',fs+4);
+fname = 'u_velocity';
 
 picturewidth = 20; % set this parameter and keep it forever
-hw_ratio = 0.65; % feel free to play with this ratio
-set(findall(hfig,'-property','FontSize'),'FontSize',24) % adjust fontsize to your document
+hw_ratio = 0.75; % feel free to play with this ratio
+set(findall(hfig,'-property','FontSize'),'FontSize',22) % adjust fontsize to your document
 
-set(findall(hfig,'-property','Box'),'Box','off') % optional
+set(findall(hfig,'-property','Box'),'Box','on') % optional
 set(findall(hfig,'-property','Interpreter'),'Interpreter','latex') 
 set(findall(hfig,'-property','TickLabelInterpreter'),'TickLabelInterpreter','latex')
 set(hfig,'Units','centimeters','Position',[3 3 picturewidth hw_ratio*picturewidth])
 pos = get(hfig,'Position');
 set(hfig,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)])
-%print(hfig,fname,'-dpdf','-painters','-fillpage')
-print(hfig,fname,'-dpdf','-painters')
+% print(hfig,fname,'-dpdf','-painters','-fillpage')
+print(hfig,fname,'-deps','-painters')
+hold off
+
+
+

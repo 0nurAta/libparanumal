@@ -1,4 +1,4 @@
-/*
+/*1 + (1.0/(16.0*Ps))*(cos(2*x) + cos(2*y))*(cos(2*z) + 2)
 
 The MIT License (MIT)
 

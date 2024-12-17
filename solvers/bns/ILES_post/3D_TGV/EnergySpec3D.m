@@ -1,5 +1,6 @@
 function [k,E_K] = EnergySpec3D(filename)
-
+  format long
+  
 % Solution Information
 L  = 2*pi;
 
@@ -11,49 +12,50 @@ L  = 2*pi;
 
 % Read Solution Data
 soln_data = readFields3D(filename);
-u_soln = soln_data(:, 5);
-v_soln = soln_data(:, 6);
-w_soln = soln_data(:, 7);
+%soln_data = readmatrix(filename);
+u_soln = soln_data(:, 4);
+v_soln = soln_data(:, 5);
+w_soln = soln_data(:, 6);
 
 n = round((size(u_soln,1))^(1/3));
 u = zeros(n,n,n);
 v = zeros(n,n,n);
 w = zeros(n,n,n);
 
-k = 1;
-for i = 1:n
-    for j = 1:n
-        for l = 1:n
-    u(i,j,l) = u_soln(k);
-    v(i,j,l) = v_soln(k); 
-    w(i,j,l) = w_soln(k); 
-    k = k+1;
-        end
-    end
-end
-
+% k = 1;
+% for i = 1:n
+%     for j = 1:n
+%         for l = 1:n
+%     u(i,j,l) = u_soln(k);
+%     v(i,j,l) = v_soln(k); 
+%     w(i,j,l) = w_soln(k); 
+%     k = k+1;
+%         end
+%     end
+% end
+u = reshape(u_soln, n, n, n);
+v = reshape(v_soln, n, n, n);
+w = reshape(w_soln, n, n, n);
 % u_k = fft2(u) / (n * n);  % Normalize
 % v_k = fft2(v) / (n * n);  % Normalize
 
-% u_k = fft(u,n,1);  
-% u_k = fft(u_k,n,2);
-% u_k = fft(u_k,n,3) / (n*n*n); % Normalize
-% v_k = fft(v,n,1);  
-% v_k = fft(v_k,n,2);
-% v_k = fft(v_k,n,3) / (n*n*n); % Normalize
-% w_k = fft(w,n,1);  
-% w_k = fft(w_k,n,2);
-% w_k = fft(w_k,n,3) / (n*n*n); % Normalize
+u_k = fft(u,n,1);  
+u_k = fft(u_k,n,2);
+u_k = fft(u_k,n,3) / (n*n*n); % Normalize
+v_k = fft(v,n,1);  
+v_k = fft(v_k,n,2);
+v_k = fft(v_k,n,3) / (n*n*n); % Normalize
+w_k = fft(w,n,1);  
+w_k = fft(w_k,n,2);
+w_k = fft(w_k,n,3) / (n*n*n); % Normalize
 
-u_k = fftn(u) / (n^3);
-v_k = fftn(v) / (n^3);
-w_k = fftn(w) / (n^3);
-% Compute energy spectrum
-E_k = 0.5 * (u_k.*conj(u_k) + v_k.*conj(v_k)+ w_k.*conj(w_k));
-E_K = zeros(n, 1);  % Correct size for energy bins
+% u_k = (fftn(u) / (n^3));
+% v_k = fftn(v) / (n^3);
+% w_k = fftn(w) / (n^3);
+
 
 % Compute Wave Numbers
-k_x =  fftfreq(n,(L/(n-1)));
+k_x =  fftfreq(n,(L/(n-1))).*(2*pi);
 k_y =  fftfreq(n,(L/(n-1)));
 k_z =  fftfreq(n,(L/(n-1)));
 % % 
@@ -77,47 +79,56 @@ k_z =  fftfreq(n,(L/(n-1)));
 % k_Z2(i,:,:) = k_Z;
 % end
 % Wave number calculation
-k_x = (0:n-1) - floor(n/2);
-k_x = (2*pi/L) * fftshift(k_x);
-k_x = [zeros(1,1) ,k_x];
-k_x = k_x(1,1:n);
+% k_x = (0:n-1) - floor(n/2);
+% k_x = (2*pi/L) * fftshift(k_x);
+% k_x = [zeros(1,1) ,k_x];
+% k_x = k_x(1,1:n);
+
+
 [k_X, k_Y, k_Z] = ndgrid(k_x, k_x, k_x);
 k_mag = sqrt(k_X.^2 + k_Y.^2+ k_Z.^2);
-% k_mag=zeros(n,n);
-kMag = zeros(n);
- for j = 1:n
-    for i = 1:n
-        for l = 1:n
-        k_id = round(k_mag(i,j,l))+1;
-            if k_id <= n  % Prevent overflow
-            E_K(k_id) = E_K(k_id) + E_k(i, j,l);  % Accumulate enery
+dk = k_x(2)-k_x(1);
+% Compute energy spectrum
+% E_k = 0.5 * (u_k.*conj(u_k) + v_k.*conj(v_k)+ w_k.*conj(w_k))/dk;
+% E_ku = u_k.*conj(u_k);
+% E_kv = v_k.*conj(v_k);
+% E_kw = w_k.*conj(w_k);
+E_ku = fftshift(u_k.*conj(u_k));
+E_kv = fftshift(v_k.*conj(v_k));
+E_kw = fftshift(w_k.*conj(w_k));
+
+centerx = floor(n/2.);
+centery = floor(n/2.);
+centerz = floor(n/2.);
+rad_sphere = ceil(sqrt((3*(n*n)))/2.+1);
+
+epsilon = 1e-50;
+
+E_Ku = zeros(rad_sphere, 1)+epsilon;  % Correct size for energy bins
+E_Kv = zeros(rad_sphere, 1)+epsilon;  % Correct size for energy bins
+E_Kw = zeros(rad_sphere, 1)+epsilon;  % Correct size for energy bins
+
+
+
+
+ for j = 1:rad_sphere
+    for i = 1:rad_sphere
+        for l = 1:rad_sphere
+        % k_id = round(k_mag(i,j,l))+1;
+        k_id =  round(sqrt((i-centerx)^2+(j-centery)^2+(l-centerz)^2))+1;
+             if k_id <= rad_sphere %&& k_id > 0.1  % Prevent overflow
+            % E_K(k_id) = E_K(k_id) + E_k(i, j,l);  % Accumulate enery
+            E_Ku(k_id) = E_Ku(k_id) + E_ku(i, j,l);  % Accumulate enery
+            E_Kv(k_id) = E_Kv(k_id) + E_kv(i, j,l);  % Accumulate enery
+            E_Kw(k_id) = E_Kw(k_id) + E_kw(i, j,l);  % Accumulate enery
             end
         end
     end
  end
-k = ((0:n-1))*(2*pi/L);  % Wavenumber range
-% Plot the energy spectrum
 
-% % Plot
-% hfig = figure;  % save the figure handle in a variable
-% loglog(k, E_K, 'LineWidth', 1.5);
-% hold on;
-% loglog(k_ref, Ek_ref, 'LineWidth', 1.5);
-% xlabel('Wavenumber k');
-% ylabel('Energy Spectrum E(k)');
-% title('Energy Spectrum');
-% grid on;
-% fname = 'Energy_Spectrum';
-% picturewidth = 20; % set this parameter and keep it forever
-% hw_ratio = 0.65; % feel free to play with this ratio
-% set(findall(hfig,'-property','FontSize'),'FontSize',15) % adjust fontsize to your document
-% set(findall(hfig,'-property','Box'),'Box','off') % optional
-% set(findall(hfig,'-property','Interpreter'),'Interpreter','latex') 
-% set(findall(hfig,'-property','TickLabelInterpreter'),'TickLabelInterpreter','latex')
-% set(hfig,'Units','centimeters','Position',[3 3 picturewidth hw_ratio*picturewidth])
-% pos = get(hfig,'Position');
-% set(hfig,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)])
-% %print(hfig,fname,'-dpdf','-painters','-fillpage')
-% print(hfig,fname,'-dpng','-painters')
+E_K = 0.5 * (E_Ku+E_Kv+E_Kw)/dk;
+k = (((0:rad_sphere-1))*(2*pi)/L);  % Wavenumber range
 
+E_K = E_K(3:rad_sphere-4,1);
+k = k(1,3:rad_sphere-4);
 end
