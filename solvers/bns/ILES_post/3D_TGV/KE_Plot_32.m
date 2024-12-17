@@ -45,7 +45,7 @@ plot(t_soln3,u_soln3,'c--','LineWidth',1.0);
 plot(t_soln4,u_soln4,'m-.','LineWidth',1.0);
 plot(t_soln5,u_soln5,'g:','LineWidth',1.5);
 plot(t_ref,u_ref,'k-','LineWidth',2.0);
-xlim([10,20]);
+% xlim([10,20]);
 % Set Legends
 string1 = '$$Spectral-512$$';
 string2 = '$$BNS-32\times3$$';

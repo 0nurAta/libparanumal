@@ -49,7 +49,9 @@ xline(48,'-k');
 xline(64,'--k');
 xline(80,'-.k');
 xline(96,':k');
-
+x = 1:1:1000;
+y = x.^(-5/3);
+line(x,y)
 
 % Set Legends
 string1 = '$$BNS-32\times3$$';

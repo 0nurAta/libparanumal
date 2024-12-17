@@ -58,10 +58,12 @@ plot(t_soln3,u_soln3,'c--','LineWidth',1.0);
 plot(T,u_soln4,'m-.','LineWidth',1.0);
 plot(T,u_soln5,'g:','LineWidth',1.5);
 plot(t_ref,u_ref,'k-','LineWidth',2.0);
-xlim([0, 20]);
-ylim([0.5e-3, 14.5e-3]);
+% xlim([0, 20]);
+% ylim([0.5e-3, 14.5e-3]);
 % xlim([5, 15]);
 % ylim([7e-3, 14e-3]);
+xlim([7, 12]);
+ylim([8e-3, 14e-3]);
 % Set Legends
 string1 = '$$BNS-8\times3$$';
 string2 = '$$BNS-16\times3$$';
