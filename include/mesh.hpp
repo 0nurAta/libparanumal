@@ -355,6 +355,14 @@ class mesh_t {
 
   kernel_t MassMatrixKernel;
 
+  /*************************/
+  /* AMR                   */
+  /*************************/
+  //memory<dfloat> o_IM;
+  deviceMemory<dfloat> o_IM;
+  deviceMemory<dfloat> o_RM;
+
+
   mesh_t() = default;
   mesh_t(platform_t& _platform, meshSettings_t& _settings,
          comm_t _comm) {
@@ -490,6 +498,9 @@ class mesh_t {
 
   int NXID, NYID, NZID;
   int SJID, IJID, IHID, WIJID, WSJID;
+
+  // AMR //
+  mesh_t SetupUpdate(int Nrefine);
 
  private:
   /*Set the type of mesh*/
@@ -731,6 +742,10 @@ class mesh_t {
   dfloat ElementCharacteristicLengthTet3D(dlong e);
   dfloat ElementCharacteristicLengthHex3D(dlong e);
 
+  // Interpolation for AMR Setup
+  void InterpolateToChildTri2D();
+  void InterpolateToParentTri2D();
+
   /***************************************************************************/
   // Basic codes for generating nodes, polynomials, matrices, etc.
 
@@ -804,6 +819,13 @@ class mesh_t {
   static void EquispacedNodesTri2D(const int _N,
                                    memory<dfloat>& _r,
                                    memory<dfloat>& _s);
+  static void EquispacedNodesChildTri2D(const int _N,
+                                       const int _a,
+                                       const int _b,
+                                       const int _c,
+                                       const int _d,
+                                       memory<dfloat>& _r,
+                                       memory<dfloat>& _s);
   static void EquispacedEToVTri2D(const int _N, memory<int>& _EToV);
   static void SEMFEMNodesTri2D(const int _N,
                                int& _Np,

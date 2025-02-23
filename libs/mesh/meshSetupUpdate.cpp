@@ -24,36 +24,46 @@ SOFTWARE.
 
 */
 
-#define ADVECTION_SPEED_X 0.5
-#define ADVECTION_SPEED_Y 0.0
+#include "mesh.hpp"
 
-// Flux function
-#define advectionFlux2D(t, x, y, q, cx, cy) \
-{                                       \
-  *(cx) = ADVECTION_SPEED_X*q;          \
-  *(cy) = ADVECTION_SPEED_Y*q;          \
+namespace libp {
+
+//build a new mesh object from another with a different degree.
+mesh_t mesh_t::SetupUpdate(int Nrefine){
+
+  // Copy the existing object
+  mesh_t mesh=*this;
+
+  //just reuse the current mesh if the degree isnt changing.
+  //if (Nf==N) return mesh;
+
+  //mesh.N = Nf;
+
+  // connect elements
+  mesh.Connect();
+
+  // load reference (r,s) element nodes
+  mesh.ReferenceNodes();
+
+  // connect face nodes (find trace indices)
+  mesh.ConnectFaceNodes();
+
+  // make a global indexing
+  mesh.ConnectNodes();
+
+  // compute physical (x,y) locations of the element nodes
+  mesh.PhysicalNodes();
+  
+  // compute geometric factors
+  mesh.GeometricFactors();
+
+  // compute surface geofacs
+  mesh.SurfaceGeometricFactors();
+  
+  // label local/global gather elements
+  //mesh.GatherScatterSetup();
+  printf("first refinement done!!\n");
+  return mesh;
 }
 
-// max wavespeed (should be max eigen of Jacobian of flux function)
-#define advectionMaxWaveSpeed2D(t, x, y, q, u, v) \
-{                                                 \
-  *(u) = ADVECTION_SPEED_X;                       \
-  *(v) = ADVECTION_SPEED_Y;                       \
-}
-
-// Boundary conditions
-/* wall 1, outflow 2 */
-#define advectionDirichletConditions2D(bc, t, x, y, nx, ny, qM, qB) \
-{                                       \
-  if(bc==1){                            \
-    *(qB) = 0.0;                        \
-  } else if(bc==2){                     \
-    *(qB) = qM;                         \
-  }                                     \
-}
-
-// Initial conditions
-#define advectionInitialConditions2D(t, x, y, q) \
-{                                       \
-  *(q) = (x >=0)? 1.5:0.5;            \
-}
+} //namespace libp

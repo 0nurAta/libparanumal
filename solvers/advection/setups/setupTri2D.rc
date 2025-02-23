@@ -5,7 +5,8 @@
 data/advectionLinear2D.h
 
 [MESH FILE]
-BOX
+../../meshes/square.msh
+#BOX
 
 [MESH DIMENSION]
 2
@@ -14,19 +15,19 @@ BOX
 3
 
 [BOX NX]
-20
+3
 
 [BOX NY]
-20
+3
 
 [BOX NZ]
-20
+3
 
 [BOX BOUNDARY FLAG]
 -1
 
 [POLYNOMIAL DEGREE]
-4
+1
 
 [THREAD MODEL]
 CUDA
@@ -44,7 +45,7 @@ DOPRI5
 0
 
 [FINAL TIME]
-10
+1
 
 [OUTPUT INTERVAL]
 1

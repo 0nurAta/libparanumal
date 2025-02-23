@@ -24,36 +24,45 @@ SOFTWARE.
 
 */
 
-#define ADVECTION_SPEED_X 0.5
-#define ADVECTION_SPEED_Y 0.0
+@kernel void advectionIndicatorTestTri2D(const dlong Nelements,
+                                   @restrict const dfloat * Q, 
+                                   @restrict dlong * RefFlag){ 
 
-// Flux function
-#define advectionFlux2D(t, x, y, q, cx, cy) \
-{                                       \
-  *(cx) = ADVECTION_SPEED_X*q;          \
-  *(cy) = ADVECTION_SPEED_Y*q;          \
+  // block partition of elements
+  for(dlong eo=0;eo<Nelements;eo+=p_NblockV;@outer(0)){
+    @shared dfloat Flag[p_NblockV][p_Np];
+    for(int es=0;es<p_NblockV;++es;@inner(1)){
+      for(int n=0;n<p_Np;++n;@inner(0)){
+        const dlong e = eo+es;
+        if(e<Nelements){
+
+          const dlong id = e*p_Np + n;
+          const dfloat qn = Q[id];
+          Flag[es][n] = ((qn)>=1.f)? 1.0:0.0;
+        }
+      }
+      
+    }
+
+  for(int es=0;es<p_NblockV;++es;@inner(1)){
+    dfloat rf = 0.0;
+    const dlong e = eo+es;
+    for(int n=0;n<p_Np;++n;@inner(0)){
+      if(e<Nelements){
+        if(n==0){
+          #pragma unroll p_Np
+          for(int i=0;i<p_Np;++i){
+          //const dlong id = e*p_Np + n;
+          rf += Flag[es][i];
+          }
+        }
+      }
+    const dlong N = rf/p_Np;
+    RefFlag[e] = 0;
+    }
+    
+    }
+
+  }
 }
 
-// max wavespeed (should be max eigen of Jacobian of flux function)
-#define advectionMaxWaveSpeed2D(t, x, y, q, u, v) \
-{                                                 \
-  *(u) = ADVECTION_SPEED_X;                       \
-  *(v) = ADVECTION_SPEED_Y;                       \
-}
-
-// Boundary conditions
-/* wall 1, outflow 2 */
-#define advectionDirichletConditions2D(bc, t, x, y, nx, ny, qM, qB) \
-{                                       \
-  if(bc==1){                            \
-    *(qB) = 0.0;                        \
-  } else if(bc==2){                     \
-    *(qB) = qM;                         \
-  }                                     \
-}
-
-// Initial conditions
-#define advectionInitialConditions2D(t, x, y, q) \
-{                                       \
-  *(q) = (x >=0)? 1.5:0.5;            \
-}

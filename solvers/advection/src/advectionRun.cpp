@@ -42,6 +42,11 @@ void advection_t::Run(){
   dfloat cfl=1.0;
   settings.getSetting("CFL NUMBER", cfl);
 
+  // Set Lists related to AMR
+   EToRefLevel.calloc(2*mesh.Nelements); //
+   PToC.calloc(2*mesh.Nelements*2); // For bisection only!(2 children from 1 parent)
+   IntFlag.calloc(2*mesh.Nelements); //
+
   // set time step
   dfloat vmax = MaxWaveSpeed(o_q, startTime);
 

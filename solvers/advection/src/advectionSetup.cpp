@@ -62,8 +62,8 @@ void advection_t::Setup(platform_t& _platform, mesh_t& _mesh,
   }
 
   // compute samples of q at interpolation nodes
-  q.malloc(Nlocal+Nhalo);
-  o_q = platform.malloc<dfloat>(Nlocal+Nhalo);
+  q.malloc(2*Nlocal+Nhalo);
+  o_q = platform.malloc<dfloat>(2*Nlocal+Nhalo);
 
   mesh.MassMatrixKernelSetup(1); // mass matrix operator
 
@@ -120,4 +120,23 @@ void advection_t::Setup(platform_t& _platform, mesh_t& _mesh,
   kernelName = "advectionMaxWaveSpeed" + suffix;
 
   maxWaveSpeedKernel = platform.buildKernel(fileName, kernelName, kernelInfo);
+
+  // indicator kernel
+  fileName   = oklFilePrefix + "advectionIndicator" + suffix + oklFileSuffix;
+  kernelName = "advectionIndicatorTest" + suffix;
+
+  indicatorKernel = platform.buildKernel(fileName, kernelName,
+                                     kernelInfo);
+  // combine solution kernel
+  fileName   = oklFilePrefix + "advectionCombine" + suffix + oklFileSuffix;
+  kernelName = "advectionCombine" + suffix;
+  combineKernel = platform.buildKernel(fileName, kernelName,
+                                     kernelInfo);
+  // split solution kernel
+  fileName   = oklFilePrefix + "advectionSplit" + suffix + oklFileSuffix;
+  kernelName = "advectionSplit" + suffix;
+  splitKernel = platform.buildKernel(fileName, kernelName,
+                                   kernelInfo);
+
+
 }

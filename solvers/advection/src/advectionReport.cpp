@@ -37,20 +37,73 @@ void advection_t::Report(dfloat time, int tstep){
 
   dfloat norm2 = sqrt(platform.linAlg().innerProd(Nentries, o_q, o_Mq, mesh.comm));
 
+
+
   if(mesh.rank==0)
     printf("%5.2f (%d), %5.2f (time, timestep, norm)\n", time, tstep, norm2);
 
   if (settings.compareSetting("OUTPUT TO FILE","TRUE")) {
 
+    // Refinement Flag
+    deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(mesh.Nelements);
+    indicatorKernel(mesh.Nelements, o_q, o_refFlag);
+    memory<dlong> refFlag(mesh.Nelements);
+    o_refFlag.copyTo(refFlag); // copy data back to host
+    
+    dlong Nrefine = 0;   
+
+    for (int i = 0; i < mesh.Nelements; ++i)
+    {
+      if (refFlag[i]==1)
+      {
+        Nrefine = Nrefine + 1;
+      }
+       
+    }
+    printf("%d\n",Nrefine);
+
+
     // copy data back to host
     o_q.copyTo(q);
+    /*for (int i = 0; i < mesh.Nelements*mesh.Np; ++i)
+    {
+      printf("q1=%f\n",q[i]);
+    }*/
+    //for test
+    Nrefine =1;
+    refFlag[3]=1;
 
-    // output field files
+    //refFlag[1]=1;
+    //refFlag[1]=1;
+    //refFlag[2]=1;
+    //refFlag[5]=1;
     std::string name;
     settings.getSetting("OUTPUT FILE NAME", name);
     char fname[BUFSIZ];
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
 
-    PlotFields(q, std::string(fname));
+    Refine(q,refFlag,Nrefine); 
+    memory<dfloat> Qold(2*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np);
+    Qold = q;
+    deviceMemory<dlong> o_Qold = platform.malloc<dfloat>(Qold);
+    splitKernel(mesh.Nelements,o_Qold ,o_q, o_refFlag, o_IntFlag,o_PToC,mesh.o_IM);
+    // copy data back to host
+    o_q.copyTo(q);
+    Qold = q;
+    deviceMemory<dlong> o_Qold1 = platform.malloc<dfloat>(Qold);
+    Ncoarse =1;
+    refFlag[3]=-1;
+    Coarse(q,refFlag,Nrefine);
+    printf("Ncoarse=%d\n",Ncoarse);
+    combineKernel(mesh.Nelements,Ncoarse,o_Qold1 ,o_q, o_refFlag, o_IntFlag,o_PToC,mesh.o_RM);
+
+    o_q.copyTo(q);
+    /*    for (int i = 0; i < mesh.Nelements*mesh.Np; ++i)
+    {
+      printf("q2=%f\n",q[i]);
+    }*/
+    PlotFields(q, refFlag,std::string(fname));
+
+    
   }
 }

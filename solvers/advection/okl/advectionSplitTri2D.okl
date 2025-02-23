@@ -24,36 +24,33 @@ SOFTWARE.
 
 */
 
-#define ADVECTION_SPEED_X 0.5
-#define ADVECTION_SPEED_Y 0.0
+@kernel void advectionSplitTri2D(const dlong Nelements,
+                                   @restrict const dfloat * Qold,
+                                   @restrict dfloat * Q,
+                                   @restrict const dlong * RefFlag, 
+                                   @restrict const dlong * IntFlag,
+                                   @restrict const dlong * PToC,
+                                   @restrict const dfloat * IM){ 
 
-// Flux function
-#define advectionFlux2D(t, x, y, q, cx, cy) \
-{                                       \
-  *(cx) = ADVECTION_SPEED_X*q;          \
-  *(cy) = ADVECTION_SPEED_Y*q;          \
+    for(dlong e=0;e<Nelements;++e;@outer(0)){
+
+    for(int n=0;n<p_Np;++n;@inner(0)){
+      const dlong id = e*p_Np;
+      const dlong id_p = (e==PToC[2*e+0])? id:(PToC[2*e+0]*p_Np);
+      const dlong id_int = IntFlag[e]-1;
+      dfloat qn=0;
+
+      if (IntFlag[e]!=0)
+      {
+        printf("IntFlag[e]=%d\n",IntFlag[e]);
+        for(int i=0;i<p_Np;++i){
+        const dfloat Ii = IM[n+i*p_Np+id_int*p_Np*p_Np];
+             qn += Ii*Qold[id_p+i];         
+        }
+      Q[id+n] = qn;
+      printf("id%d,Q=%f\n",id+n,Q[id+n]);
+      }                  
+    }
+  }
 }
 
-// max wavespeed (should be max eigen of Jacobian of flux function)
-#define advectionMaxWaveSpeed2D(t, x, y, q, u, v) \
-{                                                 \
-  *(u) = ADVECTION_SPEED_X;                       \
-  *(v) = ADVECTION_SPEED_Y;                       \
-}
-
-// Boundary conditions
-/* wall 1, outflow 2 */
-#define advectionDirichletConditions2D(bc, t, x, y, nx, ny, qM, qB) \
-{                                       \
-  if(bc==1){                            \
-    *(qB) = 0.0;                        \
-  } else if(bc==2){                     \
-    *(qB) = qM;                         \
-  }                                     \
-}
-
-// Initial conditions
-#define advectionInitialConditions2D(t, x, y, q) \
-{                                       \
-  *(q) = (x >=0)? 1.5:0.5;            \
-}

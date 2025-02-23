@@ -216,6 +216,31 @@ void mesh_t::EquispacedNodesTri2D(const int _N,
   }
 }
 
+// Create equidistributed nodes on reference triangle for child cell
+void mesh_t::EquispacedNodesChildTri2D(const int _N,
+                                       const int _a,
+                                       const int _b,
+                                       const int _c,
+                                       const int _d,
+                                  memory<dfloat>& _r,
+                                  memory<dfloat>& _s){
+
+  const int _Np = (_N+1)*(_N+2)/2;
+
+  _r.malloc(_Np);
+  _s.malloc(_Np);
+
+
+  int sk = 0;
+  for (int n=0;n<_N+1;n++) {
+    for (int m=0;m<_N+1-n;m++) {
+      _r[sk] = -_a + _b*m/_N;
+      _s[sk] = -_c + _d*n/_N;
+      sk++;
+    }
+  }
+}
+
 void mesh_t::EquispacedEToVTri2D(const int _N, memory<int>& _EToV){
   const int _Nverts = 3;
   const int _Nelements = _N*_N;

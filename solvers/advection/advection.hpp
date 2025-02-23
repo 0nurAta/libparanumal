@@ -57,11 +57,25 @@ public:
   memory<dfloat> q;
   deviceMemory<dfloat> o_q;
 
+  memory<dlong> EToRefLevel;  // Element Refinement List: size->(Nelements)
+  memory<dlong> PToC;         // Parent to Child Connectivity: size->(Nelements*Nchild)
+  deviceMemory<dlong> o_PToC; 
+  //memory<dlong> CToP;         // Child to Parent Connectivity: size->(Nelements)
+  memory<dlong> IntFlag;      // Interpolation flag for identify different type of configurations: size->(Nelements)
+  deviceMemory<dlong> o_IntFlag; 
+  dlong Ncoarse=0;       // Coarsened element count
+
+
   kernel_t volumeKernel;
   kernel_t surfaceKernel;
 
   kernel_t initialConditionKernel;
   kernel_t maxWaveSpeedKernel;
+
+  // AMR Kernels
+  kernel_t indicatorKernel;
+  kernel_t combineKernel;
+  kernel_t splitKernel;
 
   advection_t() = default;
   advection_t(platform_t &_platform, mesh_t &_mesh,
@@ -77,9 +91,13 @@ public:
 
   void Report(dfloat time, int tstep);
 
-  void PlotFields(memory<dfloat> Q, const std::string fileName);
+  void PlotFields(memory<dfloat> Q, memory<dlong> RefFlag, const std::string fileName);
 
   void rhsf(deviceMemory<dfloat>& o_q, deviceMemory<dfloat>& o_rhs, const dfloat time);
+
+  void Refine(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Nrefine);
+
+  void Coarse(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Nrefine);
 
   dfloat MaxWaveSpeed(deviceMemory<dfloat>& o_Q, const dfloat T);
 };
