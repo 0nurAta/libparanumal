@@ -201,11 +201,7 @@ void mesh_t::InterpolateToParentTri2D(){
   }
   InterpolationMatrixTri2D(N,r,s,r_child,s_child,R1);
 
-  for (int i = 0; i < Np*Np; ++i)
-  {
-    printf("R1[%d]=%f\n",i,R1[i]);
-  }
-  
+
   // Second: r_child = (r+1)/2
   for (int i = 0; i < Np; ++i)
   {
@@ -253,12 +249,6 @@ void mesh_t::InterpolateToParentTri2D(){
   linAlg_t::matrixInverse(Np, R5);
   linAlg_t::matrixInverse(Np, R6);
 
-    for (int i = 0; i < Np*Np; ++i)
-  {
-    printf("R1inv[%d]=%f\n",i,R1[i]);
-    printf("R2inv[%d]=%f\n",i,R2[i]);
-  }
-
   memory<dfloat>R1T = MRMT + 0*Np*Np;
   memory<dfloat>R2T = MRMT + 1*Np*Np;
   memory<dfloat>R3T = MRMT + 2*Np*Np;
@@ -275,6 +265,8 @@ void mesh_t::InterpolateToParentTri2D(){
 
   o_RM = platform.malloc<dfloat>(MRMT);
 
+
+  
 }
 
 } //namespace libp

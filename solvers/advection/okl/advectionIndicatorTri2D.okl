@@ -38,7 +38,7 @@ SOFTWARE.
 
           const dlong id = e*p_Np + n;
           const dfloat qn = Q[id];
-          Flag[es][n] = ((qn)>=1.f)? 1.0:0.0;
+          Flag[es][n] = ((qn)>=0.2)? 1.0:0;
         }
       }
       
@@ -58,7 +58,7 @@ SOFTWARE.
         }
       }
     const dlong N = rf/p_Np;
-    RefFlag[e] = 0;
+    RefFlag[e] = N;
     }
     
     }

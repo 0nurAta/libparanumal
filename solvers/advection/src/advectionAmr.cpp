@@ -26,32 +26,22 @@ SOFTWARE.
 
 #include "advection.hpp"
 
-void advection_t::Report(dfloat time, int tstep){
-
-  static int frame=0;
-
-  //compute q.M*q
-  dlong Nentries = mesh.Nelements*mesh.Np;
-  deviceMemory<dfloat> o_Mq = platform.reserve<dfloat>(Nentries);
-  mesh.MassMatrixApply(o_q, o_Mq);
-
-  dfloat norm2 = sqrt(platform.linAlg().innerProd(Nentries, o_q, o_Mq, mesh.comm));
+// Conduct Adaptive Mesh Refinement
+void advection_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
 
 
 
-  if(mesh.rank==0)
-    printf("%5.2f (%d), %5.2f (time, timestep, norm)\n", time, tstep, norm2);
-
-  if (settings.compareSetting("OUTPUT TO FILE","TRUE")) {
-
-    // Refinement Flag
+    // Construct Refinement Flag
     deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(2*mesh.Nelements);
+
+
     indicatorKernel(mesh.Nelements, o_q, o_refFlag);
+    
     memory<dlong> refFlag(2*mesh.Nelements);
     o_refFlag.copyTo(refFlag); // copy data back to host
     
     dlong Nrefine = 0;   
-
+    Ncoarse = 0; 
     for (int i = 0; i < mesh.Nelements; ++i)
     {
       if (refFlag[i]==1)
@@ -62,48 +52,69 @@ void advection_t::Report(dfloat time, int tstep){
     }
     printf("%d\n",Nrefine);
 
-    //printf("mesh.Nelements=%d\n",mesh.Nelements );
+    //    for (int i = 0; i < mesh.Nelements; ++i)
+    //{
+    //  if (refFlag[i]==-1)
+    //  {
+    //    Ncoarse = Ncoarse + 1;
+    //  }
+    //   
+    //}
+    printf("Ncoarse_outside=%d\n",Ncoarse);
     // copy data back to host
     o_q.copyTo(q);
-    /*for (int i = 0; i < mesh.Nelements*mesh.Np; ++i)
-    {
-      printf("q1=%f\n",q[i]);
-    }*/
-    //for test
-    //Nrefine =1;
-    //refFlag[3]=1;
 
-    //refFlag[1]=1;
+    //for test
+    //Nrefine =10;
     //refFlag[1]=1;
     //refFlag[2]=1;
-    //refFlag[5]=1;
-    std::string name;
-    settings.getSetting("OUTPUT FILE NAME", name);
-    char fname[BUFSIZ];
-    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    //refFlag[34]=1;
+    //refFlag[180]=1;
+    //refFlag[6]=1;
+    //refFlag[23]=1;
+    //refFlag[32]=1;
+    //refFlag[42]=1;
+    //refFlag[185]=1;
+    //refFlag[7]=1;
+    // Refine
+    Refine(q,refFlag,Nrefine); 
 
-    //Refine(q,refFlag,Nrefine); 
-    //memory<dfloat> Qold(2*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np);
-    //Qold = q;
-    //deviceMemory<dfloat> o_Qold = platform.malloc<dfloat>(Qold);
-    //splitKernel(mesh.Nelements,o_Qold ,o_q, o_refFlag, o_IntFlag,o_PToC,mesh.o_IM);
-    // copy data back to host
-    //o_q.copyTo(q);
+    // Store old solution
+//    memory<dfloat> Qold(2*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np);
+//    Qold = q;
+//    deviceMemory<dfloat> o_Qold = platform.malloc<dfloat>(Qold);
+//
+//    // Interpolate Solution
+//    splitKernel(mesh.Nelements,o_Qold ,o_q, o_refFlag, o_IntFlag,o_PToC,mesh.o_IM);
+
+
+    // Store Interpolated Solution
+    o_q.copyTo(q);
     //Qold = q;
     //deviceMemory<dfloat> o_Qold1 = platform.malloc<dfloat>(Qold);
-    //Ncoarse =1;
-    //refFlag[3]=-1;
-    //Coarse(q,refFlag,Nrefine);
+
+    //Ncoarse =3;
+    //refFlag[1]=-1;
+    //refFlag[2]=-1;
+    //refFlag[34]=-1;
+
+    //refFlag[6]=-1;
+
+    // Coarse
+    Coarse(q,refFlag,Nrefine);
     //printf("Ncoarse=%d\n",Ncoarse);
+
+    // Restrict Solution
     //combineKernel(mesh.Nelements,Ncoarse,o_Qold1 ,o_q, o_refFlag, o_IntFlag,o_PToC,mesh.o_RM);
 
-    //  o_q.copyTo(q);
+    //o_q.copyTo(q);
     /*    for (int i = 0; i < mesh.Nelements*mesh.Np; ++i)
     {
       printf("q2=%f\n",q[i]);
     }*/
-    PlotFields(q, refFlag,std::string(fname));
+    //PlotFields(q, refFlag,std::string(fname));
 
-    
-  }
+    *_N = mesh.Nelements*1*mesh.Np;
+    //printf("N=%d\n",*_N );
+  
 }

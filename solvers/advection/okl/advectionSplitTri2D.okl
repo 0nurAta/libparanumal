@@ -27,7 +27,7 @@ SOFTWARE.
 @kernel void advectionSplitTri2D(const dlong Nelements,
                                    @restrict const dfloat * Qold,
                                    @restrict dfloat * Q,
-                                   @restrict const dlong * RefFlag, 
+                                   @restrict const dlong * SplitFlag,
                                    @restrict const dlong * IntFlag,
                                    @restrict const dlong * PToC,
                                    @restrict const dfloat * IM){ 
@@ -40,17 +40,19 @@ SOFTWARE.
       const dlong id_int = IntFlag[e]-1;
       dfloat qn=0;
 
-      if (IntFlag[e]!=0)
+      if (IntFlag[e]!=0 && SplitFlag[e]==1)
       {
-        printf("IntFlag[e]=%d\n",IntFlag[e]);
+        //printf("IntFlag[e]_split=%d\n",IntFlag[e]);
         for(int i=0;i<p_Np;++i){
         const dfloat Ii = IM[n+i*p_Np+id_int*p_Np*p_Np];
              qn += Ii*Qold[id_p+i];         
         }
       Q[id+n] = qn;
-      printf("id%d,Q=%f\n",id+n,Q[id+n]);
+      //printf("id%d,Q=%f\n",id+n,Q[id+n]);
       }                  
     }
   }
 }
+
+
 

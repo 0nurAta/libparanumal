@@ -2,10 +2,12 @@
 2.0
 
 [DATA FILE]
-data/advectionLinear2D.h
+data/advectionTest2D.h
+#data/advectionLinear2D.h
 
 [MESH FILE]
-../../meshes/square.msh
+../../meshes/advectionTest.msh
+#../../meshes/square_mid.msh
 #BOX
 
 [MESH DIMENSION]
@@ -15,19 +17,19 @@ data/advectionLinear2D.h
 3
 
 [BOX NX]
-3
+10
 
 [BOX NY]
-3
+10
 
 [BOX NZ]
-3
+10
 
 [BOX BOUNDARY FLAG]
 -1
 
 [POLYNOMIAL DEGREE]
-1
+2
 
 [THREAD MODEL]
 CUDA
@@ -39,16 +41,16 @@ CUDA
 0
 
 [TIME INTEGRATOR]
-DOPRI5
+LSERK4
 
 [START TIME]
 0
 
 [FINAL TIME]
-1
+4
 
 [OUTPUT INTERVAL]
-1
+0.2
 
 [OUTPUT TO FILE]
 TRUE

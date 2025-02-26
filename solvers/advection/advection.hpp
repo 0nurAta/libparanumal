@@ -95,6 +95,8 @@ public:
 
   void rhsf(deviceMemory<dfloat>& o_q, deviceMemory<dfloat>& o_rhs, const dfloat time);
 
+  void Amr(deviceMemory<dfloat>& o_q,dlong* _N);
+
   void Refine(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Nrefine);
 
   void Coarse(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Nrefine);

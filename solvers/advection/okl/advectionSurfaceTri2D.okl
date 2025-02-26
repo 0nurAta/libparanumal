@@ -73,6 +73,11 @@ SOFTWARE.
             const int bc = EToB[face+p_Nfaces*e];
             if(bc>0){
               advectionDirichletConditions2D(bc, time, x[idM], y[idM], nx, ny, qM, &qP);
+              /*if (e==513)
+              {
+                printf("e=%d\n",vmapM[id]);
+              }*/
+              
             }
 
             // evaluate "flux" terms: (sJ/J)*(A*nx+B*ny)*(q^* - q^-)

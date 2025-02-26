@@ -108,6 +108,15 @@ void lserk4::Run(solver_t& solver,
   while (time < end) {
 
     if (time<outputTime && time+dt>=outputTime) {
+      printf("N=%d\n",N );
+      //refine solution
+      dlong _N=N;
+      solver.Amr(o_q, &_N);
+      N = _N;
+
+    }
+
+    if (time<outputTime && time+dt>=outputTime) {
       //save current state
       deviceMemory<dfloat> o_saveq = platform.reserve<dfloat>(N);
       deviceMemory<dfloat> o_savepmlq  = platform.reserve<dfloat>(Npml);

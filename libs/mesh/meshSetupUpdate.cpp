@@ -42,8 +42,15 @@ mesh_t mesh_t::SetupUpdate(int Nrefine){
   // connect elements
   mesh.Connect();
 
-  // load reference (r,s) element nodes
-  mesh.ReferenceNodes();
+// set up halo exchange info for MPI (do before connect face nodes)
+  mesh.HaloSetup();
+
+
+  // connect face vertices
+  mesh.ConnectFaceVertices();
+
+  //load reference (r,s) element nodes
+ //mesh.ReferenceNodes();
 
   // connect face nodes (find trace indices)
   mesh.ConnectFaceNodes();
@@ -62,7 +69,7 @@ mesh_t mesh_t::SetupUpdate(int Nrefine){
   
   // label local/global gather elements
   //mesh.GatherScatterSetup();
-  printf("first refinement done!!\n");
+  
   return mesh;
 }
 

@@ -28,12 +28,12 @@ SOFTWARE.
                                    const dlong Ncoarse,
                                    @restrict dfloat * Qold,
                                    @restrict dfloat * Q,
-                                   @restrict const dlong * RefFlag, 
+                                   @restrict const dlong * CombineFlag,
                                    @restrict const dlong * IntFlag,
                                    @restrict const dlong * PToC,
                                    @restrict const dfloat * RM){ 
 
-    for(dlong e=0;e<Nelements+Ncoarse;++e;@outer(0)){
+    for(dlong e=0;e<Nelements;++e;@outer(0)){
 
     for(int n=0;n<p_Np;++n;@inner(0)){
       const dlong id = e*p_Np;
@@ -41,15 +41,15 @@ SOFTWARE.
       const dlong id_int = IntFlag[e]-1;
       dfloat qn=0;
 
-      if (IntFlag[e]!=0)
+      if (IntFlag[e]!=0&&CombineFlag[e]==-1)
       {
-        printf("id_p=%d\n",id_p);
+        //printf("id_p_combine=%d\n",IntFlag[e]);
       Q[id_p+n] = 0.0;
       }                  
     }
   }
 
-    for(dlong e=0;e<Nelements+Ncoarse;++e;@outer(0)){
+    for(dlong e=0;e<Nelements;++e;@outer(0)){
 
     for(int n=0;n<p_Np;++n;@inner(0)){
       const dlong id = e*p_Np;
@@ -57,15 +57,15 @@ SOFTWARE.
       const dlong id_int = IntFlag[e]-1;
       dfloat qn=0;
 
-      if (IntFlag[e]!=0)
+      if (IntFlag[e]!=0&&CombineFlag[e]==-1)
       {
-        printf("id_p=%d\n",id);
+        //printf("id_p=%d\n",id);
         for(int i=0;i<p_Np;++i){
         const dfloat Ri = RM[n+i*p_Np+id_int*p_Np*p_Np];
              qn += Ri*Qold[id+i];         
         }
       Q[id_p+n] += 0.5*qn;
-      printf("qn=%f\n",qn);
+      //printf("e=%f\n",qn);
       }                  
     }
   }

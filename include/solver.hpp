@@ -107,6 +107,11 @@ public:
   virtual void Operator(deviceMemory<double>& o_q, deviceMemory<double>& o_Aq) {
     LIBP_FORCE_ABORT("Operator not implemented in this solver (pfloat)");
   }
+
+  //Amr operator
+  virtual void Amr(deviceMemory<double>& o_q, dlong* _N) {
+    LIBP_FORCE_ABORT("Amr not implemented in this solver");
+  }
 };
 
 } //namespace libp

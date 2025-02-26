@@ -40,22 +40,24 @@ void advection_t::Coarse(memory<dfloat>& Q,
   
   // Solution info
   //memory <dfloat> qold = Q;
-  
+  printf("Ncoarse inside coarsening loop=%d\n",Ncoarse);
   // Element to vertex & Element to boundary connectivity 
   //memory<hlong>EToV_old(mesh.Nelements*mesh.Nverts);
-  memory<hlong>EToV_new(mesh.Nelements*mesh.Nverts+2*Nrefine*mesh.Nverts);
-  memory<int>EToB_new(mesh.Nelements*mesh.Nverts+2*Nrefine*mesh.Nverts);
+  memory<hlong>EToV_new(2*mesh.Nelements*mesh.Nverts);
+  memory<int>EToB_new(2*mesh.Nelements*mesh.Nverts);
 
   // Vertex physical coordinates
   //memory<dfloat>EX_old(mesh.Nelements*mesh.Nverts);
   //memory<dfloat>EY_old(mesh.Nelements*mesh.Nverts);
 
-  memory<dfloat>EX_new(mesh.Nelements*mesh.Nverts+2*Nrefine*mesh.Nverts);
-  memory<dfloat>EY_new(mesh.Nelements*mesh.Nverts+2*Nrefine*mesh.Nverts);
+  memory<dfloat>EX_new(2*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EY_new(2*mesh.Nelements*mesh.Nverts);
    //printf("EToVsize=%ld\n",EToV_new.size());
   
   // A flag to ommit informations of deleted element
-  hlong Delete_Flag[mesh.Nelements]={};
+  hlong Delete_Flag[2*mesh.Nelements]={};
+  // A flag to be used in combine kernel
+  memory<dlong> CombineFlag(2*mesh.Nelements);
   // Copy old Element to Vertex Connectivity to the New One
   for (int e = 0; e < mesh.Nelements; ++e)
   {
@@ -71,13 +73,14 @@ void advection_t::Coarse(memory<dfloat>& Q,
     //printf("EY=%f\n",mesh.EY[id]);
     }
   }
-  
+    
     // Determine Triangles To be Coarsened
+  hlong del_vertex = 0; // Counts each new_vertex that will be deleted
   for (int e = 0; e < mesh.Nelements; ++e)
   {
       
-      const dlong id = e*mesh.Nverts; 
-      if (RefFlag[e]==-1 && EToRefLevel[e]!=0 && e==PToC[2*e+0])
+      const hlong id = e*mesh.Nverts; 
+      if (RefFlag[e]==-1 && EToRefLevel[e]>0 && e==PToC[2*e+0])
       {
 
         hlong sib_e ;
@@ -88,7 +91,7 @@ void advection_t::Coarse(memory<dfloat>& Q,
         hlong v0_sib;
         hlong v1_sib;
         hlong v2_sib;     
-           
+  
         // Extract Vertex Number of Elements to be Combined
         sib_e = PToC[2*e+1];
         sib_id = sib_e*mesh.Nverts;
@@ -101,7 +104,7 @@ void advection_t::Coarse(memory<dfloat>& Q,
         
 
         
-         dlong id_del; // Id of the node that will be unnecessary
+         hlong id_del; // Id of the node that will be unnecessary
          if (v0 >= v1 && v0 >= v2) {
          id_del = id+0;
          } else if (v1 >= v2) {
@@ -110,7 +113,7 @@ void advection_t::Coarse(memory<dfloat>& Q,
          id_del = id+2;
          }
 
-         dlong id_del2; // Id of the node that will be unnecessary (same node but for the sibling element)
+         hlong id_del2; // Id of the node that will be unnecessary (same node but for the sibling element)
          if (v0_sib >= v1_sib && v0_sib >= v2_sib) {
          id_del2 = sib_id+0;
          } else if (v1_sib >= v2_sib) {
@@ -118,41 +121,39 @@ void advection_t::Coarse(memory<dfloat>& Q,
          } else {
          id_del2 = sib_id+2;
          }
- 
+        
         if (id_del==id+1&&id_del2==sib_id+0)
         {
           hlong const neighbor_id = mesh.EToE[id+0];
-
-          if(RefFlag[neighbor_id]==0 && mesh.EToE[id+1]!=-1){
+           
+          if(RefFlag[neighbor_id]!=-1 && mesh.EToE[id+0]!=-1){
              RefFlag[neighbor_id]=-1;
              Ncoarse++; 
-             printf("hello1\n");
+             del_vertex--;
           }
         }
 
         if (id_del==id+2&&id_del2==sib_id+1)
         {         
           hlong const neighbor_id = mesh.EToE[id+1];
+          //printf("mesh.EToE[id+1]=%d\n",mesh.EToE[id+1]);
+        
+          if(RefFlag[neighbor_id]!=-1 && mesh.EToE[id+1]!=-1){
 
-          if(RefFlag[neighbor_id]==0 && mesh.EToE[id+1]!=-1){
              RefFlag[neighbor_id]=-1;
              Ncoarse++; 
-             printf("neighbor_id=%d\n",sib_e);
-             printf("neighbor_id=%lld\n",neighbor_id);
-             printf("Level=%lld\n",EToRefLevel[neighbor_id]);
-           
-             printf("neighbor_id%lld\n",e);
+             del_vertex--;
           }
         }
 
         if (id_del==id+2&&id_del2==sib_id+2)
         {          
           hlong const neighbor_id = mesh.EToE[id+2];
-
-          if(RefFlag[neighbor_id]==0 && mesh.EToE[id+1]!=-1){
+     
+          if(RefFlag[neighbor_id]!=-1 && mesh.EToE[id+2]!=-1){
              RefFlag[neighbor_id]=-1; 
              Ncoarse++;
-             //printf("hello3\n");
+             del_vertex--;
           }        
         } 
 
@@ -160,13 +161,13 @@ void advection_t::Coarse(memory<dfloat>& Q,
   }
   // Coarsement Loop
   // Determine ids of new vertices and EToV
-  
+  hlong nn = 0 ;
   for (int e = 0; e < mesh.Nelements; ++e)
   {
       
     dlong id = e*mesh.Nverts; 
 
-    if (RefFlag[e]==-1 && EToRefLevel[e]!=0)
+    if (RefFlag[e]==-1 && EToRefLevel[e]>0)
     {
       
       hlong sib_e=0 ;
@@ -177,6 +178,7 @@ void advection_t::Coarse(memory<dfloat>& Q,
       hlong v0_sib=0;
       hlong v1_sib=0;
       hlong v2_sib=0;
+      //printf("e=%d\n",e);
       
       if (e==PToC[2*e+0]) // Means that child stored at parents location
       {  
@@ -190,6 +192,8 @@ void advection_t::Coarse(memory<dfloat>& Q,
          v0_sib = mesh.EToV[sib_id+0]; 
          v1_sib = mesh.EToV[sib_id+1]; 
          v2_sib = mesh.EToV[sib_id+2];
+         
+
       }
 
       if (e==PToC[2*e+1]) // Means that child stored at added location
@@ -212,6 +216,8 @@ void advection_t::Coarse(memory<dfloat>& Q,
          v0_sib = mesh.EToV[sib_id+0]; 
          v1_sib = mesh.EToV[sib_id+1]; 
          v2_sib = mesh.EToV[sib_id+2];
+
+
       }
 
          dlong id_del; // Id of the node that will be unnecessary
@@ -241,13 +247,21 @@ void advection_t::Coarse(memory<dfloat>& Q,
           EToV_new[id+1] = v1_sib;
           EX_new[id+1] = EX_new[sib_id+1];
           EY_new[id+1] = EY_new[sib_id+1];
+
           EToRefLevel[e] = EToRefLevel[e]-1;
           EToRefLevel[sib_e] = EToRefLevel[sib_e]-1;
           Delete_Flag[sib_e] = 1;
-
           
-          //PToC[e*2]   = e;
-          //PToC[e*2+1] = id_new;
+          EToB_new[id+0] = mesh.EToB[id+0];
+          EToB_new[id+1] = mesh.EToB[sib_id+1];
+          EToB_new[id+2] = mesh.EToB[id+2];
+
+          RefFlag[e]=0;
+          RefFlag[sib_e]=0;
+          CombineFlag[e]=-1;
+          CombineFlag[sib_e]=-1;
+          del_vertex++;
+          nn++;
         }
 
         if (id_del==id+2&&id_del2==sib_id+1)
@@ -256,13 +270,22 @@ void advection_t::Coarse(memory<dfloat>& Q,
           EToV_new[id+2] = v2_sib;
           EX_new[id+2] = EX_new[sib_id+2];
           EY_new[id+2] = EY_new[sib_id+2];
-          //printf("e=%d\n",e);
+       
           EToRefLevel[e] = EToRefLevel[e]-1;
           EToRefLevel[sib_e] = EToRefLevel[sib_e]-1;
           Delete_Flag[sib_e] = 1;
-            
-          //PToC[e*2]   = e;
-          //PToC[e*2+1] = id_new;
+                
+          EToB_new[id+0] = mesh.EToB[id+0];
+          EToB_new[id+1] = mesh.EToB[id+1];
+          EToB_new[id+2] = mesh.EToB[sib_id+2];
+
+          RefFlag[e]=0;
+          RefFlag[sib_e]=0;
+          CombineFlag[e]=-1;
+          CombineFlag[sib_e]=-1;
+          del_vertex++;
+          nn++;  
+          
         }
 
         if (id_del==id+2&&id_del2==sib_id+2)
@@ -271,10 +294,21 @@ void advection_t::Coarse(memory<dfloat>& Q,
           EToV_new[id+2] = v1_sib;
           EX_new[id+2] = EX_new[sib_id+1];
           EY_new[id+2] = EY_new[sib_id+1];
-          //printf("e=%d\n",e);
+    
           EToRefLevel[e] = EToRefLevel[e]-1;
           EToRefLevel[sib_e] = EToRefLevel[sib_e]-1;
-          Delete_Flag[sib_e] = 1;         
+          Delete_Flag[sib_e] = 1;
+           
+          EToB_new[id+0] = mesh.EToB[id+0];
+          EToB_new[id+1] = mesh.EToB[sib_id+0];
+          EToB_new[id+2] = mesh.EToB[id+2];
+
+          RefFlag[e]=0;
+          RefFlag[sib_e]=0;
+          CombineFlag[e]=-1;
+          CombineFlag[sib_e]=-1;
+          del_vertex++;
+          nn++;         
         }
 
         
@@ -283,7 +317,7 @@ void advection_t::Coarse(memory<dfloat>& Q,
 
   // Coarsening Loop
 
-      if (Ncoarse!=0)
+      if (Ncoarse!=0 && nn!=0)
       { 
         printf("inside coarsement\n"); 
         
@@ -300,6 +334,8 @@ void advection_t::Coarse(memory<dfloat>& Q,
               
               //printf("id=%d\n",e);
             } else{
+                    EToRefLevel[e_new] = EToRefLevel[e]; 
+                    //IntFlag[e_new] = IntFlag[e];
                     for (int n = 0; n < 3; ++n)
                     {
                     dlong id = e*mesh.Nverts+n;
@@ -308,7 +344,8 @@ void advection_t::Coarse(memory<dfloat>& Q,
                     mesh.EToB[id_new] = EToB_new[id];
                     mesh.EToV[id_new] = EToV_new[id];
                     mesh.EX[id_new]   = EX_new[id]; 
-                    mesh.EY[id_new]   = EY_new[id]; 
+                    mesh.EY[id_new]   = EY_new[id];
+                    
                     //printf("EToV=%lld\n",mesh.EToV[id]);
                     //printf("EX=%g\n",mesh.EX[id]);
                     //printf("EY=%f\n",mesh.EY[id]);
@@ -316,14 +353,108 @@ void advection_t::Coarse(memory<dfloat>& Q,
                     }
                     e_new++;
                   }
-        }        
-        mesh.Nelements = mesh.Nelements - Ncoarse;
+        }
+        deviceMemory<dlong> o_combineFlag = platform.malloc<dlong>(CombineFlag);
+        memory<dfloat> Qold(2*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np);
+        Qold = Q;
+        deviceMemory<dfloat> o_Qold1 = platform.malloc<dfloat>(Qold);
+        combineKernel(mesh.Nelements,Ncoarse,o_Qold1 ,o_q, o_combineFlag,o_IntFlag,o_PToC,mesh.o_RM);        
+        
+
+        e_new = 0; 
+        for (int e = 0; e < mesh.Nelements; ++e)
+        {
+                      if (Delete_Flag[e]==1)
+            {
+              
+              printf("id=%d\n",e);
+            } else{ 
+                    IntFlag[e_new] = IntFlag[e];
+                    if (e==PToC[e*2+1])
+                                       {
+                    PToC[e_new*2+0] = PToC[e*2+0];
+                    PToC[e_new*2+1] = e_new;
+
+                    dlong p_id=PToC[e*2+0];
+                    PToC[p_id*2+1] = e_new;
+                    
+                                       }                   
+
+                   
+                    
+                    for (int n = 0; n < mesh.Np; ++n)
+                    {
+                    dlong id = e*mesh.Np+n;
+                    dlong id_new = e_new*mesh.Np+n; 
+          
+                    Q[id_new] = Q[id];
+                    
+                    //printf("EToV=%lld\n",mesh.EToV[id]);
+                    //printf("EX=%g\n",mesh.EX[id]);
+                    //printf("EY=%f\n",mesh.EY[id]);
+                    
+                    }
+                    e_new++;
+                  }
+        }
+
+
+        for (int e = e_new; e < mesh.Nelements+nn; ++e)
+        {
+          for (int n = 0; n < 2; ++n)
+          {
+          dlong id = e*2+n;
+
+          PToC[id] = 0;
+          PToC[id] = 0;
+    
+          }
+          
+        }
+
+        mesh.Nelements = mesh.Nelements-nn;
+        mesh.Nnodes = mesh.Nnodes-del_vertex;
+        mesh.o_EToB = platform.malloc<int>(mesh.EToB);
         printf("first coarsement done!!\n");
         printf("e_new=%d,Nelements=%d\n",e_new,mesh.Nelements);
-        printf("Ncoarse inside coarsening loop=%d\n",Ncoarse);
+        printf("Ncoarse inside coarsening loop=%d\n",nn);
+        printf("del_vertex_count=%lld\n",del_vertex);
         //mesh.SetupUpdate(Ncoarse);
         mesh_t updatedMeshPtr = mesh.SetupUpdate(Ncoarse);
         mesh = updatedMeshPtr;
+
+        CombineFlag.free();
+        deviceMemory<dfloat> o_oldq = platform.reserve<dfloat>(mesh.Nelements*1*mesh.Np);
+        o_oldq = platform.malloc<dfloat>(Q);
+        o_q.copyFrom(o_oldq, mesh.Nelements*1*mesh.Np, 0, properties_t("async", true));
+        /*e_new = 0; 
+        for (int e = 0; e < mesh.Nelements+nn; ++e)
+        {
+                      if (Delete_Flag[e]==1)
+            {
+            } else{
+                    for (int n = 0; n < 3; ++n)
+                    {
+                    dlong id = e*mesh.Nverts+n;
+                    dlong id_new = e_new*mesh.Nverts+n; 
+          
+                    IntFlag[id_new] = IntFlag[id];
+                    }
+                    e_new++;
+                  }
+        }
+
+                for (int e = e_new; e < mesh.Nelements+nn; ++e)
+        {
+          for (int n = 0; n < 3; ++n)
+          {
+          dlong id = e*mesh.Nverts+n;
+
+          IntFlag[id] = 0;
+    
+          }
+          
+        }   */ 
       }
 
 
