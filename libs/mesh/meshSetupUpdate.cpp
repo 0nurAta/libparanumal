@@ -50,7 +50,7 @@ mesh_t mesh_t::SetupUpdate(int Nrefine){
   mesh.ConnectFaceVertices();
 
   //load reference (r,s) element nodes
- //mesh.ReferenceNodes();
+ mesh.ReferenceNodes();
 
   // connect face nodes (find trace indices)
   mesh.ConnectFaceNodes();
@@ -68,7 +68,7 @@ mesh_t mesh_t::SetupUpdate(int Nrefine){
   mesh.SurfaceGeometricFactors();
   
   // label local/global gather elements
-  //mesh.GatherScatterSetup();
+  mesh.GatherScatterSetup();
   
   return mesh;
 }

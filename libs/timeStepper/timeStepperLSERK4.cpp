@@ -106,17 +106,15 @@ void lserk4::Run(solver_t& solver,
   int tstep=0;
   dfloat stepdt;
   while (time < end) {
-
     if (time<outputTime && time+dt>=outputTime) {
-      printf("N=%d\n",N );
+    printf("N=%d\n",N );
       //refine solution
       dlong _N=N;
       solver.Amr(o_q, &_N);
       N = _N;
-
-    }
-
+}
     if (time<outputTime && time+dt>=outputTime) {
+
       //save current state
       deviceMemory<dfloat> o_saveq = platform.reserve<dfloat>(N);
       deviceMemory<dfloat> o_savepmlq  = platform.reserve<dfloat>(Npml);
@@ -142,16 +140,24 @@ void lserk4::Run(solver_t& solver,
       outputTime += outputInterval;
     }
 
+
     //check for final timestep
     if (time+dt > end){
+      printf("final check time   %.6e %.6e \n", time, end);
       stepdt = end-time;
     } else {
       stepdt = dt;
     }
 
+    //printf("time   %.6e %.6e %.6e %.6e %.6e\n", time, end, outputTime, outputInterval, dt);
     Step(solver, o_q, o_pmlq, time, stepdt);
     time += stepdt;
     tstep++;
+
+
+
+
+   
   }
 }
 
@@ -185,6 +191,12 @@ void lserk4::Step(solver_t& solver,
                    o_rhspmlq, o_respmlq, o_pmlq.value());
     }
   }
+
+    //    printf("N=%d\n",N );
+    //  //refine solution
+    //  dlong _N=N;
+    //  solver.Amr(o_q, &_N);
+    //  N = _N;
 }
 
 } //namespace TimeStepper

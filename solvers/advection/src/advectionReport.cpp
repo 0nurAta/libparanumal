@@ -45,22 +45,22 @@ void advection_t::Report(dfloat time, int tstep){
   if (settings.compareSetting("OUTPUT TO FILE","TRUE")) {
 
     // Refinement Flag
-    deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(2*mesh.Nelements);
-    indicatorKernel(mesh.Nelements, o_q, o_refFlag);
-    memory<dlong> refFlag(2*mesh.Nelements);
-    o_refFlag.copyTo(refFlag); // copy data back to host
-    
-    dlong Nrefine = 0;   
-
-    for (int i = 0; i < mesh.Nelements; ++i)
-    {
-      if (refFlag[i]==1)
-      {
-        Nrefine = Nrefine + 1;
-      }
-       
-    }
-    printf("%d\n",Nrefine);
+    //deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(2*mesh.Nelements);
+    //indicatorKernel(mesh.Nelements, o_q, o_refFlag);
+    //memory<dlong> refFlag(2*mesh.Nelements);
+    //o_refFlag.copyTo(refFlag); // copy data back to host
+    //
+    //dlong Nrefine = 0;   
+//
+    //for (int i = 0; i < mesh.Nelements; ++i)
+    //{
+    //  if (refFlag[i]==1)
+    //  {
+    //    Nrefine = Nrefine + 1;
+    //  }
+    //   
+    //}
+    //printf("%d\n",Nrefine);
 
     //printf("mesh.Nelements=%d\n",mesh.Nelements );
     // copy data back to host
@@ -102,7 +102,7 @@ void advection_t::Report(dfloat time, int tstep){
     {
       printf("q2=%f\n",q[i]);
     }*/
-    PlotFields(q, refFlag,std::string(fname));
+    PlotFields(q, std::string(fname));
 
     
   }

@@ -1,4 +1,4 @@
-#define ADVECTION_SPEED_X 1.0
+#define ADVECTION_SPEED_X 0.05
 #define ADVECTION_SPEED_Y 0.0
 #define x0 1.0
 #define y0 1.0

@@ -55,7 +55,7 @@ void mesh_t::InterpolateToChildTri2D(){
   // Second: r_child = (r+1)/2
   for (int i = 0; i < Np; ++i)
   {
-    r_child[i] = 0.5*(r[i]+1);
+    r_child[i] = 0.5*(r[i]-s[i]);
     s_child[i] = s[i];
   }
   InterpolationMatrixTri2D(N,r,s,r_child,s_child,I2);
@@ -71,7 +71,7 @@ void mesh_t::InterpolateToChildTri2D(){
   // Fourth: s_child = (s+1)/2
   for (int i = 0; i < Np; ++i)
   {
-    s_child[i] = 0.5*(s[i]+1);
+    s_child[i] = 0.5*(s[i]-r[i]);
     r_child[i] = r[i];
   }
   InterpolationMatrixTri2D(N,r,s,r_child,s_child,I4);

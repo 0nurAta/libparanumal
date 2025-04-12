@@ -52,7 +52,7 @@ void advection_t::Run(){
 
   dfloat dt = cfl/(vmax*(mesh.N+1.)*(mesh.N+1.));
   timeStepper.SetTimeStep(dt);
-
+  printf("dt=%f\n", dt);
   timeStepper.Run(*this, o_q, startTime, finalTime);
 
   // output norm of final solution

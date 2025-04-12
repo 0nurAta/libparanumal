@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-#define ADVECTION_SPEED_X 0.05
+#define ADVECTION_SPEED_X 0.1
 #define ADVECTION_SPEED_Y 0.0
 
 // Flux function

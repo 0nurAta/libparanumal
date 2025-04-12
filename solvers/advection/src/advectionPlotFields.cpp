@@ -27,7 +27,7 @@ SOFTWARE.
 #include "advection.hpp"
 
 // interpolate data to plot nodes and save to file (one per process
-void advection_t::PlotFields(memory<dfloat> Q, memory<dlong> RefFlag,const std::string fileName){
+void advection_t::PlotFields(memory<dfloat> Q, const std::string fileName){
   
 
   FILE *fp;
@@ -39,7 +39,7 @@ void advection_t::PlotFields(memory<dfloat> Q, memory<dlong> RefFlag,const std::
   fprintf(fp, "    <Piece NumberOfPoints=\"%d\" NumberOfCells=\"%d\">\n",
           mesh.Nelements*mesh.plotNp,
           mesh.Nelements*mesh.plotNelements);
-  printf("hello\n");
+  
   // write out nodes
   fprintf(fp, "      <Points>\n");
   fprintf(fp, "        <DataArray type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n");
@@ -90,17 +90,17 @@ void advection_t::PlotFields(memory<dfloat> Q, memory<dlong> RefFlag,const std::
   fprintf(fp, "       </DataArray>\n");
 
 
-  // write out refflag
-  fprintf(fp, "        <DataArray type=\"Int32\" Name=\"RefFlag\" Format=\"ascii\">\n");
-  for(dlong e=0;e<mesh.Nelements;++e){
-    //mesh.PlotInterp(RefFlag + e*mesh.Np, Ip, scratch);
-
-    for(int n=0;n<mesh.plotNp;++n){
-      fprintf(fp, "       ");
-      fprintf(fp, "%d\n", RefFlag[e]);
-    }
-  }
-  fprintf(fp, "       </DataArray>\n");
+  //// write out refflag
+  //fprintf(fp, "        <DataArray type=\"Int32\" Name=\"RefFlag\" Format=\"ascii\">\n");
+  //for(dlong e=0;e<mesh.Nelements;++e){
+  //  //mesh.PlotInterp(RefFlag + e*mesh.Np, Ip, scratch);
+//
+  //  for(int n=0;n<mesh.plotNp;++n){
+  //    fprintf(fp, "       ");
+  //    fprintf(fp, "%d\n", RefFlag[e]);
+  //  }
+  //}
+  //fprintf(fp, "       </DataArray>\n");
   fprintf(fp, "     </PointData>\n");
   
   fprintf(fp, "    <Cells>\n");

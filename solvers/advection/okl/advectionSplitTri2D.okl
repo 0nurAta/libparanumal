@@ -43,12 +43,14 @@ SOFTWARE.
       if (IntFlag[e]!=0 && SplitFlag[e]==1)
       {
         //printf("IntFlag[e]_split=%d\n",IntFlag[e]);
+        //printf("id=%d,id_p=%d,IntFlag=%d\n",id,id_p,IntFlag[e]);
         for(int i=0;i<p_Np;++i){
         const dfloat Ii = IM[n+i*p_Np+id_int*p_Np*p_Np];
              qn += Ii*Qold[id_p+i];         
         }
+        //printf("Q[%d]=%f\n",id+n,Q[id+n]);
       Q[id+n] = qn;
-      //printf("id%d,Q=%f\n",id+n,Q[id+n]);
+      
       }                  
     }
   }

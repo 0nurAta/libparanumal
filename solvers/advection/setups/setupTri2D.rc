@@ -7,7 +7,7 @@ data/advectionTest2D.h
 
 [MESH FILE]
 ../../meshes/advectionTest.msh
-#../../meshes/square_mid.msh
+#../../meshes/square.msh
 #BOX
 
 [MESH DIMENSION]
@@ -30,7 +30,6 @@ data/advectionTest2D.h
 
 [POLYNOMIAL DEGREE]
 2
-
 [THREAD MODEL]
 CUDA
 
@@ -47,10 +46,10 @@ LSERK4
 0
 
 [FINAL TIME]
-4
+70
 
 [OUTPUT INTERVAL]
-0.2
+1
 
 [OUTPUT TO FILE]
 TRUE

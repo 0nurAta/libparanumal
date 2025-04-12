@@ -26,35 +26,29 @@ SOFTWARE.
 
 #include "advection.hpp"
 
-// 
+
 void advection_t::Refine(memory<dfloat>& Q,
                          memory<dlong>& RefFlag,
                          dlong Nrefine){
 
   
-  dlong MAX_REFINEMENT_LEVEL = 1;
-  // extract q halo on DEVICE
-  //traceHalo.ExchangeStart(o_Q, 1);
+  dlong const MAX_REFINEMENT_LEVEL = 1;
 
   // Store old info & Allocate new arrays
-  
-  // Solution info
-  //memory <dfloat> qold = Q;
-  
   // Element to vertex & Element to boundary connectivity 
-  //memory<hlong>EToV_old(mesh.Nelements*mesh.Nverts);
+
   memory<hlong>EToV_new(2*mesh.Nelements*mesh.Nverts);
   memory<int>EToB_new(2*mesh.Nelements*mesh.Nverts);
 
   // Vertex physical coordinates
-  //memory<dfloat>EX_old(mesh.Nelements*mesh.Nverts);
-  //memory<dfloat>EY_old(mesh.Nelements*mesh.Nverts);
-
   memory<dfloat>EX_new(2*mesh.Nelements*mesh.Nverts);
   memory<dfloat>EY_new(2*mesh.Nelements*mesh.Nverts);
-   //printf("EToVsize=%ld\n",EToV_new.size());
-  memory<dlong> SplitFlag(2*mesh.Nelements);
+  
+  // A flag to be used in split kernel, initialized with zero values.
+  memory<dlong> SplitFlag(2*mesh.Nelements,0);
+
   // Copy old Element to Vertex Connectivity to the New One
+  #pragma omp parallel for
   for (int e = 0; e < mesh.Nelements; ++e)
   {
     for (int n = 0; n < 3; ++n)
@@ -64,27 +58,20 @@ void advection_t::Refine(memory<dfloat>& Q,
     EToV_new[id] = mesh.EToV[id];
     EX_new[id] = mesh.EX[id]; 
     EY_new[id] = mesh.EY[id]; 
-    //printf("EToV=%lld\n",mesh.EToV[id]);
-    //printf("EX=%g\n",mesh.EX[id]);
-    //printf("EY=%f\n",mesh.EY[id]);
     }
   }
   
   hlong new_vertex = 0; // Counts each new_vertex that will be created
+  
   // Determine Triangles To be Refined
+  #pragma omp parallel for
   for (int e = 0; e < mesh.Nelements; ++e)
   {
       
       const dlong id = e*mesh.Nverts; 
       if (RefFlag[e]==1 && EToRefLevel[e]<MAX_REFINEMENT_LEVEL)
       {
-        
-
-        // Extract Vertex Number of Element to Refine
-        //const hlong v0 = mesh.EToV[id+0]; 
-        //const hlong v1 = mesh.EToV[id+1]; 
-        //const hlong v2 = mesh.EToV[id+2];
-        
+                
         // Find vertex locations of elements to be refined
         const dfloat x0 = mesh.EX[id+0]; const dfloat x1 = mesh.EX[id+1]; const dfloat x2 = mesh.EX[id+2];    
         const dfloat y0 = mesh.EY[id+0]; const dfloat y1 = mesh.EY[id+1]; const dfloat y2 = mesh.EY[id+2];
@@ -106,38 +93,37 @@ void advection_t::Refine(memory<dfloat>& Q,
         if (Le==id+0)
         {
           hlong const neighbor_id = mesh.EToE[id+0];
-          //printf("hello1\n");
-          //printf("neighbor_id%lld\n",RefFlag[neighbor_id]==0);
-          //printf("mesh.EToE%lld\n",mesh.EToE[id+0]);
-          if(RefFlag[neighbor_id]!=1 && mesh.EToE[id+0]!=-1){
+          printf("level=%d\n",RefFlag[neighbor_id]);
+          if(RefFlag[neighbor_id]!=1 && mesh.EToE[id+0]!=-1 && EToRefLevel[neighbor_id]<MAX_REFINEMENT_LEVEL){
              RefFlag[neighbor_id]=1;
              Nrefine++; 
-             new_vertex--;
+             //new_vertex--;
           }
         }
 
         if (Le==id+1)
         {         
           hlong const neighbor_id = mesh.EToE[id+1];
-
-          if(RefFlag[neighbor_id]!=1 && mesh.EToE[id+1]!=-1){
+          printf("level=%d\n",RefFlag[neighbor_id]);
+          if(RefFlag[neighbor_id]!=1 && mesh.EToE[id+1]!=-1 && EToRefLevel[neighbor_id]<MAX_REFINEMENT_LEVEL){
              RefFlag[neighbor_id]=1;
              Nrefine++; 
-             new_vertex--;
+             //new_vertex--;
           }
         }
 
         if (Le==id+2)
         {          
           hlong const neighbor_id = mesh.EToE[id+2];
-
-          if(RefFlag[neighbor_id]!=1 && mesh.EToE[id+2]!=-1){
+          printf("level=%d\n",RefFlag[neighbor_id]);
+          if(RefFlag[neighbor_id]!=1 && mesh.EToE[id+2]!=-1 && EToRefLevel[neighbor_id]<MAX_REFINEMENT_LEVEL){
              RefFlag[neighbor_id]=1; 
              Nrefine++;
-             new_vertex--;
+             //new_vertex--;
+
           }        
         } 
-
+        printf("new_vertex_count_conf=%lld\n",new_vertex);
       }             
   }   
 
@@ -228,10 +214,10 @@ void advection_t::Refine(memory<dfloat>& Q,
           PToC[(mesh.Nelements+nn)*2]   = e;
           PToC[(mesh.Nelements+nn)*2+1] = mesh.Nelements+nn;
           IntFlag[e] = 1;
-          IntFlag[(mesh.Nelements+nn)] = 1;
+          IntFlag[(mesh.Nelements+nn)] = 2;
 
           SplitFlag[e]=1;
-          SplitFlag[mesh.Nelements+nn]=2;
+          SplitFlag[mesh.Nelements+nn]=1;
 
           nn++;
           new_vertex++;
@@ -289,26 +275,26 @@ void advection_t::Refine(memory<dfloat>& Q,
           hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
           
           EToV_new[id+2] = newNode;
-          EToV_new[id_new+0] = v1;
-          EToV_new[id_new+1] = v2;
-          EToV_new[id_new+2] = newNode;
+          EToV_new[id_new+0] = newNode;
+          EToV_new[id_new+1] = v1;
+          EToV_new[id_new+2] = v2;
 
           EX_new[id+2] = 0.5*(mesh.EX[id+2]+mesh.EX[id+0]);
-          EX_new[id_new+0] = mesh.EX[id+1];
-          EX_new[id_new+1] = mesh.EX[id+2];
-          EX_new[id_new+2] = EX_new[id+2];
+          EX_new[id_new+0] = EX_new[id+2];
+          EX_new[id_new+1] = mesh.EX[id+1];
+          EX_new[id_new+2] = mesh.EX[id+2];
 
           EY_new[id+2] = 0.5*(mesh.EY[id+2]+mesh.EY[id+0]);
-          EY_new[id_new+0] = mesh.EY[id+1];
-          EY_new[id_new+1] = mesh.EY[id+2];
-          EY_new[id_new+2] = EY_new[id+2];
+          EY_new[id_new+0] = EY_new[id+2];
+          EY_new[id_new+1] = mesh.EY[id+1];
+          EY_new[id_new+2] = mesh.EY[id+2];
 
           EToB_new[id+0] = mesh.EToB[id+0];
           EToB_new[id+1] = -1;
           EToB_new[id+2] = mesh.EToB[id+2];
-          EToB_new[id_new+0] = mesh.EToB[id+1];
-          EToB_new[id_new+1] = mesh.EToB[id+2];
-          EToB_new[id_new+2] = -1;
+          EToB_new[id_new+0] = -1;
+          EToB_new[id_new+1] = mesh.EToB[id+1];
+          EToB_new[id_new+2] = mesh.EToB[id+2];
 
           // Update lists related to AMR
           EToRefLevel[e] = EToRefLevel[e]+1;
@@ -326,63 +312,38 @@ void advection_t::Refine(memory<dfloat>& Q,
           nn++;
           new_vertex++;
           } 
-
-        
-        //id_new_node++;
-        //printf("nn=%d\n",nn);
       }             
   }   
 
-  // Coarsening Loop
-  
-
       if (Nrefine!=0&& nn!=0)
       {
-
-        mesh.EToV.free();
+        // Update mesh connectivity and physical coordinates
         mesh.EToV = EToV_new;
-        EToV_new.free();
-
-        mesh.EToB.free();
         mesh.EToB = EToB_new;
-        EToB_new.free();
-        
-        mesh.EX.free();
-        mesh.EY.free();
         mesh.EX = EX_new;
         mesh.EY = EY_new;
-        EX_new.free();
-        EY_new.free();
 
+        // Update total number of elements and nodes
         mesh.Nelements = mesh.Nelements + nn;
-        mesh.Nnodes = mesh.Nnodes+new_vertex;
+        mesh.Nnodes = mesh.Nnodes + new_vertex;
         
-        o_PToC = platform.malloc<dlong>(PToC);
-        
-        o_IntFlag = platform.malloc<dlong>(IntFlag);
-        mesh.o_EToB = platform.malloc<int>(mesh.EToB);  // NEW!!
-        
-        //mesh.SetupUpdate(Nrefine);
-        mesh_t updatedMeshPtr = mesh.SetupUpdate(Nrefine);
-        mesh = updatedMeshPtr;
+        // Update mesh
+        mesh = mesh.SetupUpdate(Nrefine);
 
-        memory<dfloat> Qold(2*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np);
-        Qold = Q;
-        deviceMemory<dfloat> o_Qold = platform.malloc<dfloat>(Qold);
+        mesh.o_EToB = platform.malloc<int>(mesh.EToB);  // NEW!!
+        o_PToC = platform.malloc<dlong>(PToC);  
+        o_IntFlag = platform.malloc<dlong>(IntFlag);   
+      
+
+        deviceMemory<dfloat> o_Q = platform.malloc<dfloat>(Q);
         deviceMemory<dlong> o_splitFlag = platform.malloc<dlong>(SplitFlag);
+        
         // Interpolate Solution
-        splitKernel(mesh.Nelements,o_Qold ,o_q, o_splitFlag,o_IntFlag,o_PToC,mesh.o_IM);
-        SplitFlag.free();
-        printf("Refinement Done!\n");
-        printf("new_vertex_count=%lld\n",new_vertex);
-        printf("New Element Number=%d\n",mesh.Nelements);
-      }//else if(Nrefine==0 || nn==0)
-       // {
-       //   for (int i = 0; i < 2*mesh.Nelements; ++i)
-       //   {
-       //     IntFlag[i]=0;
-       //   }
-       //   o_IntFlag = platform.malloc<dlong>(IntFlag);
-       // }
-         
+        splitKernel(mesh.Nelements,o_Q ,o_q, o_splitFlag,o_IntFlag,o_PToC,mesh.o_IM);
+      }
+printf("Refinement Done!, Nrefine=%d\n",Nrefine);
+printf("new_vertex_count=%lld\n",new_vertex);
+printf("New Element Number=%d\n",mesh.Nelements);
+
+        
 }

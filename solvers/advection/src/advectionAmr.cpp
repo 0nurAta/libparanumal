@@ -34,7 +34,7 @@ void advection_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
     // Construct Refinement Flag
     deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(2*mesh.Nelements);
 
-
+    // Indicator 
     indicatorKernel(mesh.Nelements, o_q, o_refFlag);
     
     memory<dlong> refFlag(2*mesh.Nelements);
@@ -42,13 +42,13 @@ void advection_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
     
     dlong Nrefine = 0;   
     Ncoarse = 0; 
+    
     for (int i = 0; i < mesh.Nelements; ++i)
     {
       if (refFlag[i]==1)
       {
         Nrefine = Nrefine + 1;
-      }
-       
+      }   
     }
     printf("%d\n",Nrefine);
 
@@ -61,21 +61,38 @@ void advection_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
     //   
     //}
     printf("Ncoarse_outside=%d\n",Ncoarse);
+
+        // Store Interpolated Solution
+    o_q.copyTo(q);
+    //Qold = q;
+    //deviceMemory<dfloat> o_Qold1 = platform.malloc<dfloat>(Qold);
+
+    //Ncoarse =2;
+    //refFlag[1]=-1;
+    //refFlag[2]=-1;
+    //refFlag[34]=-1;
+    //refFlag[40]=-1;
+
+    //refFlag[6]=-1;
+
+    // Coarse
+    Coarse(q,refFlag,Nrefine);
     // copy data back to host
     o_q.copyTo(q);
 
     //for test
-    //Nrefine =10;
+    //Nrefine =3;
     //refFlag[1]=1;
     //refFlag[2]=1;
     //refFlag[34]=1;
-    //refFlag[180]=1;
-    //refFlag[6]=1;
+    //refFlag[37]=1;
+    //refFlag[40]=1;
+    //refFlag[126]=1;
     //refFlag[23]=1;
-    //refFlag[32]=1;
-    //refFlag[42]=1;
-    //refFlag[185]=1;
-    //refFlag[7]=1;
+    //refFlag[232]=1;
+    //refFlag[246]=1;
+    //refFlag[85]=1;
+    //refFlag[77]=1;
     // Refine
     Refine(q,refFlag,Nrefine); 
 
@@ -88,20 +105,7 @@ void advection_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
 //    splitKernel(mesh.Nelements,o_Qold ,o_q, o_refFlag, o_IntFlag,o_PToC,mesh.o_IM);
 
 
-    // Store Interpolated Solution
-    o_q.copyTo(q);
-    //Qold = q;
-    //deviceMemory<dfloat> o_Qold1 = platform.malloc<dfloat>(Qold);
 
-    //Ncoarse =3;
-    //refFlag[1]=-1;
-    //refFlag[2]=-1;
-    //refFlag[34]=-1;
-
-    //refFlag[6]=-1;
-
-    // Coarse
-    Coarse(q,refFlag,Nrefine);
     //printf("Ncoarse=%d\n",Ncoarse);
 
     // Restrict Solution
