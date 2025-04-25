@@ -97,9 +97,11 @@ public:
 
   void Amr(deviceMemory<dfloat>& o_q,dlong* _N);
 
+  void Conform(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Nrefine);
+
   void Refine(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Nrefine);
 
-  void Coarse(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Nrefine);
+  void Coarse(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Ncoarse);
 
   dfloat MaxWaveSpeed(deviceMemory<dfloat>& o_Q, const dfloat T);
 };

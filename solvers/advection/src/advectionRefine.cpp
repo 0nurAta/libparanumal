@@ -47,6 +47,9 @@ void advection_t::Refine(memory<dfloat>& Q,
   // A flag to be used in split kernel, initialized with zero values.
   memory<dlong> SplitFlag(2*mesh.Nelements,0);
 
+  // A flag to address that which face will be used for bisection
+  memory<dlong> FaceFlag(mesh.Nverts*Nrefine*2,0);
+
   // Copy old Element to Vertex Connectivity to the New One
   #pragma omp parallel for
   for (int e = 0; e < mesh.Nelements; ++e)
@@ -63,12 +66,29 @@ void advection_t::Refine(memory<dfloat>& Q,
   
   hlong new_vertex = 0; // Counts each new_vertex that will be created
   
-  // Determine Triangles To be Refined
-  #pragma omp parallel for
+  // Determine elements to be refined by using Refine Flag
+  
+  memory<dlong> Ref(Nrefine*2,0); // Array holds element ids for refining. Holds some extra mem. for 
+                                  // conforming
+  dlong ii = 0;
   for (int e = 0; e < mesh.Nelements; ++e)
   {
-      
+    if (RefFlag[e]==1)
+    {
+      Ref[ii] = e;
+      ii = ii + 1;
+      //printf("Flagged, level= %d\n" ,EToRefLevel[e]);
+    }
+  }
+  printf("ii=%d\n",ii );
+  
+  // Conforming loop
+ /* #pragma omp parallel for
+  for (int i = 0; i < ii; ++i)
+  {
+      int e = Ref[i];
       const dlong id = e*mesh.Nverts; 
+      
       if (RefFlag[e]==1 && EToRefLevel[e]<MAX_REFINEMENT_LEVEL)
       {
                 
@@ -93,7 +113,7 @@ void advection_t::Refine(memory<dfloat>& Q,
         if (Le==id+0)
         {
           hlong const neighbor_id = mesh.EToE[id+0];
-          printf("level=%d\n",RefFlag[neighbor_id]);
+          
           if(RefFlag[neighbor_id]!=1 && mesh.EToE[id+0]!=-1 && EToRefLevel[neighbor_id]<MAX_REFINEMENT_LEVEL){
              RefFlag[neighbor_id]=1;
              Nrefine++; 
@@ -104,7 +124,7 @@ void advection_t::Refine(memory<dfloat>& Q,
         if (Le==id+1)
         {         
           hlong const neighbor_id = mesh.EToE[id+1];
-          printf("level=%d\n",RefFlag[neighbor_id]);
+          
           if(RefFlag[neighbor_id]!=1 && mesh.EToE[id+1]!=-1 && EToRefLevel[neighbor_id]<MAX_REFINEMENT_LEVEL){
              RefFlag[neighbor_id]=1;
              Nrefine++; 
@@ -115,7 +135,7 @@ void advection_t::Refine(memory<dfloat>& Q,
         if (Le==id+2)
         {          
           hlong const neighbor_id = mesh.EToE[id+2];
-          printf("level=%d\n",RefFlag[neighbor_id]);
+          
           if(RefFlag[neighbor_id]!=1 && mesh.EToE[id+2]!=-1 && EToRefLevel[neighbor_id]<MAX_REFINEMENT_LEVEL){
              RefFlag[neighbor_id]=1; 
              Nrefine++;
@@ -123,9 +143,20 @@ void advection_t::Refine(memory<dfloat>& Q,
 
           }        
         } 
-        printf("new_vertex_count_conf=%lld\n",new_vertex);
+        //printf("new_vertex_count_conf=%lld\n",new_vertex);
       }             
-  }   
+  }  */ 
+
+
+  ii = 0;
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    if (RefFlag[e]==1)
+    {
+      Ref[ii] = e;
+      ii = ii + 1;
+    }
+  }
 
   // Refinement Loop
   // Determine ids of new vertices and EToV
@@ -134,10 +165,10 @@ void advection_t::Refine(memory<dfloat>& Q,
   printf("Refinement Start!\n");
   printf("Old Element Number=%d\n",mesh.Nelements);
 
-  for (int e = 0; e < mesh.Nelements; ++e)
+  for (int i = 0; i < ii; ++i)
   {
 
-
+      int e = Ref[i];
       const dlong id = e*mesh.Nverts; 
       if (RefFlag[e]==1 && EToRefLevel[e]<MAX_REFINEMENT_LEVEL)
       {
@@ -155,13 +186,13 @@ void advection_t::Refine(memory<dfloat>& Q,
         const dfloat mag1 = sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
         const dfloat mag2 = sqrt((x2-x0)*(x2-x0)+(y2-y0)*(y2-y0));
 
-        dlong Le;
+        dlong Face_id;
         if (mag0 >= mag1 && mag0 >= mag2) {
-          Le = id+0;
+          Face_id = id+0;
         } else if (mag1 >= mag2) {
-          Le = id+1;
+          Face_id = id+1;
         } else {
-          Le = id+2;
+          Face_id = id+2;
         }
 
         
@@ -176,7 +207,7 @@ void advection_t::Refine(memory<dfloat>& Q,
         // Modify EToV with new vertex ids for bisection (3 different configurations)
         // & Calculate Physical Coordinates of new vertices
         // & Store boundary conditions of new faces
-        if (Le==id+0)
+        if (Face_id==id+0)
         { 
           // Uniquely number new vertex 
           hlong Local_id = 0+mesh.Nfaces*e+mesh.Nnodes;
@@ -223,7 +254,7 @@ void advection_t::Refine(memory<dfloat>& Q,
           new_vertex++;
         }
 
-        if (Le==id+1)
+        if (Face_id==id+1)
         {
           hlong Local_id = 1+mesh.Nfaces*e+mesh.Nnodes;
           hlong Neigh_id = mesh.EToF[id+1]+mesh.Nfaces*mesh.EToE[id+1]+mesh.Nnodes;
@@ -268,7 +299,7 @@ void advection_t::Refine(memory<dfloat>& Q,
           new_vertex++;
         }
 
-        if (Le==id+2)
+        if (Face_id==id+2)
         {
           hlong Local_id = 2+mesh.Nfaces*e+mesh.Nnodes;
           hlong Neigh_id = mesh.EToF[id+2]+mesh.Nfaces*mesh.EToE[id+2]+mesh.Nnodes;
@@ -325,7 +356,7 @@ void advection_t::Refine(memory<dfloat>& Q,
 
         // Update total number of elements and nodes
         mesh.Nelements = mesh.Nelements + nn;
-        mesh.Nnodes = mesh.Nnodes + new_vertex;
+        //mesh.Nnodes = mesh.Nnodes + new_vertex;
         
         // Update mesh
         mesh = mesh.SetupUpdate(Nrefine);

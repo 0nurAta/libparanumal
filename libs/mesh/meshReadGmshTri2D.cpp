@@ -170,6 +170,7 @@ void mesh_t::ReadGmshTri2D(const std::string fileName){
       EY[e*Nverts+n] = VY[EToV[e*Nverts+n]];
     }
   }
+  printf("Nelements=%d, Nnodes=%d\n",Nelements, Nnodes);
 }
 
 } //namespace libp
