@@ -224,7 +224,7 @@ void bns_t::Setup(platform_t& _platform, mesh_t& _mesh,
 
   // kernels from relaxation file
   fileName   = oklFilePrefix + "bnsRelaxation" + suffix + oklFileSuffix;
-  kernelName = "bnsRelaxationCol" + suffix;
+  kernelName = "bnsRelaxation" + suffix;
   relaxationKernel = platform.buildKernel(fileName, kernelName,
                                          kernelInfo);
   if (pmlcubature) {
@@ -263,6 +263,20 @@ void bns_t::Setup(platform_t& _platform, mesh_t& _mesh,
   kernelName = "bnsVorticity" + suffix;
 
   vorticityKernel = platform.buildKernel(fileName, kernelName,
+                                     kernelInfo);
+
+  // Q-criterion calculation
+  fileName   = oklFilePrefix + "bnsQCriterion" + suffix + oklFileSuffix;
+  kernelName = "bnsQCriterion" + suffix;
+
+  Q_CriterionKernel = platform.buildKernel(fileName, kernelName,
+                                     kernelInfo);
+
+  // Dilatation calculation
+  fileName   = oklFilePrefix + "bnsDiv" + suffix + oklFileSuffix;
+  kernelName = "bnsDiv" + suffix;
+
+  DivKernel = platform.buildKernel(fileName, kernelName,
                                      kernelInfo);
 
   if (mesh.dim==2) {

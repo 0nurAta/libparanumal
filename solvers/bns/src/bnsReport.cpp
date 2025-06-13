@@ -54,6 +54,27 @@ void bns_t::Report(dfloat time, int tstep){
     o_q.copyTo(q);
     o_Vort.copyTo(Vort);
     o_Vort.free();
+
+    //compute Q-criterion
+    deviceMemory<dfloat> o_QCrit = platform.reserve<dfloat>(mesh.Nelements*mesh.Np);
+    Q_CriterionKernel(mesh.Nelements, mesh.o_vgeo, mesh.o_D, o_q, c, o_QCrit);
+
+    memory<dfloat> QCrit(mesh.Nelements*mesh.Np);
+
+    // copy data back to host
+    o_QCrit.copyTo(QCrit);
+    o_QCrit.free();
+
+    //compute Dilatation
+    deviceMemory<dfloat> o_Div = platform.reserve<dfloat>(mesh.Nelements*mesh.Np);
+    DivKernel(mesh.Nelements, mesh.o_vgeo, mesh.o_D, o_q, c, o_Div);
+
+    memory<dfloat> Div(mesh.Nelements*mesh.Np);
+
+    // copy data back to host
+    o_Div.copyTo(Div);
+    o_Div.free();
+
     // output field files
     std::string name;
     settings.getSetting("OUTPUT FILE NAME", name);
@@ -77,7 +98,7 @@ void bns_t::Report(dfloat time, int tstep){
 
     if(time<(8+1e-06)&&time>(8-1e-06)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
-    PlotFields(q, Vort, std::string(fname));
+    PlotFields(q, Vort, QCrit, std::string(fname));
     }
     
     if(time<(9+1e-06)&&time>(9-1e-06)){
@@ -92,7 +113,7 @@ void bns_t::Report(dfloat time, int tstep){
    // PlotFields(q, Vort, std::string(fname));
    // }
     sprintf(fname2, "%s_%04d_%04d.txt", name2, mesh.rank, mesh.Np);
-    PlotTGV3D(q, Vort,std::string(fname2), time);
+    PlotTGV3D(q, Vort, Div, std::string(fname2), time);
 
   }
 

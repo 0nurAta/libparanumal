@@ -43,27 +43,27 @@ t_soln4  = table2array(t_soln4(1:1:2000,1));
 % u_soln4 = -gradient(u_soln4, T);
 
 % Import BNS Solution Data
-t_soln5 = readtable("DATA.csv",Range="BC3:BC2002",ReadVariableNames=false);
-u_soln5 = readtable("DATA.csv",Range="BF3:BF2002",ReadVariableNames=false);
-u_soln5  = -table2array(u_soln5(1:1:2000,1));
+t_soln5 = readtable("DATA.csv",Range="b3:AM2002",ReadVariableNames=false);
+u_soln5 = readtable("DATA.csv",Range="AN3:AN2002",ReadVariableNames=false);
+u_soln5  = table2array(u_soln5(1:1:2000,1));
 t_soln5  = table2array(t_soln5(1:1:2000,1));
 
-% u_soln5 = spline(t_soln5,u_soln5, T);
-% u_soln5 = -gradient(u_soln5, T);
+u_soln5 = spline(t_soln5,u_soln5, T);
+u_soln5 = -gradient(u_soln5, T);
 
 % Plot
 hfig = figure;  % save the figure handle in a variable 
 plot(t_soln2,u_soln2,'b-','LineWidth',1.0);hold on;
 plot(t_soln3,u_soln3,'c--','LineWidth',1.0);
-% plot(t_soln4,u_soln4,'m-.','LineWidth',1.0);
-plot(t_soln5,u_soln5,'g:','LineWidth',1.5);
+plot(t_soln4,u_soln4,'m-.','LineWidth',1.0);
+plot(T,u_soln5,'g:','LineWidth',1.5);
 plot(t_ref,u_ref,'k-','LineWidth',2.0);
 % xlim([0, 20]);
 % ylim([0.5e-3, 14.5e-3]);
 % xlim([5, 15]);
 % ylim([7e-3, 14e-3]);
-% xlim([7, 12]);
-% ylim([8e-3, 14e-3]);
+xlim([7, 12]);
+ylim([8e-3, 14e-3]);
 % Set Legends
 string1 = '$$BNS-8\times3$$';
 string2 = '$$BNS-16\times3$$';

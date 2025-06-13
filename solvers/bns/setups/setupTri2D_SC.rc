@@ -5,7 +5,7 @@
 data/bnsUniform2D.h
 
 [MESH FILE]
-../../meshes/boltzmannSquareCylinderPML2D_v2.msh
+../../meshes/boltzmannSquareCylinderTri2D.msh
 
 [MESH DIMENSION]
 2
@@ -26,7 +26,7 @@ data/bnsUniform2D.h
 1
 
 [POLYNOMIAL DEGREE]
-4
+3
 
 [THREAD MODEL]
 CUDA
@@ -38,7 +38,7 @@ CUDA
 0
 
 [VISCOSITY]
-0.000005
+0.0005
 
 [SPEED OF SOUND]
 1.0
@@ -56,7 +56,7 @@ CUDA
 COLLOCATION
 
 [TIME INTEGRATOR]
-MRSAAB3
+SARK4
 
 [START TIME]
 0

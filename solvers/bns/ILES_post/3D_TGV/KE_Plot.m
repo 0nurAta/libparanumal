@@ -27,14 +27,14 @@ u_soln3  = table2array(u_soln3);
 t_soln3  = table2array(t_soln3);
 
 % Import BNS Solution Data
-t_soln4 = readtable("DATA.csv",Range="AE3:AE2002",ReadVariableNames=false);
-u_soln4 = readtable("DATA.csv",Range="AF3:AF2002",ReadVariableNames=false);
+t_soln4 = readtable("DATA.csv",Range="AY3:AY2002",ReadVariableNames=false);
+u_soln4 = readtable("DATA.csv",Range="AZ3:AZ2002",ReadVariableNames=false);
 u_soln4  = table2array(u_soln4);
 t_soln4  = table2array(t_soln4);
 
 % Import BNS Solution Data
-t_soln5 = readtable("DATA.csv",Range="AM3:AM2002",ReadVariableNames=false);
-u_soln5 = readtable("DATA.csv",Range="AN3:AN2002",ReadVariableNames=false);
+t_soln5 = readtable("DATA.csv",Range="BC3:BC2002",ReadVariableNames=false);
+u_soln5 = readtable("DATA.csv",Range="BD3:BD2002",ReadVariableNames=false);
 u_soln5  = table2array(u_soln5);
 t_soln5  = table2array(t_soln5);
 

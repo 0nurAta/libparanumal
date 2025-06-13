@@ -27,11 +27,12 @@ SOFTWARE.
 #include "bns.hpp"
 
 // interpolate data to plot nodes and save to file (one per process)
-void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName, dfloat time){
+void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, memory<dfloat>& Div, std::string fileName, dfloat time){
 
   FILE *fp;
   dfloat KE=0.0;
   dfloat Eps=0.0;
+  dfloat Dil=0.0;
 
   if(mesh.rank==0)
     fp = fopen(fileName.c_str(), "a+");
@@ -60,6 +61,10 @@ void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName
               +V[e*mesh.Np*3+n+mesh.Np*1]*V[e*mesh.Np*3+n+mesh.Np*1]
               +V[e*mesh.Np*3+n+mesh.Np*2]*V[e*mesh.Np*3+n+mesh.Np*2])*rm; 
 
+        // write dilatation
+
+        Dil += mesh.wJ[mesh.Np*e+n]*Div[e*mesh.Np+n]*rm*RT;
+
       } else {
 
                 // write kinetic energy
@@ -74,15 +79,15 @@ void bns_t::PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName
 
 comm.Allreduce(KE, Comm::Sum);
 comm.Allreduce(Eps, Comm::Sum);
+comm.Allreduce(Dil, Comm::Sum);
 
+const dfloat scale1 = mesh.dim==2 ? 0.5/(6.28318530718*6.28318530718): 0.5/(6.28318530718*6.28318530718*6.28318530718); 
+const dfloat scale2 = mesh.dim==2 ? -1.0/(6.28318530718*6.28318530718): -1.0/(6.28318530718*6.28318530718*6.28318530718); 
 
-const dfloat scale = mesh.dim==2 ? 0.5/(6.28318530718*6.28318530718): 0.5/(6.28318530718*6.28318530718*6.28318530718); 
-
-
-KE *= scale; Eps *= scale;  
+KE *= scale1; Eps *= scale1; Dil *= scale2;
 
 if(mesh.rank==0){
-  fprintf(fp,"%5.4f %13.12f %13.12f\n",time, KE, Eps);
+  fprintf(fp,"%5.4f %13.12f %13.12f %13.12f\n",time, KE, Eps, Dil);
   fclose(fp);
 }
   //std::cout << KE << std::endl;

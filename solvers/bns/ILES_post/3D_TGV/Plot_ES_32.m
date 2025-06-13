@@ -14,8 +14,6 @@ data2 = readmatrix("Ek_Spectrum_32x4.dat");
 data3 = readmatrix("Ek_Spectrum_32x5.dat");
 data4 = readmatrix("Ek_Spectrum_32x6.dat");
 
-
-
 % Attain Data
 k1   = data1(3:(size(data1,1)-12),1);
 E_K1 = data1(3:(size(data1,1)-12),2);
@@ -25,8 +23,6 @@ k3   = data3(3:(size(data3,1)-14),1);
 E_K3 = data3(3:(size(data3,1)-14),2);
 k4   = data4(3:(size(data4,1)-16),1);
 E_K4 = data4(3:(size(data4,1)-16),2);
-% k5   = data5(3:(size(data5,1)-10),1);
-% E_K5 = data5(3:(size(data5,1)-10),2);
 
 % Read Result Data
 % [k1,E_K1] = EnergySpec3D("fields_32x32_6.txt");
@@ -49,9 +45,9 @@ xline(48,'-k');
 xline(64,'--k');
 xline(80,'-.k');
 xline(96,':k');
-x = 1:1:1000;
-y = x.^(-5/3);
-line(x,y)
+% x = 1:1:1000;
+% y = x.^(-5/3);
+% line(x,y)
 
 % Set Legends
 string1 = '$$BNS-32\times3$$';

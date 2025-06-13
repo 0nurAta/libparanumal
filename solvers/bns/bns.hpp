@@ -89,6 +89,8 @@ public:
   kernel_t pmlRelaxationKernel;
 
   kernel_t vorticityKernel;
+  kernel_t Q_CriterionKernel;
+  kernel_t DivKernel;
 
   kernel_t initialConditionKernel;
   kernel_t pmlInitialConditionKernel;
@@ -109,9 +111,9 @@ public:
 
   void Report(dfloat time, int tstep);
 
-  void PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName);
+  void PlotFields(memory<dfloat>& Q, memory<dfloat>& V, memory<dfloat>& QC, std::string fileName);
 
-  void PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V,std::string fileName, dfloat time);
+  void PlotTGV3D(memory<dfloat>& Q, memory<dfloat>& V, memory<dfloat>& Div, std::string fileName, dfloat time);
 
   void WriteFieldsTxt(memory<dfloat>& Q, std::string fileName, dfloat time);
 
