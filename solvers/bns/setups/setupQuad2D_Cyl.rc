@@ -2,33 +2,31 @@
 2.0
 
 [DATA FILE]
-#data/bnsGaussian3D.h
-data/bnsUniform3D.h
+data/bnsUniform2D_SC.h
+
 [MESH FILE]
-#PMLBOX
-../../meshes/sphere_v2_coarser.msh
+../../meshes/cylinder_pml_mid.msh
 
 [MESH DIMENSION]
-3
+2
 
 [ELEMENT TYPE] # number of edges
-12
+4
 
 #[BOX NX]
-#10
+#20
 
 #[BOX NY]
-#10
+#20
 
 #[BOX NZ]
-#10
+#20
 
 #[BOX BOUNDARY FLAG]
-
 #1
 
 [POLYNOMIAL DEGREE]
-4
+3
 
 [THREAD MODEL]
 CUDA
@@ -40,13 +38,13 @@ CUDA
 0
 
 [VISCOSITY]
-0.0001
+0.0000541
 
 [SPEED OF SOUND]
 1.0
 
 [PML PROFILE ORDER]
-3
+4
 
 [PML SIGMAX MAX]
 50
@@ -54,11 +52,8 @@ CUDA
 [PML SIGMAY MAX]
 50
 
-[PML SIGMAZ MAX]
-50
-
 [PML INTEGRATION]
-COLLOCATION
+CUBATURE
 
 [TIME INTEGRATOR]
 SARK4
@@ -67,13 +62,15 @@ SARK4
 0
 
 [FINAL TIME]
-100
+500
 
 [OUTPUT INTERVAL]
-1
+5
 
 [OUTPUT TO FILE]
 TRUE
 
 [OUTPUT FILE NAME]
+#/media/onur/Elements/ONUR/SquareCylinder_Bns_Outputs/Quad/bns
 bns
+

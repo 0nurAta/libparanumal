@@ -731,6 +731,58 @@ class mesh_t {
   dfloat ElementCharacteristicLengthTet3D(dlong e);
   dfloat ElementCharacteristicLengthHex3D(dlong e);
 
+    /* compute x,y,z vertices of wall boundary nodes for curved faces */
+  void Curved() {
+    switch (elementType) {
+      case Mesh::TRIANGLES:
+        if(dim==2)
+          CurvedQuad2D();
+        else
+          CurvedQuad2D();
+        break;
+      case Mesh::QUADRILATERALS:
+        if(dim==2)
+          CurvedQuad2D();
+        else
+          CurvedNodesHex3D();
+        break;
+      case Mesh::TETRAHEDRA:
+        CurvedQuad2D();
+        break;
+      case Mesh::HEXAHEDRA:
+        CurvedHex3D();
+        break;
+    }
+  }
+  void CurvedQuad2D();
+  void CurvedHex3D();
+
+    /* compute x,y,z nodes of wall boundary nodes for curved faces */
+  void CurvedNodes() {
+    switch (elementType) {
+      case Mesh::TRIANGLES:
+        if(dim==2)
+          CurvedNodesQuad2D();
+        else
+          CurvedNodesQuad2D();
+        break;
+      case Mesh::QUADRILATERALS:
+        if(dim==2)
+          CurvedNodesQuad2D();
+        else
+          CurvedNodesHex3D();
+        break;
+      case Mesh::TETRAHEDRA:
+        CurvedNodesQuad2D();
+        break;
+      case Mesh::HEXAHEDRA:
+        CurvedNodesHex3D();
+        break;
+    }
+  }
+  void CurvedNodesQuad2D();
+  void CurvedNodesHex3D();
+
   /***************************************************************************/
   // Basic codes for generating nodes, polynomials, matrices, etc.
 

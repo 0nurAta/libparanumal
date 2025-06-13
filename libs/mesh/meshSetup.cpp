@@ -88,8 +88,14 @@ void mesh_t::Setup(platform_t& _platform, meshSettings_t& _settings,
   // make global indexing
   ConnectNodes();
 
+  // compute location vertices for curved boundary elements
+  Curved();
+
   // compute physical (x,y) locations of the element nodes
   PhysicalNodes();
+
+  // compute physical (x,y) locations of the curved element nodes
+  CurvedNodes();
 
   // compute geometric factors
   GeometricFactors();
@@ -99,6 +105,8 @@ void mesh_t::Setup(platform_t& _platform, meshSettings_t& _settings,
 
   // label local/global gather elements
   GatherScatterSetup();
+
+
 }
 
 } //namespace libp
