@@ -46,6 +46,8 @@ void bns_t::Setup(platform_t& _platform, mesh_t& _mesh,
   //Trigger JIT kernel builds
   ogs::InitializeKernels(platform, ogs::Dfloat, ogs::Add);
 
+  platform.linAlg().InitKernels({"sum"});
+
   //setup cubature
   mesh.CubatureSetup();
 
@@ -264,6 +266,15 @@ void bns_t::Setup(platform_t& _platform, mesh_t& _mesh,
 
   vorticityKernel = platform.buildKernel(fileName, kernelName,
                                      kernelInfo);
+
+  // force calculation
+  fileName   = oklFilePrefix + "bnsForces" + suffix + oklFileSuffix;
+  kernelName = "bnsForcesSurface" + suffix;
+
+  forceKernel = platform.buildKernel(fileName, kernelName,
+                                     kernelInfo);
+
+
 
   if (mesh.dim==2) {
     fileName   = oklFilePrefix + "bnsInitialCondition2D" + oklFileSuffix;

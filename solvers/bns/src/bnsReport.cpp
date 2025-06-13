@@ -29,7 +29,8 @@ SOFTWARE.
 void bns_t::Report(dfloat time, int tstep){
 
   static int frame=0;
-
+  static int forceFrame = 0;     
+  
   //compute q.M*q
   dlong Nentries = mesh.Nelements*mesh.Np*Nfields;
   deviceMemory<dfloat> o_Mq = platform.reserve<dfloat>(Nentries);
@@ -94,8 +95,14 @@ void bns_t::Report(dfloat time, int tstep){
     sprintf(fname2, "%s_%04d_%04d.txt", name2, mesh.rank, mesh.Np);
     PlotTGV3D(q, Vort,std::string(fname2), time);
 
+    // Calculate Drag & Lift Coeff.
+    writeForces(time, tstep, forceFrame); 
+    forceFrame++; 
+
+
   }
 
+ 
 
 
   /*
@@ -160,4 +167,101 @@ void bns_t::Report(dfloat time, int tstep){
     }
   }
   */
+}
+
+
+void bns_t::writeForces(dfloat time, int tstep, int frame){
+
+  dfloat rref=1.0, uref=0.1, vref=0.0, wref=0.0; 
+
+  const dfloat velRef = mesh.dim==2 ?   std::sqrt(uref*uref + vref*vref):
+                                        std::sqrt(uref*uref + vref*vref + wref*wref);
+
+
+  dfloat Aref = 2*M_PI*1.;
+  //dfloat Lref = 1.; 
+
+
+  const dfloat rcp_dynp = 1.0/(0.5*rref*velRef*velRef*Aref); 
+
+  if(mesh.dim==2 && mesh.rank==0){
+    printf("----------------------------------------------------------------------\n");
+       printf("\t\tviscous_x - viscous_y - pressure_x - pressure_y\n"); 
+
+  }else if(mesh.dim==3 && mesh.rank==0){
+    printf("----------------------------------------------------------------------\n"); 
+       printf("\t\tviscous_x-viscous_y-viscous_z-pressure_x-pressure_y-pressure_z\n"); 
+  }
+
+  // output field files
+  std::string name;
+  settings.getSetting("OUTPUT FILE NAME", name);
+  name = name + "analysis.dat";
+  // Open file
+  FILE *fp; 
+  fp = fopen(name.c_str(), "a");
+  if(frame==0 && mesh.rank==0){
+      if(mesh.dim==2){
+       fprintf(fp, "time\tgroupID\tviscous_x\tviscous_y\tpressure_x\tpressure_y\n"); 
+      }else{
+       fprintf(fp, "time\tgroupID\tviscous_x\tviscous_y\tviscous_z\tpressure_x\tpressure_y\tpressure_z\n"); 
+      }    
+  }
+
+   // Write out the integrated pressure and viscous forces
+  dlong Nentries = mesh.dim==2 ? mesh.Nelements*mesh.Np*(mesh.dim*mesh.dim):
+                                 mesh.Nelements*mesh.Np*(mesh.dim*mesh.dim-3); 
+  
+  // Compute all forces on all boundaries
+  deviceMemory<dfloat> o_F = platform.reserve<dfloat>(Nentries);
+  
+    // compute volume contributions to gradients
+           forceKernel(mesh.Nelements,
+                       c,
+                       mesh.o_sgeo,
+                       mesh.o_sM,
+                       mesh.o_vmapM,
+                       mesh.o_EToB,
+                       mesh.o_x,
+                       mesh.o_y,
+                       mesh.o_z,
+                       o_q,
+                       o_F);
+
+
+    const dlong shift = mesh.Nelements*mesh.Np; 
+    if(mesh.dim==2){
+      const dfloat vFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F+0*shift , mesh.comm); 
+      const dfloat vFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F+1*shift , mesh.comm); 
+      const dfloat pFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F+2*shift , mesh.comm); 
+      const dfloat pFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F+3*shift , mesh.comm);
+      if(mesh.rank==0){
+          printf(" %.4e %.4e %.2e %.2e \n", vFx, vFy, pFx, pFy);
+          fprintf(fp,"%.6e  %.6e %.6e %.6e %.6e \n", time, vFx, vFy, pFx, pFy);
+        }
+      }else{
+
+    const dfloat vFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 0*shift, mesh.comm); 
+    const dfloat vFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 1*shift, mesh.comm); 
+    const dfloat vFz = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 2*shift, mesh.comm); 
+    
+    const dfloat pFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 3*shift, mesh.comm); 
+    const dfloat pFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 4*shift, mesh.comm); 
+    const dfloat pFz = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 5*shift, mesh.comm); 
+
+    if(mesh.rank==0){
+
+          printf("%.2e %.2e %.2e %.2e %.2e %.2e\n", vFx, vFy, vFz, pFx, pFy, pFz);
+          fprintf(fp, "%.6e %.2e %.2e %.2e %.2e %.2e %.2e\n", time, vFx, vFy, vFz, pFx, pFy, pFz);
+    } 
+    }
+
+  
+
+  if(mesh.rank==0){
+    printf("----------------------------------------------------------------------\n");      
+}
+  
+  
+  fclose(fp); 
 }
