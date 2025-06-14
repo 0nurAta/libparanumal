@@ -5,7 +5,7 @@
 data/bnsUniform2D_SC.h
 
 [MESH FILE]
-../../meshes/cylinder_pml_mid.msh
+../../meshes/cylinder_pml_coarse.msh
 
 [MESH DIMENSION]
 2
@@ -26,7 +26,7 @@ data/bnsUniform2D_SC.h
 #1
 
 [POLYNOMIAL DEGREE]
-3
+4
 
 [THREAD MODEL]
 CUDA
@@ -62,10 +62,10 @@ SARK4
 0
 
 [FINAL TIME]
-200
+4000
 
 [OUTPUT INTERVAL]
-1
+10
 
 [OUTPUT TO FILE]
 TRUE

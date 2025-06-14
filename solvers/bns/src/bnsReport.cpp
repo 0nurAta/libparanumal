@@ -178,7 +178,7 @@ void bns_t::writeForces(dfloat time, int tstep, int frame){
                                         std::sqrt(uref*uref + vref*vref + wref*wref);
 
 
-  dfloat Aref = 2*M_PI*1.;
+  dfloat Aref = 2.;
   //dfloat Lref = 1.; 
 
 
