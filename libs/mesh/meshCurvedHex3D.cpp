@@ -30,8 +30,8 @@ namespace libp {
 
 void mesh_t::CurvedHex3D(){
 
-  printf("HELLO\n");
-  printf("Nbf = %lld\n", NboundaryFaces);
+  
+  //printf("Nbf = %lld\n", NboundaryFaces);
 
   /* Origin coordinates and radius of the sphere */
   dfloat x0 = 0.0;

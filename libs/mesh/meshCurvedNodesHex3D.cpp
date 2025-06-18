@@ -71,10 +71,7 @@ void mesh_t::CurvedNodesHex3D(){
         b[1] = 0.5*(mag1-mag3);
         b[2] = 0.5*(mag2-mag3);
 
-             for (int i = 0; i < 9; ++i)
-       {
-          printf("c = %f \n", A[i]); 
-       }
+
         dfloat c[3] = {};
         //linAlg_t::matrixInverse((3), A);
 

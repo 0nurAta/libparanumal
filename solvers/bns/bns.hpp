@@ -94,6 +94,7 @@ public:
   kernel_t pmlInitialConditionKernel;
 
   kernel_t forceKernel;
+  kernel_t qcriterionKernel;
 
   bns_t() = default;
   bns_t(platform_t &_platform, mesh_t &_mesh,

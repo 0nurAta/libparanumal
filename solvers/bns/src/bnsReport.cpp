@@ -51,10 +51,20 @@ void bns_t::Report(dfloat time, int tstep){
 
     memory<dfloat> Vort(mesh.dim*mesh.Nelements*mesh.Np);
 
+    //compute Q-Criterion 
+    deviceMemory<dfloat> o_QCrit = platform.reserve<dfloat>(mesh.dim*mesh.Nelements*mesh.Np);
+    qcriterionKernel(mesh.Nelements, mesh.o_vgeo, mesh.o_D, o_q, c, o_QCrit);
+
+    memory<dfloat> QCrit(mesh.dim*mesh.Nelements*mesh.Np);
+    
+
     // copy data back to host
     o_q.copyTo(q);
     o_Vort.copyTo(Vort);
     o_Vort.free();
+    o_QCrit.copyTo(QCrit);
+    o_QCrit.free();
+
     // output field files
     std::string name;
     settings.getSetting("OUTPUT FILE NAME", name);
@@ -78,7 +88,7 @@ void bns_t::Report(dfloat time, int tstep){
 
     //if(time>(0)&&time<(100)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
-    PlotFields(q, Vort, std::string(fname));
+    PlotFields(q, QCrit, std::string(fname));
     //}
     
     if(time<(9+1e-06)&&time>(9-1e-06)){
@@ -93,7 +103,7 @@ void bns_t::Report(dfloat time, int tstep){
    // PlotFields(q, Vort, std::string(fname));
    // }
     sprintf(fname2, "%s_%04d_%04d.txt", name2, mesh.rank, mesh.Np);
-    PlotTGV3D(q, Vort,std::string(fname2), time);
+    //PlotTGV3D(q, Vort,std::string(fname2), time);
 
     // Calculate Drag & Lift Coeff.
     writeForces(time, tstep, forceFrame); 
@@ -178,19 +188,21 @@ void bns_t::writeForces(dfloat time, int tstep, int frame){
                                         std::sqrt(uref*uref + vref*vref + wref*wref);
 
 
-  dfloat Aref = 2.;
-  //dfloat Lref = 1.; 
+  //dfloat Aref = 2.;
+
+  // Frontal area of the sphere pi*D/4                                      
+  dfloat Aref = M_PI; 
 
 
   const dfloat rcp_dynp = 1.0/(0.5*rref*velRef*velRef*Aref); 
 
   if(mesh.dim==2 && mesh.rank==0){
     printf("----------------------------------------------------------------------\n");
-       printf("\t\tviscous_x - viscous_y - pressure_x - pressure_y\n"); 
+       printf("Drag  \t\t Lift\n"); 
 
   }else if(mesh.dim==3 && mesh.rank==0){
     printf("----------------------------------------------------------------------\n"); 
-       printf("\t\tviscous_x-viscous_y-viscous_z-pressure_x-pressure_y-pressure_z\n"); 
+       printf("X-Forces\tY-Forces\tZ-Forces \n"); 
   }
 
   // output field files
@@ -202,9 +214,9 @@ void bns_t::writeForces(dfloat time, int tstep, int frame){
   fp = fopen(name.c_str(), "a");
   if(frame==0 && mesh.rank==0){
       if(mesh.dim==2){
-       fprintf(fp, "time\tgroupID\tviscous_x\tviscous_y\tpressure_x\tpressure_y\n"); 
+       fprintf(fp, "time\tDrag\tLift\n"); 
       }else{
-       fprintf(fp, "time\tgroupID\tviscous_x\tviscous_y\tviscous_z\tpressure_x\tpressure_y\tpressure_z\n"); 
+       fprintf(fp, "time\tDrag\tLift\n"); 
       }    
   }
 
@@ -236,8 +248,8 @@ void bns_t::writeForces(dfloat time, int tstep, int frame){
       const dfloat pFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F+2*shift , mesh.comm); 
       const dfloat pFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F+3*shift , mesh.comm);
       if(mesh.rank==0){
-          printf(" %.4e %.4e %.2e %.2e \n", vFx, vFy, pFx, pFy);
-          fprintf(fp,"%.6e  %.6e %.6e %.6e %.6e \n", time, vFx, vFy, pFx, pFy);
+          printf("%.4e \t %.4e \n", vFx+pFx, vFy+pFy);
+          fprintf(fp,"%.6e  %.6e %.6e \n", time, vFx+pFx, vFy+pFy);
         }
       }else{
 
@@ -251,8 +263,8 @@ void bns_t::writeForces(dfloat time, int tstep, int frame){
 
     if(mesh.rank==0){
 
-          printf("%.2e %.2e %.2e %.2e %.2e %.2e\n", vFx, vFy, vFz, pFx, pFy, pFz);
-          fprintf(fp, "%.6e %.2e %.2e %.2e %.2e %.2e %.2e\n", time, vFx, vFy, vFz, pFx, pFy, pFz);
+          printf("%.2e \t %.2e \t %.2e\n", vFx+pFx, vFy+pFy, vFz+pFz);
+          fprintf(fp, "%.6e %.2e %.2e %.2e\n", time, vFx+pFx, vFy+pFx, vFz+pFz);
     } 
     }
 

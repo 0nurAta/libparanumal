@@ -274,6 +274,13 @@ void bns_t::Setup(platform_t& _platform, mesh_t& _mesh,
   forceKernel = platform.buildKernel(fileName, kernelName,
                                      kernelInfo);
 
+  // Q-Criterion calculation
+  fileName   = oklFilePrefix + "bnsQCriterion" + suffix + oklFileSuffix;
+  kernelName = "bnsQCriterion" + suffix;
+
+  qcriterionKernel = platform.buildKernel(fileName, kernelName,
+                                     kernelInfo);
+
 
 
   if (mesh.dim==2) {
