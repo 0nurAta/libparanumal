@@ -26,6 +26,7 @@ SOFTWARE.
 
 #define p_isq12 (1.f/sqrt(12.f))
 #define p_isq6 (1.f/sqrt(6.f))
+#define sqrt2 sqrt(2.f)
 
 void upwind(const dfloat nx,  const dfloat ny,  const dfloat nz, const dfloat c,
             const dfloat q1M, const dfloat q2M, const dfloat q3M, const dfloat q4M, const dfloat q5M,
@@ -34,7 +35,93 @@ void upwind(const dfloat nx,  const dfloat ny,  const dfloat nz, const dfloat c,
             const dfloat q6B, const dfloat q7B, const dfloat q8B, const dfloat q9B, const dfloat q10B,
             dfloat * qflux){
 
-  const dfloat dq1  = 0.5f*(q1B  - q1M)  - p_isq12*(nx*(q2B-q2M) + ny*(q3B-q3M) + nz*(q4B-q4M));
+// Lax-Friedrichs intercell flux scheme
+      
+const dfloat uM = c*q2M/q1M;
+const dfloat vM = c*q3M/q1M;
+const dfloat wM = c*q4M/q1M;
+const dfloat uB = c*q2B/q1B;
+const dfloat vB = c*q3B/q1B;
+const dfloat wB = c*q4B/q1B;    
+
+const dfloat unM   = fabs(nx*uM + ny*vM + nz*wM);
+const dfloat unP   = fabs(nx*uB + ny*vB + nz*wB);
+
+const dfloat alpha = (unM > unP) ? unM : unP;
+//const dfloat alpha = sqrt(3.f)*c;  
+
+
+const dfloat s2 = sqrtf(2.f);
+const dfloat h = 0.5f;
+
+// dq1
+const dfloat dq1 = h*( nx*(q2B - q2M)
+                     + ny*(q3B - q3M)
+                     + nz*(q4B - q4M)
+                     + alpha*(q1M - q1B) );
+
+// dq2
+const dfloat dq2 = h*( nx*(q1B - q1M)
+                     + ny*(q5B - q5M)
+                     + nz*(q6B - q6M)
+                     + alpha*(q2M - q2B)
+                     + s2*nx*(q8B - q8M) );
+
+// dq3
+const dfloat dq3 = h*( nx*(q5B - q5M)
+                     + ny*(q1B - q1M)
+                     + nz*(q7B - q7M)
+                     + alpha*(q3M - q3B)
+                     + s2*ny*(q9B - q9M) );
+
+// dq4
+const dfloat dq4 = h*( nx*(q6B - q6M)
+                     + ny*(q7B - q7M)
+                     + nz*(q1B - q1M)
+                     + alpha*(q4M - q4B)
+                     + s2*nz*(q10B - q10M) );
+
+// dq5
+const dfloat dq5 = h*( nx*(q3B - q3M)
+                     + ny*(q2B - q2M)
+                     + alpha*(q5M - q5B) );
+
+// dq6
+const dfloat dq6 = h*( nx*(q4B - q4M)
+                     + nz*(q2B - q2M)
+                     + alpha*(q6M - q6B) );
+
+// dq7
+const dfloat dq7 = h*( ny*(q4B - q4M)
+                     + nz*(q3B - q3M)
+                     + alpha*(q7M - q7B) );
+
+// dq8
+const dfloat dq8 = h*( alpha*(q8M - q8B)
+                     + s2*nx*(q2B - q2M) );
+
+// dq9
+const dfloat dq9 = h*( alpha*(q9M - q9B)
+                     + s2*ny*(q3B - q3M) );
+
+// dq10
+const dfloat dq10 = h*( alpha*(q10M - q10B)
+                      + s2*nz*(q4B - q4M) ); 
+
+  qflux[0] = c*dq1;
+  qflux[1] = c*dq2;
+  qflux[2] = c*dq3;
+  qflux[3] = c*dq4;
+  qflux[4] = c*dq5;
+  qflux[5] = c*dq6;
+  qflux[6] = c*dq7;
+  qflux[7] = c*dq8;
+  qflux[8] = c*dq9;
+  qflux[9] = c*dq10;
+
+
+
+  /*const dfloat dq1  = 0.5f*(q1B  - q1M)  - p_isq12*(nx*(q2B-q2M) + ny*(q3B-q3M) + nz*(q4B-q4M));
   const dfloat dq2  = 0.5f*(q2B  - q2M)  - p_isq12*nx*(q1B-q1M) - p_isq6*nx*(q8B-q8M) - 0.5f*ny*(q5B-q5M) - 0.5f*nz*(q6B-q6M);
   const dfloat dq3  = 0.5f*(q3B  - q3M)  - 0.5f*nx*(q5B-q5M) - p_isq12*ny*(q1B-q1M) - p_isq6*ny*(q9B-q9M) - 0.5f*nz*(q7B-q7M);
   const dfloat dq4  = 0.5f*(q4B  - q4M)  - 0.5f*nx*(q6B-q6M) - 0.5f*ny*(q7B-q7M) - p_isq6*nz*(q10B-q10M) - p_isq12*nz*(q1B-q1M);
@@ -54,7 +141,7 @@ void upwind(const dfloat nx,  const dfloat ny,  const dfloat nz, const dfloat c,
   qflux[6] = c*(ny*dq4 + nz*dq3);
   qflux[7] = c*sqrt(2.0)*(nx*dq2);
   qflux[8] = c*sqrt(2.0)*(ny*dq3);
-  qflux[9] = c*sqrt(2.0)*(nz*dq4);
+  qflux[9] = c*sqrt(2.0)*(nz*dq4);*/
 }
 
 void upwind_split(const dfloat nx,  const dfloat ny,  const dfloat nz, const dfloat c,

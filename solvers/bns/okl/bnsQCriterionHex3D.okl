@@ -115,12 +115,13 @@ SOFTWARE.
 
           
           
-          
+          const dfloat S_norm = (ux*ux) + (vy*vy) + (wz*wz) + 0.5 * ((wy+vz)*(wy+vz)+(uz+wx)*(uz+wx)+(vx+uy)*(vx+uy));
+          const dfloat Omega_norm = 0.5 * ((wy-vz)*(wy-vz)+(uz-wx)*(uz-wx)+(vx-uy)*(vx-uy));
 
-          const dfloat S = (ux*ux) + (vy*vy) + (wz*wz) + 0.25 * ((wy+vz)*(wy+vz)+(uz+wx)*(uz+wx)+(vx+uy)*(vx+uy));
-          const dfloat Omega = 0.25 * ((wy-vz)*(wy-vz)+(uz-wx)*(uz-wx)+(vx-uy)*(vx-uy));
+          //const dfloat S = (ux*ux) + (vy*vy) + (wz*wz) + 0.25 * ((wy+vz)*(wy+vz)+(uz+wx)*(uz+wx)+(vx+uy)*(vx+uy));
+          //const dfloat Omega = 0.25 * ((wy-vz)*(wy-vz)+(uz-wx)*(uz-wx)+(vx-uy)*(vx-uy));
 
-          QCrit[id] = 0.5*(Omega-S);
+          QCrit[id] = 0.5*(Omega_norm-S_norm);
         }
       }
     }
