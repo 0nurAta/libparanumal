@@ -77,9 +77,9 @@ void surfaceTerms(const int e,
 
 
 
-  s_vFx[k][j][i] += (bc==1) ? -wSJ*(nx*T11 + ny*T12 + nz*T23): 0.0; 
+  s_vFx[k][j][i] += (bc==1) ? -wSJ*(nx*T11 + ny*T12 + nz*T13): 0.0; 
   s_vFy[k][j][i] += (bc==1) ? -wSJ*(nx*T12 + ny*T22 + nz*T23): 0.0; 
-  s_vFz[k][j][i] += (bc==1) ? -wSJ*(nx*T23 + ny*T23 + nz*T33): 0.0; 
+  s_vFz[k][j][i] += (bc==1) ? -wSJ*(nx*T13 + ny*T23 + nz*T33): 0.0; 
   s_pFx[k][j][i] += (bc==1) ?  wSJ*p*nx: 0.0; 
   s_pFy[k][j][i] += (bc==1) ?  wSJ*p*ny: 0.0;
   s_pFz[k][j][i] += (bc==1) ?  wSJ*p*nz: 0.0; 

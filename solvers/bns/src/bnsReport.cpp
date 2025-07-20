@@ -46,22 +46,22 @@ void bns_t::Report(dfloat time, int tstep){
   if (settings.compareSetting("OUTPUT TO FILE","TRUE")) {
 
     //compute vorticity
-    deviceMemory<dfloat> o_Vort = platform.reserve<dfloat>(mesh.dim*mesh.Nelements*mesh.Np);
-    vorticityKernel(mesh.Nelements, mesh.o_vgeo, mesh.o_D, o_q, c, o_Vort);
+    //deviceMemory<dfloat> o_Vort = platform.reserve<dfloat>(mesh.dim*mesh.Nelements*mesh.Np);
+    //vorticityKernel(mesh.Nelements, mesh.o_vgeo, mesh.o_D, o_q, c, o_Vort);
 
-    memory<dfloat> Vort(mesh.dim*mesh.Nelements*mesh.Np);
+    //memory<dfloat> Vort(mesh.dim*mesh.Nelements*mesh.Np);
 
     //compute Q-Criterion 
-    deviceMemory<dfloat> o_QCrit = platform.reserve<dfloat>(mesh.dim*mesh.Nelements*mesh.Np);
+    deviceMemory<dfloat> o_QCrit = platform.reserve<dfloat>(mesh.Nelements*mesh.Np);
     qcriterionKernel(mesh.Nelements, mesh.o_vgeo, mesh.o_D, o_q, c, o_QCrit);
 
-    memory<dfloat> QCrit(mesh.dim*mesh.Nelements*mesh.Np);
+    memory<dfloat> QCrit(mesh.Nelements*mesh.Np);
     
 
     // copy data back to host
     o_q.copyTo(q);
-    o_Vort.copyTo(Vort);
-    o_Vort.free();
+    //o_Vort.copyTo(Vort);
+    //o_Vort.free();
     o_QCrit.copyTo(QCrit);
     o_QCrit.free();
 
@@ -70,44 +70,52 @@ void bns_t::Report(dfloat time, int tstep){
     settings.getSetting("OUTPUT FILE NAME", name);
     char fname[BUFSIZ];
     char fname1[BUFSIZ];
-    char fname2[BUFSIZ];
     char name1[] = "fields" ;  
-    char name2[] = "KE" ; 
+    //char name2[] = "KE" ; 
+    //char fname2[BUFSIZ];
+    
 
-    sprintf(fname1, "%s.txt", name.c_str());
-
-   // if(time<(0+1e-06)&&time>(0-1e-06)){
-   // sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
-   // PlotFields(q, Vort, std::string(fname));
-   // }
-
-   // if(time<(4+1e-06)&&time>(4-1e-06)){
-   // sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
-   // PlotFields(q, Vort, std::string(fname));
-   // }
-
-    //if(time>(0)&&time<(100)){
+    if(time<(2000+1e-06)&&time>(2000-1e-06)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, QCrit, std::string(fname));
-    //}
-    
-    if(time<(9+1e-06)&&time>(9-1e-06)){
-    //sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
-   // PlotFields(q, Vort, std::string(fname));
+    }
+
+    if(time<(2100+1e-06)&&time>(2100-1e-06)){
+    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    PlotFields(q, QCrit, std::string(fname));
+    }
+
+    if(time<(2200+1e-06)&&time>(2200-1e-06)){
+    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    PlotFields(q, QCrit, std::string(fname));
+    }
+
+    if(time<(2300+1e-06)&&time>(2300-1e-06)){
+    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    PlotFields(q, QCrit, std::string(fname));
+    }
+
     sprintf(fname1, "%s_%04d_%04d.txt", name1, mesh.rank, mesh.Np);
     WriteFieldsTxt(q,std::string(fname1), time);
-    }
+
+    // Calculate Drag & Lift Coeff.
+    writeForces(time, tstep, forceFrame); 
+    forceFrame++; 
+
+  //  if(time<(9+1e-06)&&time>(9-1e-06)){
+    //sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    //PlotFields(q, Vort, std::string(fname));
+
+    //}
 
    // if(time<(12.11+1e-06)&&time>(12.11-1e-06)){
    // sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
    // PlotFields(q, Vort, std::string(fname));
    // }
-    sprintf(fname2, "%s_%04d_%04d.txt", name2, mesh.rank, mesh.Np);
+  //  sprintf(fname2, "%s_%04d_%04d.txt", name2, mesh.rank, mesh.Np);
     //PlotTGV3D(q, Vort,std::string(fname2), time);
 
-    // Calculate Drag & Lift Coeff.
-    writeForces(time, tstep, forceFrame); 
-    forceFrame++; 
+
 
 
   }
@@ -191,7 +199,7 @@ void bns_t::writeForces(dfloat time, int tstep, int frame){
   //dfloat Aref = 2.;
 
   // Frontal area of the sphere pi*D/4                                      
-  dfloat Aref = M_PI; 
+  dfloat Aref = M_PI*0.25; 
 
 
   const dfloat rcp_dynp = 1.0/(0.5*rref*velRef*velRef*Aref); 
