@@ -70,7 +70,9 @@ void bns_t::Report(dfloat time, int tstep){
     settings.getSetting("OUTPUT FILE NAME", name);
     char fname[BUFSIZ];
     char fname1[BUFSIZ];
-    char name1[] = "fields" ;  
+    std::string name1; 
+    name1 = name + "fields";
+
     //char name2[] = "KE" ; 
     //char fname2[BUFSIZ];
     
@@ -95,7 +97,7 @@ void bns_t::Report(dfloat time, int tstep){
     PlotFields(q, QCrit, std::string(fname));
     }
 
-    sprintf(fname1, "%s_%04d_%04d.txt", name1, mesh.rank, mesh.Np);
+    sprintf(fname1, "%s_%04d_%04d.txt", name1.c_str(), mesh.rank, mesh.Np);
     WriteFieldsTxt(q,std::string(fname1), time);
 
     // Calculate Drag & Lift Coeff.
