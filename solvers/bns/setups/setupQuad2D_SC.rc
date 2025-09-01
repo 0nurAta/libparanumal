@@ -5,7 +5,7 @@
 data/bnsUniform2D_SC.h
 
 [MESH FILE]
-../../meshes/boltzmannSquareCylinderPMLStructuredQuad2D_largeuniform.msh
+../../meshes/boltzmannSquareCylinderPMLStructuredQuad2D.msh
 
 [MESH DIMENSION]
 2
@@ -71,6 +71,6 @@ SARK4
 TRUE
 
 [OUTPUT FILE NAME]
-/media/onur/Elements/ONUR/SquareCylinder_Bns_Outputs/Quad/bns
-#bns
+#/media/onur/Elements/ONUR/SquareCylinder_Bns_Outputs/Quad/bns
+bns
 

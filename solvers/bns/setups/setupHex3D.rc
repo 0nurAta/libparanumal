@@ -6,7 +6,7 @@
 data/bnsUniform3D.h
 [MESH FILE]
 #PMLBOX
-../../meshes/sphere_v2_coarser.msh
+../../meshes/sphere_v2_coarse.msh
 
 [MESH DIMENSION]
 3
@@ -40,7 +40,8 @@ CUDA
 0
 
 [VISCOSITY]
-0.002
+0.00066666666
+#0.002
 
 [SPEED OF SOUND]
 1.0
@@ -67,7 +68,7 @@ SARK4
 0
 
 [FINAL TIME]
-1000
+400
 
 [OUTPUT INTERVAL]
 1
@@ -76,4 +77,5 @@ SARK4
 TRUE
 
 [OUTPUT FILE NAME]
+#bns
 bns

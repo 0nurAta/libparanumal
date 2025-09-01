@@ -82,20 +82,20 @@ void bns_t::Report(dfloat time, int tstep){
     PlotFields(q, QCrit, std::string(fname));
     }
 
-    if(time<(2100+1e-06)&&time>(2100-1e-06)){
+    if(time<(4000+1e-06)&&time>(4000-1e-06)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, QCrit, std::string(fname));
     }
 
-    if(time<(2200+1e-06)&&time>(2200-1e-06)){
+    if(time<(9000+1e-06)&&time>(9000-1e-06)){
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
     PlotFields(q, QCrit, std::string(fname));
     }
 
-    if(time<(2300+1e-06)&&time>(2300-1e-06)){
-    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
-    PlotFields(q, QCrit, std::string(fname));
-    }
+//    if(time<(2300+1e-06)&&time>(2300-1e-06)){
+//    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+//    PlotFields(q, QCrit, std::string(fname));
+//    }
 
     sprintf(fname1, "%s_%04d_%04d.txt", name1.c_str(), mesh.rank, mesh.Np);
     WriteFieldsTxt(q,std::string(fname1), time);
@@ -189,101 +189,75 @@ void bns_t::Report(dfloat time, int tstep){
   */
 }
 
-
 void bns_t::writeForces(dfloat time, int tstep, int frame){
 
-  dfloat rref=1.0, uref=0.1, vref=0.0, wref=0.0; 
+  dfloat rref=1.0, uref=0.1, vref=0.0, wref=0.0;
+  const dfloat velRef = (mesh.dim==2)
+      ? std::sqrt(uref*uref + vref*vref)
+      : std::sqrt(uref*uref + vref*vref + wref*wref);
 
-  const dfloat velRef = mesh.dim==2 ?   std::sqrt(uref*uref + vref*vref):
-                                        std::sqrt(uref*uref + vref*vref + wref*wref);
+  dfloat Aref = M_PI*0.25;
+  const dfloat rcp_dynp = 1.0/(0.5*rref*velRef*velRef*Aref);
 
-
-  //dfloat Aref = 2.;
-
-  // Frontal area of the sphere pi*D/4                                      
-  dfloat Aref = M_PI*0.25; 
-
-
-  const dfloat rcp_dynp = 1.0/(0.5*rref*velRef*velRef*Aref); 
-
-  if(mesh.dim==2 && mesh.rank==0){
+  if (mesh.rank==0) {
     printf("----------------------------------------------------------------------\n");
-       printf("Drag  \t\t Lift\n"); 
-
-  }else if(mesh.dim==3 && mesh.rank==0){
-    printf("----------------------------------------------------------------------\n"); 
-       printf("X-Forces\tY-Forces\tZ-Forces \n"); 
+    if (mesh.dim==2) printf("Drag  \t\t Lift\n");
+    else             printf("X-Forces\tY-Forces\tZ-Forces\n");
   }
 
-  // output field files
-  std::string name;
-  settings.getSetting("OUTPUT FILE NAME", name);
-  name = name + "analysis.dat";
-  // Open file
-  FILE *fp; 
-  fp = fopen(name.c_str(), "a");
-  if(frame==0 && mesh.rank==0){
-      if(mesh.dim==2){
-       fprintf(fp, "time\tDrag\tLift\n"); 
-      }else{
-       fprintf(fp, "time\tDrag\tLift\n"); 
-      }    
-  }
+  // ---- compute forces on all ranks (unchanged) ----
+  dlong Nentries = (mesh.dim==2)
+      ? mesh.Nelements*mesh.Np*(mesh.dim*mesh.dim)
+      : mesh.Nelements*mesh.Np*(mesh.dim*mesh.dim-3);
 
-   // Write out the integrated pressure and viscous forces
-  dlong Nentries = mesh.dim==2 ? mesh.Nelements*mesh.Np*(mesh.dim*mesh.dim):
-                                 mesh.Nelements*mesh.Np*(mesh.dim*mesh.dim-3); 
-  
-  // Compute all forces on all boundaries
   deviceMemory<dfloat> o_F = platform.reserve<dfloat>(Nentries);
-  
-    // compute volume contributions to gradients
-           forceKernel(mesh.Nelements,
-                       c,
-                       mesh.o_sgeo,
-                       mesh.o_sM,
-                       mesh.o_vmapM,
-                       mesh.o_EToB,
-                       mesh.o_x,
-                       mesh.o_y,
-                       mesh.o_z,
-                       o_q,
-                       o_F);
 
+  forceKernel(mesh.Nelements, c,
+              mesh.o_sgeo, mesh.o_sM, mesh.o_vmapM, mesh.o_EToB,
+              mesh.o_x, mesh.o_y, mesh.o_z,
+              o_q, o_F);
 
-    const dlong shift = mesh.Nelements*mesh.Np; 
-    if(mesh.dim==2){
-      const dfloat vFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F+0*shift , mesh.comm); 
-      const dfloat vFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F+1*shift , mesh.comm); 
-      const dfloat pFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F+2*shift , mesh.comm); 
-      const dfloat pFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F+3*shift , mesh.comm);
-      if(mesh.rank==0){
-          printf("%.4e \t %.4e \n", vFx+pFx, vFy+pFy);
-          fprintf(fp,"%.6e  %.6e %.6e \n", time, vFx+pFx, vFy+pFy);
-        }
-      }else{
+  const dlong shift = mesh.Nelements*mesh.Np;
 
-    const dfloat vFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 0*shift, mesh.comm); 
-    const dfloat vFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 1*shift, mesh.comm); 
-    const dfloat vFz = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 2*shift, mesh.comm); 
-    
-    const dfloat pFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 3*shift, mesh.comm); 
-    const dfloat pFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 4*shift, mesh.comm); 
-    const dfloat pFz = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 5*shift, mesh.comm); 
+  if (mesh.dim==2){
+    const dfloat vFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 0*shift, mesh.comm);
+    const dfloat vFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 1*shift, mesh.comm);
+    const dfloat pFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 2*shift, mesh.comm);
+    const dfloat pFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 3*shift, mesh.comm);
 
-    if(mesh.rank==0){
+    if (mesh.rank==0){
+      // open → write → close (rank 0 only)
+      std::string name; settings.getSetting("OUTPUT FILE NAME", name);
+      name += "analysis.dat";
+      FILE* fp = fopen(name.c_str(), "a");
 
-          printf("%.2e \t %.2e \t %.2e\n", vFx+pFx, vFy+pFy, vFz+pFz);
-          fprintf(fp, "%.6e %.2e %.2e %.2e\n", time, vFx+pFx, vFy+pFx, vFz+pFz);
-    } 
+      if (frame==0) fprintf(fp, "time\tDrag\tLift\n");
+      printf("%.4e \t %.4e \n", vFx+pFx, vFy+pFy);
+      fprintf(fp, "%.6e  %.6e %.6e\n", time, vFx+pFx, vFy+pFy);
+      fclose(fp);
+
+      printf("----------------------------------------------------------------------\n");
     }
 
-  
+  } else { // 3D
+    const dfloat vFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 0*shift, mesh.comm);
+    const dfloat vFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 1*shift, mesh.comm);
+    const dfloat vFz = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 2*shift, mesh.comm);
+    const dfloat pFx = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 3*shift, mesh.comm);
+    const dfloat pFy = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 4*shift, mesh.comm);
+    const dfloat pFz = rcp_dynp*platform.linAlg().sum(mesh.Nelements*mesh.Np, o_F + 5*shift, mesh.comm);
 
-  if(mesh.rank==0){
-    printf("----------------------------------------------------------------------\n");      
-}
-  
-  
-  fclose(fp); 
+    if (mesh.rank==0){
+      std::string name; settings.getSetting("OUTPUT FILE NAME", name);
+      name += "analysis.dat";
+      FILE* fp = fopen(name.c_str(), "a");
+
+      if (frame==0) fprintf(fp, "time\tFx\tFy\tFz\n"); // header fixed for 3D
+      printf("%.2e \t %.2e \t %.2e\n", vFx+pFx, vFy+pFy, vFz+pFz);
+      fprintf(fp, "%.6e %.2e %.2e %.2e\n", time, vFx+pFx, vFy+pFy, vFz+pFz);
+      fclose(fp);
+
+      printf("----------------------------------------------------------------------\n");
+    }
+  }
 }
