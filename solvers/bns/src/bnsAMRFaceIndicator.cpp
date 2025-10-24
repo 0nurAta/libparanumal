@@ -24,37 +24,39 @@ SOFTWARE.
 
 */
 
-@kernel void advectionSplitTri2D(const dlong Nelements,
-                                   @restrict const dfloat * Qold,
-                                   @restrict dfloat * Q,
-                                   @restrict const dlong * SplitFlag,
-                                   @restrict const dlong * IntFlag,
-                                   @restrict const dlong * PToC,
-                                   @restrict const dfloat * IM){ 
+#include "bns.hpp"
 
-    for(dlong e=0;e<Nelements;++e;@outer(0)){
 
-    for(int n=0;n<p_Np;++n;@inner(0)){
-      const dlong id = e*p_Np;
-      const dlong id_p = (e==PToC[4*e+0])? id:(PToC[4*e+0]*p_Np);
-      const dlong id_int = IntFlag[e]-1;
-      dfloat qn=0;
+void bns_t::LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag){
+  dlong const MAX_REFINEMENT_LEVEL = 1;
+  printf("Finding Longest Edge!\n");
 
-      if (IntFlag[e]!=0 && SplitFlag[e]==1)
-      {
-        //printf("IntFlag[e]_split=%d\n",IntFlag[e]);
-        //printf("id=%d,id_p=%d,IntFlag=%d\n",id,id_p,IntFlag[e]);
-        for(int i=0;i<p_Np;++i){
-        const dfloat Ii = IM[n+i*p_Np+id_int*p_Np*p_Np];
-             qn += Ii*Qold[id_p+i];         
-        }
-        //printf("Q[%d]=%f\n",id+n,Q[id+n]);
-      Q[id+n] = qn;
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+      if (RefFlag[e]==1 && EToRefLevel[e]<MAX_REFINEMENT_LEVEL)
+      {      
+      //int e = Ref[i];
+      const dlong id = e*mesh.Nverts; 
+              
+      // Find vertex locations of elements to be refined
+      const dfloat x0 = mesh.EX[id+0]; const dfloat x1 = mesh.EX[id+1]; const dfloat x2 = mesh.EX[id+2];    
+      const dfloat y0 = mesh.EY[id+0]; const dfloat y1 = mesh.EY[id+1]; const dfloat y2 = mesh.EY[id+2];
       
-      }                  
-    }
-  }
+      // Find Longest Edge
+      const dfloat mag0 = sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)); 
+      const dfloat mag1 = sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+      const dfloat mag2 = sqrt((x2-x0)*(x2-x0)+(y2-y0)*(y2-y0));
+      
+      dlong Face_id;
+      if (mag0 >= mag1 && mag0 >= mag2) {
+        Face_id = id+0;
+      } else if (mag1 >= mag2) {
+        Face_id = id+1;
+      } else {
+        Face_id = id+2;
+      }
+      FaceFlag[Face_id] = 1;        
+
+      }          
+  }           
 }
-
-
-

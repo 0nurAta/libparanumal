@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-@kernel void advectionSplitTri2D(const dlong Nelements,
+@kernel void bnsSplitTri2D(const dlong Nelements,
                                    @restrict const dfloat * Qold,
                                    @restrict dfloat * Q,
                                    @restrict const dlong * SplitFlag,
@@ -35,10 +35,15 @@ SOFTWARE.
     for(dlong e=0;e<Nelements;++e;@outer(0)){
 
     for(int n=0;n<p_Np;++n;@inner(0)){
-      const dlong id = e*p_Np;
-      const dlong id_p = (e==PToC[4*e+0])? id:(PToC[4*e+0]*p_Np);
+      const dlong id = e*p_Nfields*p_Np;
+      const dlong id_p = (e==PToC[4*e+0])? id:(PToC[4*e+0]*p_Nfields*p_Np);
       const dlong id_int = IntFlag[e]-1;
-      dfloat qn=0;
+      dfloat qn1=0.;
+      dfloat qn2=0.;
+      dfloat qn3=0.;
+      dfloat qn4=0.;
+      dfloat qn5=0.;
+      dfloat qn6=0.;
 
       if (IntFlag[e]!=0 && SplitFlag[e]==1)
       {
@@ -46,10 +51,20 @@ SOFTWARE.
         //printf("id=%d,id_p=%d,IntFlag=%d\n",id,id_p,IntFlag[e]);
         for(int i=0;i<p_Np;++i){
         const dfloat Ii = IM[n+i*p_Np+id_int*p_Np*p_Np];
-             qn += Ii*Qold[id_p+i];         
+             qn1 += Ii*Qold[id_p+i+p_Np*0];  
+             qn2 += Ii*Qold[id_p+i+p_Np*1];
+             qn3 += Ii*Qold[id_p+i+p_Np*2];
+             qn4 += Ii*Qold[id_p+i+p_Np*3];
+             qn5 += Ii*Qold[id_p+i+p_Np*4];
+             qn6 += Ii*Qold[id_p+i+p_Np*5];         
         }
         //printf("Q[%d]=%f\n",id+n,Q[id+n]);
-      Q[id+n] = qn;
+      Q[id+n+p_Np*0] = qn1;
+      Q[id+n+p_Np*1] = qn2;
+      Q[id+n+p_Np*2] = qn3;
+      Q[id+n+p_Np*3] = qn4;
+      Q[id+n+p_Np*4] = qn5;
+      Q[id+n+p_Np*5] = qn6;
       
       }                  
     }

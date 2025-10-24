@@ -53,8 +53,8 @@ void bns_t::Setup(platform_t& _platform, mesh_t& _mesh,
   PmlSetup();
 
   //setup timeStepper
-  dlong Nlocal = mesh.Nelements*mesh.Np*Nfields;
-  dlong Nhalo  = mesh.totalHaloPairs*mesh.Np*Nfields;
+  dlong Nlocal = 2*mesh.Nelements*mesh.Np*Nfields;
+  dlong Nhalo  = 2*mesh.totalHaloPairs*mesh.Np*Nfields;
 
   semiAnalytic = 0;
   if (settings.compareSetting("TIME INTEGRATOR","SARK4")
@@ -282,4 +282,21 @@ void bns_t::Setup(platform_t& _platform, mesh_t& _mesh,
                                                   "bnsPmlInitialCondition3D",
                                                   kernelInfo);
   }
+
+    // indicator kernel
+  fileName   = oklFilePrefix + "bnsIndicator" + suffix + oklFileSuffix;
+  kernelName = "bnsIndicatorTest" + suffix;
+
+  indicatorKernel = platform.buildKernel(fileName, kernelName,
+                                     kernelInfo);
+  // combine solution kernel
+  fileName   = oklFilePrefix + "bnsCombine" + suffix + oklFileSuffix;
+  kernelName = "bnsCombine" + suffix;
+  combineKernel = platform.buildKernel(fileName, kernelName,
+                                     kernelInfo);
+  // split solution kernel
+  fileName   = oklFilePrefix + "bnsSplit" + suffix + oklFileSuffix;
+  kernelName = "bnsSplit" + suffix;
+  splitKernel = platform.buildKernel(fileName, kernelName,
+                                   kernelInfo);
 }

@@ -24,18 +24,22 @@ SOFTWARE.
 
 */
 
-#include "advection.hpp"
+#include "bns.hpp"
 
 // Conduct Adaptive Mesh Refinement
-void advection_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
+void bns_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
 
 
 
     // Construct Refinement Flag
     deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(2*mesh.Nelements);
 
+    // Compute Vorticity for Indicator
+    deviceMemory<dfloat> o_Vort = platform.reserve<dfloat>(mesh.dim*mesh.Nelements*mesh.Np);
+    vorticityKernel(mesh.Nelements, mesh.o_vgeo, mesh.o_D, o_q, c, o_Vort);
+
     // Indicator 
-    indicatorKernel(mesh.Nelements, o_q, o_refFlag);
+    indicatorKernel(mesh.Nelements, o_Vort, o_refFlag);
     
     // Array holds element ids for refining. Holds some extra mem. for 
     // conforming
@@ -62,7 +66,7 @@ void advection_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
         Ncoarse = Ncoarse + 1;
       }   
     }
-
+    printf("_N_before=%d\n",mesh.Nelements*6*mesh.Np );
     printf("Number_of_Elements_to_be_refined= %d\n",Nrefine);
     printf("Number_of_Elements_to_be_coarsened= %d\n",Ncoarse);
 
@@ -75,8 +79,9 @@ void advection_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
     //Conform(refFlag,FaceFlag,Nrefine);
     // Refine
     Refine(q,refFlag,FaceFlag,Nrefine);
+    
+    *_N = mesh.Nelements*Nfields*mesh.Np;
+    printf("_N_after=%d\n",*_N );
 
-    *_N = mesh.Nelements*1*mesh.Np;
-
-    printf("=%d, =%d, =%d, \n",mesh.EToF[9],mesh.EToF[10],mesh.EToF[11] );
+    
 }

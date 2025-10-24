@@ -95,14 +95,38 @@ public:
 
   void rhsf(deviceMemory<dfloat>& o_q, deviceMemory<dfloat>& o_rhs, const dfloat time);
 
+  //// AMR ////
   void Amr(deviceMemory<dfloat>& o_q,dlong* _N);
 
-  void Conform(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Nrefine);
+  void Conform(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong Nrefine);
 
-  void Refine(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Nrefine);
+  void Refine(memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
+
+  void Bisect(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
+                                                                              memory<hlong>& EToV_new,
+                                                                              memory<int>& EToB_new,
+                                                                              memory<dlong>& SplitFlag,                                                                           
+                                                                              hlong* nn,
+                                                                              dlong RefLevel);
+
+  void Red(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
+                                                                              memory<hlong>& EToV_new,
+                                                                              memory<int>& EToB_new,
+                                                                              memory<dlong>& SplitFlag,                                                                           
+                                                                              hlong* nn);
+
+  void Blue(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
+                                                                              memory<hlong>& EToV_new,
+                                                                              memory<int>& EToB_new,
+                                                                              memory<dlong>& SplitFlag,                                                                           
+                                                                              hlong* nn);
+
 
   void Coarse(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Ncoarse);
 
+  void LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag);
+
+  //// AMR ENDS ////
   dfloat MaxWaveSpeed(deviceMemory<dfloat>& o_Q, const dfloat T);
 };
 

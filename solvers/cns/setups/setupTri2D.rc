@@ -2,7 +2,7 @@
 2.0
 
 [DATA FILE]
-data/cnsGaussian2D.h
+data/cnsUniform2D.h
 
 [MESH FILE]
 BOX

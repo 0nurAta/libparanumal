@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "advection.hpp"
+#include "bns.hpp"
 
 // 
-void advection_t::Coarse(memory<dfloat>& Q,
+void bns_t::Coarse(memory<dfloat>& Q,
                          memory<dlong>& RefFlag,
                          dlong Ncoarse){
 
@@ -443,10 +443,16 @@ void advection_t::Coarse(memory<dfloat>& Q,
                     
                     for (int n = 0; n < mesh.Np; ++n)
                     {
-                    dlong id = e*mesh.Np+n;
-                    dlong id_new = e_new*mesh.Np+n; 
+                    dlong id = e*6*mesh.Np;
+                    dlong id_new = e_new*6*mesh.Np; 
           
-                    Q[id_new] = Q[id];
+                    //Q[id_new] = Q[id];
+                    Q[id_new+n+mesh.Np*0] = Q[id+n+mesh.Np*0];
+                    Q[id_new+n+mesh.Np*1] = Q[id+n+mesh.Np*1];
+                    Q[id_new+n+mesh.Np*2] = Q[id+n+mesh.Np*2];
+                    Q[id_new+n+mesh.Np*3] = Q[id+n+mesh.Np*3];
+                    Q[id_new+n+mesh.Np*4] = Q[id+n+mesh.Np*4];
+                    Q[id_new+n+mesh.Np*5] = Q[id+n+mesh.Np*5];
                     
                     //printf("EToV=%lld\n",mesh.EToV[id]);
                     //printf("EX=%g\n",mesh.EX[id]);
@@ -480,9 +486,9 @@ void advection_t::Coarse(memory<dfloat>& Q,
         printf("del_vertex_count=%lld\n",del_vertex);
         
         mesh = mesh.SetupUpdate(Ncoarse);
-        
-        deviceMemory<dfloat> o_oldq = platform.reserve<dfloat>(mesh.Nelements*1*mesh.Np);
+        mesh.PmlSetup();
+        deviceMemory<dfloat> o_oldq = platform.reserve<dfloat>(mesh.Nelements*6*mesh.Np);
         o_oldq = platform.malloc<dfloat>(Q);
-        o_q.copyFrom(o_oldq, mesh.Nelements*1*mesh.Np, 0, properties_t("async", true));
+        o_q.copyFrom(o_oldq, mesh.Nelements*6*mesh.Np, 0, properties_t("async", true));
       }         
 }

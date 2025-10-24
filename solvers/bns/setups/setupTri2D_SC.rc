@@ -2,13 +2,10 @@
 2.0
 
 [DATA FILE]
-data/advectionTest2D.h
-#data/advectionLinear2D.h
+data/bnsUniform2D_SC.h
 
 [MESH FILE]
-../../meshes/advectionTest_unisotropic.msh
-#../../meshes/square.msh
-#BOX
+../../meshes/boltzmannSquareCylinderPMLUNStructuredQuad2D.msh
 
 [MESH DIMENSION]
 2
@@ -17,19 +14,20 @@ data/advectionTest2D.h
 3
 
 [BOX NX]
-10
+20
 
 [BOX NY]
-10
+20
 
 [BOX NZ]
-10
+20
 
 [BOX BOUNDARY FLAG]
--1
+1
 
 [POLYNOMIAL DEGREE]
-4
+3
+
 [THREAD MODEL]
 CUDA
 
@@ -39,6 +37,24 @@ CUDA
 [DEVICE NUMBER]
 0
 
+[VISCOSITY]
+0.0005
+
+[SPEED OF SOUND]
+1.0
+
+[PML PROFILE ORDER]
+4
+
+[PML SIGMAX MAX]
+50
+
+[PML SIGMAY MAX]
+50
+
+[PML INTEGRATION]
+COLLOCATION
+
 [TIME INTEGRATOR]
 LSERK4
 
@@ -46,13 +62,13 @@ LSERK4
 0
 
 [FINAL TIME]
-70
+1000
 
 [OUTPUT INTERVAL]
-1
+2
 
 [OUTPUT TO FILE]
 TRUE
 
 [OUTPUT FILE NAME]
-advection
+bns

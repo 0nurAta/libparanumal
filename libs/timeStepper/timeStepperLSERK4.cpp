@@ -118,11 +118,13 @@ void lserk4::Run(solver_t& solver,
       //save current state
       deviceMemory<dfloat> o_saveq = platform.reserve<dfloat>(N);
       deviceMemory<dfloat> o_savepmlq  = platform.reserve<dfloat>(Npml);
+      printf("here Npml=%d\n",o_pmlq.has_value() );
       o_saveq.copyFrom(o_q, N, 0, properties_t("async", true));
       if (o_pmlq.has_value()) {
         o_savepmlq.copyFrom(o_pmlq.value(), Npml, 0, properties_t("async", true));
+      
       }
-
+      
       stepdt = outputTime-time;
 
       //take small time step

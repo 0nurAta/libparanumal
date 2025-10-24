@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "advection.hpp"
+#include "bns.hpp"
 
 
-void advection_t::Refine(memory<dfloat>& Q,
+void bns_t::Refine(memory<dfloat>& Q,
                          memory<dlong>& RefFlag,
                          memory<dlong>& FaceFlag,
                          dlong Nrefine){
@@ -73,11 +73,12 @@ void advection_t::Refine(memory<dfloat>& Q,
   // Determine ids of new vertices and EToV
 
   hlong nn = 0 ; // Counts each refinement
+  
   printf("Refinement Start!\n");
   printf("Old Element Number=%d\n",mesh.Nelements);
 
   //Bisect(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn);
-  Bisect(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,1);
+  Bisect(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
     
       if (Nrefine!=0 && nn!=0)
       {
@@ -93,7 +94,7 @@ void advection_t::Refine(memory<dfloat>& Q,
         
         // Update mesh
         mesh = mesh.SetupUpdate(Nrefine);
-
+        mesh.PmlSetup();
         mesh.o_EToB = platform.malloc<int>(mesh.EToB);  // NEW!!
         o_PToC = platform.malloc<dlong>(PToC);  
         o_IntFlag = platform.malloc<dlong>(IntFlag);   

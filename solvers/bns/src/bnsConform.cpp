@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "advection.hpp"
+#include "bns.hpp"
 
 
-void advection_t::Conform(memory<dlong>& RefFlag,                        
+void bns_t::Conform(memory<dlong>& RefFlag,                        
                          memory<dlong>& FaceFlag,
                          dlong Nrefine){
 
