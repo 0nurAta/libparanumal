@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-#include "bns.hpp"
+#include "adaptivity.hpp"
 
 
 // Bisection

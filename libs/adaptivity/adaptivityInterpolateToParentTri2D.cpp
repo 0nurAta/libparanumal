@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-#include "mesh.hpp"
+#include "adaptivity.hpp"
 
 namespace libp {
 
@@ -270,7 +270,7 @@ namespace libp {
   
 }*/
 
-void mesh_t::InterpolateToParentTri2D(){
+void adaptivity_t::InterpolateToParentTri2D(){
 
   // Purpose: Constructing 3 different RM to interpolate solution from child to parent
   // where r_p = (IM^T*IM)^-1*IM^T*r_c

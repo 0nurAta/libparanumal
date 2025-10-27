@@ -24,10 +24,11 @@ SOFTWARE.
 
 */
 
-#include "bns.hpp"
+#include "adaptivity.hpp"
+#include "mesh.hpp"
 
-// 
-void bns_t::Coarse(memory<dfloat>& Q,
+namespace libp {
+void adaptivity_t::Coarse(deviceMemory<dfloat>& o_q,
                          memory<dlong>& RefFlag,
                          dlong Ncoarse){
 
@@ -401,10 +402,13 @@ void bns_t::Coarse(memory<dfloat>& Q,
 
 
         deviceMemory<dlong> o_combineFlag = platform.malloc<dlong>(CombineFlag);
+        deviceMemory<dfloat> o_qOld = platform.reserve<dfloat>(mesh.Nelements*6*mesh.Np);
+    
+        o_qOld.copyFrom(o_q, mesh.Nelements*6*mesh.Np, 0, properties_t("async", true));
 
-        deviceMemory<dfloat> o_Q = platform.malloc<dfloat>(Q);
-        combineKernel(mesh.Nelements,Ncoarse,o_Q ,o_q, o_combineFlag,o_IntFlag,o_PToC,mesh.o_RM);        
+        combineKernel(mesh.Nelements,Ncoarse,o_qOld ,o_q, o_combineFlag,o_IntFlag,o_PToC,o_RM);        
         
+        memory<dfloat> Q(mesh.Nelements*6*mesh.Np);
         o_q.copyTo(Q);
         
         e_new = 0; 
@@ -491,4 +495,5 @@ void bns_t::Coarse(memory<dfloat>& Q,
         o_oldq = platform.malloc<dfloat>(Q);
         o_q.copyFrom(o_oldq, mesh.Nelements*6*mesh.Np, 0, properties_t("async", true));
       }         
+}
 }

@@ -24,19 +24,23 @@ SOFTWARE.
 
 */
 
-#include "bns.hpp"
+#include "adaptivity.hpp"
 
+namespace libp {
 // Conduct Adaptive Mesh Refinement
-void bns_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
+void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
 
-
+    // Set Lists related to AMR
+    EToRefLevel.calloc(2*mesh.Nelements); //
+    PToC.calloc(2*mesh.Nelements*4); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+    IntFlag.calloc(2*mesh.Nelements); //
 
     // Construct Refinement Flag
     deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(2*mesh.Nelements);
 
     // Compute Vorticity for Indicator
     deviceMemory<dfloat> o_Vort = platform.reserve<dfloat>(mesh.dim*mesh.Nelements*mesh.Np);
-    vorticityKernel(mesh.Nelements, mesh.o_vgeo, mesh.o_D, o_q, c, o_Vort);
+    //vorticityKernel(mesh.Nelements, mesh.o_vgeo, mesh.o_D, o_q, c, o_Vort);
 
     // Indicator 
     indicatorKernel(mesh.Nelements, o_Vort, o_refFlag);
@@ -74,7 +78,7 @@ void bns_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
     o_q.copyTo(q);
 
     // Coarse
-    Coarse(q,refFlag,Ncoarse);
+    Coarse(o_q,refFlag,Ncoarse);
     // Conform
     //Conform(refFlag,FaceFlag,Nrefine);
     // Refine
@@ -84,4 +88,5 @@ void bns_t::Amr(deviceMemory<dfloat>& o_Q,dlong* _N){
     printf("_N_after=%d\n",*_N );
 
     
+}
 }

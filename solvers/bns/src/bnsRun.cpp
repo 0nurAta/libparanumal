@@ -54,11 +54,6 @@ void bns_t::Run(){
   dfloat cfl=1.0;
   settings.getSetting("CFL NUMBER", cfl);
 
-  // Set Lists related to AMR
-   EToRefLevel.calloc(2*mesh.Nelements); //
-   PToC.calloc(2*mesh.Nelements*4); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-   IntFlag.calloc(2*mesh.Nelements); //
-
   // set time step
   dfloat hmin = mesh.MinCharacteristicLength();
   dfloat vmax = MaxWaveSpeed();

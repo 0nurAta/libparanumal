@@ -355,14 +355,6 @@ class mesh_t {
 
   kernel_t MassMatrixKernel;
 
-  /*************************/
-  /* AMR                   */
-  /*************************/
-  //memory<dfloat> o_IM;
-  deviceMemory<dfloat> o_IM;
-  deviceMemory<dfloat> o_RM;
-
-
   mesh_t() = default;
   mesh_t(platform_t& _platform, meshSettings_t& _settings,
          comm_t _comm) {
@@ -741,10 +733,6 @@ class mesh_t {
   dfloat ElementCharacteristicLengthQuad2D(dlong e);
   dfloat ElementCharacteristicLengthTet3D(dlong e);
   dfloat ElementCharacteristicLengthHex3D(dlong e);
-
-  // Interpolation for AMR Setup
-  void InterpolateToChildTri2D();
-  void InterpolateToParentTri2D();
 
   /***************************************************************************/
   // Basic codes for generating nodes, polynomials, matrices, etc.

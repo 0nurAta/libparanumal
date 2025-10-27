@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-#include "bns.hpp"
+#include "adaptivity.hpp"
 
-
-void bns_t::Conform(memory<dlong>& RefFlag,                        
+namespace libp {
+void adaptivity_t::Conform(memory<dlong>& RefFlag,                        
                          memory<dlong>& FaceFlag,
                          dlong Nrefine){
 
@@ -267,4 +267,5 @@ void bns_t::Conform(memory<dlong>& RefFlag,
   Refine(q,RefFlag,Nrefine);*/
 
 printf("Conforming Done!, Nrefine=%d\n",Nrefine);        
+}
 }

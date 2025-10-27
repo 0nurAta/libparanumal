@@ -283,20 +283,5 @@ void bns_t::Setup(platform_t& _platform, mesh_t& _mesh,
                                                   kernelInfo);
   }
 
-    // indicator kernel
-  fileName   = oklFilePrefix + "bnsIndicator" + suffix + oklFileSuffix;
-  kernelName = "bnsIndicatorTest" + suffix;
 
-  indicatorKernel = platform.buildKernel(fileName, kernelName,
-                                     kernelInfo);
-  // combine solution kernel
-  fileName   = oklFilePrefix + "bnsCombine" + suffix + oklFileSuffix;
-  kernelName = "bnsCombine" + suffix;
-  combineKernel = platform.buildKernel(fileName, kernelName,
-                                     kernelInfo);
-  // split solution kernel
-  fileName   = oklFilePrefix + "bnsSplit" + suffix + oklFileSuffix;
-  kernelName = "bnsSplit" + suffix;
-  splitKernel = platform.buildKernel(fileName, kernelName,
-                                   kernelInfo);
 }

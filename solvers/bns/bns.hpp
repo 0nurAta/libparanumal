@@ -77,25 +77,12 @@ public:
   memory<dfloat> q;
   deviceMemory<dfloat> o_q;
 
-  memory<dlong> EToRefLevel;  // Element Refinement List: size->(Nelements)
-  memory<dlong> PToC;         // Parent to Child Connectivity: size->(Nelements*Nchild)
-  deviceMemory<dlong> o_PToC; 
-  //memory<dlong> CToP;         // Child to Parent Connectivity: size->(Nelements)
-  memory<dlong> IntFlag;      // Interpolation flag for identify different type of configurations: size->(Nelements)
-  deviceMemory<dlong> o_IntFlag; 
-  dlong Ncoarse=0;       // Coarsened element count
-
   memory<dfloat> pmlq;
   deviceMemory<dfloat> o_pmlq;
 
   kernel_t volumeKernel;
   kernel_t surfaceKernel;
   kernel_t relaxationKernel;
-
-    // AMR Kernels
-  kernel_t indicatorKernel;
-  kernel_t combineKernel;
-  kernel_t splitKernel;
 
   kernel_t pmlVolumeKernel;
   kernel_t pmlSurfaceKernel;
@@ -125,39 +112,6 @@ public:
   void PlotFields(memory<dfloat>& Q, memory<dfloat>& V, std::string fileName);
 
   dfloat MaxWaveSpeed();
-
-
-  //// AMR ////
-  void Amr(deviceMemory<dfloat>& o_q,dlong* _N);
-
-  void Conform(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong Nrefine);
-
-  void Refine(memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
-
-  void Bisect(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
-                                                                              memory<hlong>& EToV_new,
-                                                                              memory<int>& EToB_new,
-                                                                              memory<dlong>& SplitFlag,                                                                           
-                                                                              hlong* nn,
-                                                                              hlong* new_vertex,
-                                                                              dlong RefLevel);
-
-  void Red(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
-                                                                              memory<hlong>& EToV_new,
-                                                                              memory<int>& EToB_new,
-                                                                              memory<dlong>& SplitFlag,                                                                           
-                                                                              hlong* nn);
-
-  void Blue(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
-                                                                              memory<hlong>& EToV_new,
-                                                                              memory<int>& EToB_new,
-                                                                              memory<dlong>& SplitFlag,                                                                           
-                                                                              hlong* nn);
-
-
-  void Coarse(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Ncoarse);
-
-  void LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag);
 
   void rhsf_pml(deviceMemory<dfloat>& o_Q, deviceMemory<dfloat>& o_pmlQ,
                 deviceMemory<dfloat>& o_RHS, deviceMemory<dfloat>& o_pmlRHS, const dfloat T);

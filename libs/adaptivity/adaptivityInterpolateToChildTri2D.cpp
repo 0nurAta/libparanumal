@@ -24,11 +24,11 @@ SOFTWARE.
 
 */
 
-#include "mesh.hpp"
+#include "adaptivity.hpp"
 
 namespace libp {
 
-void mesh_t::InterpolateToChildTri2D(){
+void adaptivity_t::InterpolateToChildTri2D(){
 
   // Purpose: Constructing 6 different IM to interpolate solution from parent to child,
   
