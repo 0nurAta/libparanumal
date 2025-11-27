@@ -79,15 +79,22 @@ void adaptivity_t::Coarse(deviceMemory<dfloat>& o_q,
       ii = ii + 1;
     }
   }
+
+
     // Determine Triangles To be Coarsened
   hlong del_vertex = 0; // Counts each new_vertex that will be deleted
-  #pragma omp parallel for
+  //#pragma omp parallel for
   for (int i = 0; i < ii; ++i)
   {
+
       int e = Coar[i];
       const hlong id = e*mesh.Nverts; 
-      if (RefFlag[e]==-1 && EToRefLevel[e]>0 /*&& e==PToC[2*e+0]*/)
+       //printf("I am Here!!!!\n");  
+      //printf("refflag=%d\n",RefFlag[e]); 
+      if (RefFlag[e]==-1 && EToRefLevel[e]>0)
       {
+
+       
         //printf("e_conf=%d\n",PToC[2*e+0]*mesh.Np);
         hlong sib_e ;
         hlong sib0_id;
@@ -98,7 +105,7 @@ void adaptivity_t::Coarse(deviceMemory<dfloat>& o_q,
         hlong v0_sib;
         hlong v1_sib;
         hlong v2_sib;     
-  
+        
         // Extract Vertex Number of Elements to be Combined
         
        /* sib0_id = PToC[2*e+0]*mesh.Nverts; 
@@ -198,10 +205,12 @@ void adaptivity_t::Coarse(deviceMemory<dfloat>& o_q,
           }        
         } 
 
-      }         
+      }  
+
+        
   }
   
-
+  
   ii = 0;
   for (int e = 0; e < mesh.Nelements; ++e)
   {

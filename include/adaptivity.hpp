@@ -48,6 +48,13 @@ class adaptivity_t {
 
   adaptivity_t() = default;
 
+  // constructor
+  adaptivity_t(platform_t& _platform, 
+               mesh_t& _mesh,
+               adaptivitySettings_t& _settings) {
+    Setup(_platform, _mesh, _settings);
+  }
+
   platform_t platform;
   adaptivitySettings_t settings;
   properties_t props;
@@ -64,8 +71,11 @@ class adaptivity_t {
   deviceMemory<dfloat> o_RM;
 
   void adaptivity(deviceMemory<dfloat>& o_q,dlong* _N);
+  void Setup(platform_t& _platform, 
+             mesh_t& _mesh,
+             adaptivitySettings_t& _settings);
   void Conform(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong Nrefine);
-  void Refine(memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
+  void Refine(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
   void Bisect(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
                                                                               memory<hlong>& EToV_new,
                                                                               memory<int>& EToB_new,

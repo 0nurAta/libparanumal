@@ -40,6 +40,7 @@ int main(int argc, char **argv){
     platformSettings_t platformSettings(comm);
     meshSettings_t meshSettings(comm);
     advectionSettings_t advectionSettings(comm);
+    adaptivitySettings_t adaptivitySettings(comm);
 
     //load settings from file
     advectionSettings.parseFromFile(platformSettings, meshSettings, argv[1]);
@@ -51,11 +52,17 @@ int main(int argc, char **argv){
     meshSettings.report();
     advectionSettings.report();
 
+    
     // set up mesh
     mesh_t mesh(platform, meshSettings, comm);
+    
+    // set up adaptivity
+    adaptivity_t adaptivity(platform, mesh, adaptivitySettings);
 
     // set up advection solver
-    advection_t advection(platform, mesh, advectionSettings);
+    advection_t advection(platform, mesh, advectionSettings, adaptivity);
+
+
 
     // run
     advection.Run();

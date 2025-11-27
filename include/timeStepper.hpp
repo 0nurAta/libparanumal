@@ -66,6 +66,15 @@ class timeStepper_t {
 
   dfloat GetGamma();
 
+   // --- NEW: callback type and setter for the wrapper ---
+  using AmrCallback =
+    std::function<void(solver_t&,
+                       deviceMemory<dfloat>&,
+                       std::optional<deviceMemory<dfloat>>&,
+                       dlong&, dlong&)>;
+
+  void SetAmrCallback(AmrCallback cb);
+ 
  private:
   std::shared_ptr<TimeStepper::timeStepperBase_t> ts=nullptr;
 
@@ -85,6 +94,17 @@ public:
   dlong Npml;
 
   dfloat dt;
+
+  // ---- NEW: AMR callback type ----
+  // This is the generic signature the stepper can call.
+  using AmrCallback =
+    std::function<void(solver_t&,
+                       deviceMemory<dfloat>& o_q,
+                       std::optional<deviceMemory<dfloat>>& o_pmlq,
+                       dlong& N, dlong& Npml)>;
+
+  // Register the callback
+  void setAmrCallback(AmrCallback cb) { amrCallback = std::move(cb); }
 
   timeStepperBase_t(dlong Nelements, dlong NpmlElements, dlong NhaloElements,
                     int Np, int Nfields, int Npmlfields,
@@ -108,6 +128,10 @@ public:
     LIBP_FORCE_ABORT("GetGamma() not available in this Timestepper");
     return 0.0;
   }
+
+protected:
+  AmrCallback amrCallback;
+
 };
 
 /* Adams Bashforth, order 3 */

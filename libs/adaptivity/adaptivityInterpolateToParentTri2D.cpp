@@ -275,7 +275,7 @@ void adaptivity_t::InterpolateToParentTri2D(){
   // Purpose: Constructing 3 different RM to interpolate solution from child to parent
   // where r_p = (IM^T*IM)^-1*IM^T*r_c
   
-  Np = (N+1)*(N+2)/2; // Number of points in a triangular element
+  const dfloat Np = (mesh.N+1)*(mesh.N+2)/2; // Number of points in a triangular element
 
   const memory<dfloat>r_child(Np);
   const memory<dfloat>s_child(Np);
@@ -325,53 +325,53 @@ void adaptivity_t::InterpolateToParentTri2D(){
   // First: r_child = (r-1)/2
   for (int i = 0; i < Np; ++i)
   {
-    r_child[i] = 0.5*(r[i]-1);
-    s_child[i] = s[i];
+    r_child[i] = 0.5*(mesh.r[i]-1);
+    s_child[i] = mesh.s[i];
     
   }
-  InterpolationMatrixTri2D(N,r,s,r_child,s_child,R1);
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R1);
 
 
   //printf("r[%d]=%f,s[%d]=%f\n", r[i],s[i]);
   // Second: r_child = (r+1)/2
   for (int i = 0; i < Np; ++i)
   {
-    r_child[i] = 0.5*(r[i]-s[i]);
-    s_child[i] = s[i];
+    r_child[i] = 0.5*(mesh.r[i]-mesh.s[i]);
+    s_child[i] = mesh.s[i];
   }
-  InterpolationMatrixTri2D(N,r,s,r_child,s_child,R2);
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R2);
   
   // Third: s_child = (s-1)/2
   for (int i = 0; i < Np; ++i)
   {
-    s_child[i] = 0.5*(s[i]-1.0);
-    r_child[i] = r[i];
+    s_child[i] = 0.5*(mesh.s[i]-1.0);
+    r_child[i] = mesh.r[i];
   }
-  InterpolationMatrixTri2D(N,r,s,r_child,s_child,R3);
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R3);
   
   // Fourth: s_child = (s+1)/2
   for (int i = 0; i < Np; ++i)
   {
-    s_child[i] = 0.5*(s[i]-r[i]);
-    r_child[i] = r[i];
+    s_child[i] = 0.5*(mesh.s[i]-mesh.r[i]);
+    r_child[i] = mesh.r[i];
   }
-  InterpolationMatrixTri2D(N,r,s,r_child,s_child,R4);
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R4);
 
   // Fifth: 
   for (int i = 0; i < Np; ++i)
   {
-    r_child[i] = 0.5*(s[i]+1)+r[i];
-    s_child[i] = 0.5*(s[i]-1);
+    r_child[i] = 0.5*(mesh.s[i]+1)+mesh.r[i];
+    s_child[i] = 0.5*(mesh.s[i]-1);
   }
-  InterpolationMatrixTri2D(N,r,s,r_child,s_child,R5);
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R5);
 
   // Sixth: 
   for (int i = 0; i < Np; ++i)
   {
-    r_child[i] = 0.5*(r[i]-1.0);
-    s_child[i] = 0.5*(r[i]+1.0)+s[i];
+    r_child[i] = 0.5*(mesh.r[i]-1.0);
+    s_child[i] = 0.5*(mesh.r[i]+1.0)+mesh.s[i];
   }
-  InterpolationMatrixTri2D(N,r,s,r_child,s_child,R6);
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R6);
 
 
   /*for (int i = 0; i < Np*Np; ++i)

@@ -64,4 +64,9 @@ void timeStepper_t::assertInitialized() {
              ts==nullptr);
 }
 
+void timeStepper_t::SetAmrCallback(AmrCallback cb) {
+  assertInitialized();
+  ts->setAmrCallback(std::move(cb));
+}
+
 } //namespace libp

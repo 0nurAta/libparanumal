@@ -33,6 +33,7 @@ SOFTWARE.
 #include "solver.hpp"
 #include "timeStepper.hpp"
 #include "linAlg.hpp"
+#include "adaptivity.hpp"
 
 #define DADVECTION LIBP_DIR"/solvers/advection/"
 
@@ -51,20 +52,12 @@ class advection_t: public solver_t {
 public:
   mesh_t mesh;
   timeStepper_t timeStepper;
+  adaptivity_t adaptivity;
 
   ogs::halo_t traceHalo;
 
   memory<dfloat> q;
   deviceMemory<dfloat> o_q;
-
-  memory<dlong> EToRefLevel;  // Element Refinement List: size->(Nelements)
-  memory<dlong> PToC;         // Parent to Child Connectivity: size->(Nelements*Nchild)
-  deviceMemory<dlong> o_PToC; 
-  //memory<dlong> CToP;         // Child to Parent Connectivity: size->(Nelements)
-  memory<dlong> IntFlag;      // Interpolation flag for identify different type of configurations: size->(Nelements)
-  deviceMemory<dlong> o_IntFlag; 
-  dlong Ncoarse=0;       // Coarsened element count
-
 
   kernel_t volumeKernel;
   kernel_t surfaceKernel;
@@ -72,20 +65,15 @@ public:
   kernel_t initialConditionKernel;
   kernel_t maxWaveSpeedKernel;
 
-  // AMR Kernels
-  kernel_t indicatorKernel;
-  kernel_t combineKernel;
-  kernel_t splitKernel;
-
   advection_t() = default;
   advection_t(platform_t &_platform, mesh_t &_mesh,
-              advectionSettings_t& _settings) {
-    Setup(_platform, _mesh, _settings);
+              advectionSettings_t& _settings, adaptivity_t& _adaptivity) {
+    Setup(_platform, _mesh, _settings,_adaptivity);
   }
 
   //setup
   void Setup(platform_t& platform, mesh_t& mesh,
-             advectionSettings_t& settings);
+             advectionSettings_t& settings, adaptivity_t& adaptivity);
 
   void Run();
 
@@ -95,38 +83,6 @@ public:
 
   void rhsf(deviceMemory<dfloat>& o_q, deviceMemory<dfloat>& o_rhs, const dfloat time);
 
-  //// AMR ////
-  void Amr(deviceMemory<dfloat>& o_q,dlong* _N);
-
-  void Conform(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong Nrefine);
-
-  void Refine(memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
-
-  void Bisect(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
-                                                                              memory<hlong>& EToV_new,
-                                                                              memory<int>& EToB_new,
-                                                                              memory<dlong>& SplitFlag,                                                                           
-                                                                              hlong* nn,
-                                                                              dlong RefLevel);
-
-  void Red(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
-                                                                              memory<hlong>& EToV_new,
-                                                                              memory<int>& EToB_new,
-                                                                              memory<dlong>& SplitFlag,                                                                           
-                                                                              hlong* nn);
-
-  void Blue(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
-                                                                              memory<hlong>& EToV_new,
-                                                                              memory<int>& EToB_new,
-                                                                              memory<dlong>& SplitFlag,                                                                           
-                                                                              hlong* nn);
-
-
-  void Coarse(memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Ncoarse);
-
-  void LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag);
-
-  //// AMR ENDS ////
   dfloat MaxWaveSpeed(deviceMemory<dfloat>& o_Q, const dfloat T);
 };
 

@@ -107,11 +107,16 @@ void lserk4::Run(solver_t& solver,
   dfloat stepdt;
   while (time < end) {
     if (time<outputTime && time+dt>=outputTime) {
-    printf("N=%d\n",N );
-      //refine solution
-      dlong _N=N;
-      solver.Amr(o_q, &_N);
-      N = _N;
+if (amrCallback) {
+    amrCallback(solver, o_q, o_pmlq, N, Npml);
+    printf("_N_after_ts=%d\n",N );
+  } else {
+    // (optional fallback)
+    printf("I am in old implementation!\n");
+    dlong _N = N;
+    solver.Amr(o_q, &_N);
+    N = _N;
+  }
 }
     if (time<outputTime && time+dt>=outputTime) {
 

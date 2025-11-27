@@ -32,6 +32,9 @@ void advection_t::Report(dfloat time, int tstep){
 
   //compute q.M*q
   dlong Nentries = mesh.Nelements*mesh.Np;
+
+   
+        printf("New Element Number in report=%d\n",mesh.Nelements);
   deviceMemory<dfloat> o_Mq = platform.reserve<dfloat>(Nentries);
   mesh.MassMatrixApply(o_q, o_Mq);
 
@@ -62,7 +65,7 @@ void advection_t::Report(dfloat time, int tstep){
     //}
     //printf("%d\n",Nrefine);
 
-    //printf("mesh.Nelements=%d\n",mesh.Nelements );
+    printf("mesh.Nelements=%d\n",mesh.Nelements );
     // copy data back to host
     o_q.copyTo(q);
     /*for (int i = 0; i < mesh.Nelements*mesh.Np; ++i)

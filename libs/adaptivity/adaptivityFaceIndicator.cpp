@@ -26,9 +26,10 @@ SOFTWARE.
 
 #include "adaptivity.hpp"
 
+namespace libp {
 
-void bns_t::LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag){
-  dlong const MAX_REFINEMENT_LEVEL = 1;
+void adaptivity_t::LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag){ 
+ dlong const MAX_REFINEMENT_LEVEL = 1;
   printf("Finding Longest Edge!\n");
 
   for (int e = 0; e < mesh.Nelements; ++e)
@@ -60,3 +61,5 @@ void bns_t::LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag){
       }          
   }           
 }
+
+} // namespace libp

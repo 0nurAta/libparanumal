@@ -27,8 +27,9 @@ SOFTWARE.
 #include "advection.hpp"
 
 void advection_t::Setup(platform_t& _platform, mesh_t& _mesh,
-                         advectionSettings_t& _settings){
+                         advectionSettings_t& _settings,adaptivity_t& _adaptivity){
 
+  adaptivity = _adaptivity;
   platform = _platform;
   mesh = _mesh;
   comm = mesh.comm;
@@ -55,6 +56,17 @@ void advection_t::Setup(platform_t& _platform, mesh_t& _mesh,
     timeStepper.Setup<TimeStepper::lserk4>(mesh.Nelements,
                                            mesh.totalHaloPairs,
                                            mesh.Np, 1, platform, comm);
+    timeStepper.SetAmrCallback(
+      [this](solver_t& solver,
+             deviceMemory<dfloat>& o_q,
+             std::optional<deviceMemory<dfloat>>& o_pmlq,
+             dlong& N, dlong& Npml) {
+           dlong _N = N;
+        printf("I reached callback function!!\n");
+        adaptivity.adaptivity(o_q, &_N); 
+        N = _N;
+
+        });
   } else if (settings.compareSetting("TIME INTEGRATOR","DOPRI5")){
     timeStepper.Setup<TimeStepper::dopri5>(mesh.Nelements,
                                            mesh.totalHaloPairs,
@@ -120,23 +132,5 @@ void advection_t::Setup(platform_t& _platform, mesh_t& _mesh,
   kernelName = "advectionMaxWaveSpeed" + suffix;
 
   maxWaveSpeedKernel = platform.buildKernel(fileName, kernelName, kernelInfo);
-
-  // indicator kernel
-  fileName   = oklFilePrefix + "advectionIndicator" + suffix + oklFileSuffix;
-  kernelName = "advectionIndicatorTest" + suffix;
-
-  indicatorKernel = platform.buildKernel(fileName, kernelName,
-                                     kernelInfo);
-  // combine solution kernel
-  fileName   = oklFilePrefix + "advectionCombine" + suffix + oklFileSuffix;
-  kernelName = "advectionCombine" + suffix;
-  combineKernel = platform.buildKernel(fileName, kernelName,
-                                     kernelInfo);
-  // split solution kernel
-  fileName   = oklFilePrefix + "advectionSplit" + suffix + oklFileSuffix;
-  kernelName = "advectionSplit" + suffix;
-  splitKernel = platform.buildKernel(fileName, kernelName,
-                                   kernelInfo);
-
 
 }

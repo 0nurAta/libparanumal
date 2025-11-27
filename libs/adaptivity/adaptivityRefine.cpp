@@ -26,11 +26,13 @@ SOFTWARE.
 
 #include "adaptivity.hpp"
 
-
-void bns_t::Refine(memory<dfloat>& Q,
-                         memory<dlong>& RefFlag,
-                         memory<dlong>& FaceFlag,
-                         dlong Nrefine){
+namespace libp {
+void adaptivity_t::Refine(deviceMemory<dfloat>& o_q,
+                          memory<dfloat>& Q,
+                          memory<dlong>& RefFlag,
+                          memory<dlong>& FaceFlag,
+                          dlong Nrefine)
+{
 
   
   //dlong const MAX_REFINEMENT_LEVEL = 1;
@@ -94,7 +96,7 @@ void bns_t::Refine(memory<dfloat>& Q,
         
         // Update mesh
         mesh = mesh.SetupUpdate(Nrefine);
-        mesh.PmlSetup();
+        // mesh.PmlSetup();
         mesh.o_EToB = platform.malloc<int>(mesh.EToB);  // NEW!!
         o_PToC = platform.malloc<dlong>(PToC);  
         o_IntFlag = platform.malloc<dlong>(IntFlag);   
@@ -104,7 +106,7 @@ void bns_t::Refine(memory<dfloat>& Q,
         deviceMemory<dlong> o_splitFlag = platform.malloc<dlong>(SplitFlag);
         
         // Interpolate Solution
-        splitKernel(mesh.Nelements,o_Q ,o_q, o_splitFlag,o_IntFlag,o_PToC,mesh.o_IM);
+        splitKernel(mesh.Nelements,o_Q ,o_q, o_splitFlag,o_IntFlag,o_PToC,o_IM);
 
         printf("Refinement Done!, Nrefine=%d\n",Nrefine);
         printf("new_vertex_count=%lld\n",new_vertex);
@@ -113,4 +115,5 @@ void bns_t::Refine(memory<dfloat>& Q,
 
 
         
+}
 }

@@ -28,23 +28,17 @@ SOFTWARE.
 
 
 // Bisection
-//      /|\
-//     / | \
-//    /  |  \
-//   /   |   \
-//  /    |    \
-// /_____|_____\
-
-void bns_t::Bisect(memory<dlong>& RefFlag,
-                         memory<dlong>& FaceFlag,
-                         memory<dfloat>& EX_new,
-                         memory<dfloat>& EY_new,
-                         memory<hlong>& EToV_new,
-                         memory<int>& EToB_new,
-                         memory<dlong>& SplitFlag,
-                         hlong* NN,
-                         hlong* new_vertex,
-                         dlong RefLevel){
+namespace libp {
+void adaptivity_t::Bisect(memory<dlong>& RefFlag,
+                          memory<dlong>& FaceFlag,
+                          memory<dfloat>& EX_new,
+                          memory<dfloat>& EY_new,
+                          memory<hlong>& EToV_new,
+                          memory<int>& EToB_new,
+                          memory<dlong>& SplitFlag,
+                          hlong* NN,
+                          hlong* new_vertex,
+                          dlong RefLevel){
 
   hlong nv = 0 ; // new vertex
   hlong nn = 0 ; // Counts each refinement
@@ -224,22 +218,16 @@ void bns_t::Bisect(memory<dlong>& RefFlag,
 }
 
 
-// Red refinement of triangle i.e. regular refinement
-//      /\
-//     /  \
-//    /____\
-//   /\    /\
-//  /  \  /  \
-// /____\/____\
 
-void bns_t::Red(memory<dlong>& RefFlag,
-                         memory<dlong>& FaceFlag,
-                         memory<dfloat>& EX_new,
-                         memory<dfloat>& EY_new,
-                         memory<hlong>& EToV_new,
-                         memory<int>& EToB_new,
-                         memory<dlong>& SplitFlag,
-                         hlong* NN){
+// Red refinement of triangle i.e. regular refinement
+void adaptivity_t::Red(memory<dlong>& RefFlag,
+                       memory<dlong>& FaceFlag,
+                       memory<dfloat>& EX_new,
+                       memory<dfloat>& EY_new,
+                       memory<hlong>& EToV_new,
+                       memory<int>& EToB_new,
+                       memory<dlong>& SplitFlag,
+                       hlong* NN){
 
   hlong nn = 0 ; // Counts each refinement
   dlong const MAX_REFINEMENT_LEVEL = 1;
@@ -353,23 +341,16 @@ void bns_t::Red(memory<dlong>& RefFlag,
   }
 }   
 
+
 // Blue refinement of triangle i.e. double bisect
-//      /|\
-//     / | \
-//    /  |  \
-//   /   |  /\
-//  /    | /  \
-// /_____|/____\
-
-
-void bns_t::Blue(memory<dlong>& RefFlag,
-                         memory<dlong>& FaceFlag,
-                         memory<dfloat>& EX_new,
-                         memory<dfloat>& EY_new,
-                         memory<hlong>& EToV_new,
-                         memory<int>& EToB_new,
-                         memory<dlong>& SplitFlag,
-                         hlong* NN){
+void adaptivity_t::Blue(memory<dlong>& RefFlag,
+                        memory<dlong>& FaceFlag,
+                        memory<dfloat>& EX_new,
+                        memory<dfloat>& EY_new,
+                        memory<hlong>& EToV_new,
+                        memory<int>& EToB_new,
+                        memory<dlong>& SplitFlag,
+                        hlong* NN){
 
   hlong nn = 0 ; // Counts each refinement
   dlong const MAX_REFINEMENT_LEVEL = 1;
@@ -519,4 +500,9 @@ void bns_t::Blue(memory<dlong>& RefFlag,
       *NN = nn;             
   }    
         
+}
+     
+    
+        
+
 }

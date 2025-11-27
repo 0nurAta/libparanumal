@@ -28,8 +28,9 @@ SOFTWARE.
 
 namespace libp {
 // Conduct Adaptive Mesh Refinement
-void adaptivity_t::Setup(platform_t& _platform, adaptivitySettings_t& _settings,
-                   comm_t _comm){
+void adaptivity_t::Setup(platform_t& _platform, 
+                         mesh_t& _mesh,
+                         adaptivitySettings_t& _settings){
 
   platform = _platform;
   settings = _settings;
@@ -37,32 +38,63 @@ void adaptivity_t::Setup(platform_t& _platform, adaptivitySettings_t& _settings,
   props = platform.props();
 
 
-  comm = _comm.Dup();
-  rank = comm.rank();
-  size = comm.size();
+  //comm = _comm.Dup();
+  //rank = comm.rank();
+  //size = comm.size();
   
-    // compute interpolation matrices for amr
-InterpolateToChildTri2D();
-InterpolateToParentTri2D();
+  // compute interpolation matrices for amr
+  InterpolateToChildTri2D();
+  InterpolateToParentTri2D();
+
+  // Set Lists related to AMR
+  EToRefLevel.calloc(2*mesh.Nelements); //
+  PToC.calloc(2*mesh.Nelements*4); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  IntFlag.calloc(2*mesh.Nelements); //
 
 // OCCA build stuff
+
   properties_t kernelInfo = mesh.props; //copy base occa properties
 
+  int maxNodes = std::max(mesh.Np, (mesh.Nfp*mesh.Nfaces));
+  kernelInfo["defines/" "p_maxNodes"]= maxNodes;
+
+  int blockMax = 256;
+  if (platform.device.mode() == "CUDA") blockMax = 512;
+
+  int NblockV = std::max(1, blockMax/mesh.Np);
+  kernelInfo["defines/" "p_NblockV"] = NblockV;
+
+  int NblockS = std::max(1, blockMax/maxNodes);
+  kernelInfo["defines/" "p_NblockS"] = NblockS;
+
+  kernelInfo["defines/" "p_Nfields"] = 1;
+
+  // set kernel name suffix
+  std::string suffix = mesh.elementSuffix();
+
+  std::string oklFilePrefix = ADAPTIVITY_DIR "/okl/";
+  std::string oklFileSuffix = ".okl";
+
+  std::string fileName, kernelName;
+
     // indicator kernel
-fileName   = oklFilePrefix + "bnsIndicator" + suffix + oklFileSuffix;
-kernelName = "bnsIndicatorTest" + suffix;
-indicatorKernel = platform.buildKernel(fileName, kernelName,
-                                     kernelInfo);
+  fileName   = oklFilePrefix + "Indicator" + suffix + oklFileSuffix;
+  kernelName = "IndicatorTest" + suffix;
+  indicatorKernel = platform.buildKernel(fileName, kernelName,
+                                         kernelInfo);
   // combine solution kernel
-fileName   = oklFilePrefix + "bnsCombine" + suffix + oklFileSuffix;
-kernelName = "bnsCombine" + suffix;
-combineKernel = platform.buildKernel(fileName, kernelName,
-                                     kernelInfo);
+  fileName   = oklFilePrefix + "Combine" + suffix + oklFileSuffix;
+  kernelName = "Combine" + suffix;
+  combineKernel = platform.buildKernel(fileName, kernelName,
+                                       kernelInfo);
   // split solution kernel
-fileName   = oklFilePrefix + "bnsSplit" + suffix + oklFileSuffix;
-kernelName = "bnsSplit" + suffix;
-splitKernel = platform.buildKernel(fileName, kernelName,
-                                   kernelInfo);
+  fileName   = oklFilePrefix + "Split" + suffix + oklFileSuffix;
+  kernelName = "Split" + suffix;
+  splitKernel = platform.buildKernel(fileName, kernelName,
+                                     kernelInfo);
+
+
+
 }
     
 }

@@ -30,10 +30,7 @@ namespace libp {
 // Conduct Adaptive Mesh Refinement
 void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
 
-    // Set Lists related to AMR
-    EToRefLevel.calloc(2*mesh.Nelements); //
-    PToC.calloc(2*mesh.Nelements*4); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-    IntFlag.calloc(2*mesh.Nelements); //
+
 
     // Construct Refinement Flag
     deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(2*mesh.Nelements);
@@ -43,7 +40,7 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     //vorticityKernel(mesh.Nelements, mesh.o_vgeo, mesh.o_D, o_q, c, o_Vort);
 
     // Indicator 
-    indicatorKernel(mesh.Nelements, o_Vort, o_refFlag);
+    indicatorKernel(mesh.Nelements, o_q, o_refFlag);
     
     // Array holds element ids for refining. Holds some extra mem. for 
     // conforming
@@ -70,23 +67,24 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
         Ncoarse = Ncoarse + 1;
       }   
     }
-    printf("_N_before=%d\n",mesh.Nelements*6*mesh.Np );
+    printf("_N_before=%d\n",mesh.Nelements*1*mesh.Np );
     printf("Number_of_Elements_to_be_refined= %d\n",Nrefine);
     printf("Number_of_Elements_to_be_coarsened= %d\n",Ncoarse);
-
+    memory<dfloat> q(mesh.Np*2*mesh.Nelements);
     // copy data back to host
     o_q.copyTo(q);
 
     // Coarse
-    Coarse(o_q,refFlag,Ncoarse);
+    //Coarse(o_q,refFlag,Ncoarse);
+    
     // Conform
     //Conform(refFlag,FaceFlag,Nrefine);
     // Refine
-    Refine(q,refFlag,FaceFlag,Nrefine);
+    Refine(o_q,q,refFlag,FaceFlag,Nrefine);
     
-    *_N = mesh.Nelements*Nfields*mesh.Np;
+    *_N = mesh.Nelements*1*mesh.Np;
     printf("_N_after=%d\n",*_N );
-
+    printf("Number_of_Elements_after= %d\n",mesh.Nelements);
     
 }
 }

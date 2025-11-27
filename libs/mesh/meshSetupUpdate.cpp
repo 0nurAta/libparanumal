@@ -33,7 +33,6 @@ mesh_t mesh_t::SetupUpdate(int Nrefine){
 
   // Copy the existing object
   mesh_t mesh=*this;
-
   //just reuse the current mesh if the degree isnt changing.
   //if (Nf==N) return mesh;
 

@@ -79,7 +79,7 @@ endif
 endif
 
 #libraries
-ADVECTION_LIBP_LIBS=timeStepper mesh parAdogs ogs linAlg core
+ADVECTION_LIBP_LIBS=timeStepper adaptivity mesh parAdogs ogs linAlg core 
 
 #includes
 INCLUDES=${LIBP_INCLUDES} \

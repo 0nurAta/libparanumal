@@ -27,12 +27,8 @@ SOFTWARE.
 #include "adaptivity.hpp"
 
 namespace libp {
-void adaptivity_t::Conform(memory<dlong>& RefFlag,                        
-                         memory<dlong>& FaceFlag,
-                         dlong Nrefine){
-
-  
-  dlong const MAX_REFINEMENT_LEVEL = 1;
+void adaptivity_t::Conform(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine){ 
+dlong const MAX_REFINEMENT_LEVEL = 1;
   
   // Determine elements to be refined by using Refine Flag
   /*
@@ -268,4 +264,5 @@ void adaptivity_t::Conform(memory<dlong>& RefFlag,
 
 printf("Conforming Done!, Nrefine=%d\n",Nrefine);        
 }
+  
 }

@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-@kernel void advectionIndicatorTestTri2D(const dlong Nelements,
+@kernel void IndicatorTestTri2D(const dlong Nelements,
                                    @restrict const dfloat * Q, 
                                    @restrict dlong * RefFlag){ 
 
@@ -36,10 +36,10 @@ SOFTWARE.
         const dlong e = eo+es;
         if(e<Nelements){
 
-          const dlong id = e*p_Np + n;
-          const dfloat qn = Q[id];
-          Flag[es][n] = ((qn)>=0.08)? 1.0:0.0;
-          Flag[es][n] = ((qn)<=0.05)? -1.0:Flag[es][n];
+          const dlong id = e*p_Nfields*p_Np + n;
+          const dfloat qn = Q[id+1*p_Np]; // q1
+          Flag[es][n] = ((qn)>=0.06)? 1.0:0.0;
+          Flag[es][n] = ((qn)<=0.03)? -1.0:Flag[es][n];
 
         }
       }
@@ -66,5 +66,59 @@ SOFTWARE.
     }
 
   }
-}
+} 
 
+/*@kernel void IndicatorTestTri2D(const dlong Nelements,
+                                @restrict const dfloat * Q, 
+                                @restrict dlong * RefFlag){ 
+
+  // block partition of elements
+  for(dlong eo=0;eo<Nelements;eo+=p_NblockV;@outer(0)){
+    @shared dfloat Flag[p_NblockV][p_Np];
+    for(int es=0;es<p_NblockV;++es;@inner(1)){
+      for(int n=0;n<p_Np;++n;@inner(0)){
+        const dlong e = eo+es;
+        if(e<Nelements){
+
+          const dlong id = e*1*p_Np + n;
+          const dfloat qn = Q[id]; // Vorticity
+          Flag[es][n] = ((qn)>=0.02)? 1.0:0.0;
+          Flag[es][n] = ((qn)<=-0.02)? 1.0:Flag[es][n];
+          Flag[es][n] = ((qn)<=0.01 && (qn)>=-0.01)? -1.0:Flag[es][n];
+
+        }
+      }
+      
+    }
+
+  for(int es=0;es<p_NblockV;++es;@inner(1)){
+    dfloat rf = 0.0;
+    const dlong e = eo+es;
+    for(int n=0;n<p_Np;++n;@inner(0)){
+      if(e<Nelements){
+        if(n==0){
+          #pragma unroll p_Np
+          for(int i=0;i<p_Np;++i){
+          //const dlong id = e*p_Np + n;
+          rf += Flag[es][i];
+          }
+        }
+      }
+    //const dfloat Np = p_Np;
+    //const dfloat N = rf/Np;
+    const dlong N = rf/p_Np;
+    RefFlag[e] = N;
+    //if (N>0.99)
+    //{
+    //RefFlag[e] = 1.0;
+    //} else if (N<-0.7)
+    //{
+    //RefFlag[e] = -1.0;
+    //}
+    
+    }
+    
+    }
+
+  }
+}*/

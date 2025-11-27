@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-@kernel void bnsSplitTri2D(const dlong Nelements,
+@kernel void SplitTri2D(const dlong Nelements,
                                    @restrict const dfloat * Qold,
                                    @restrict dfloat * Q,
                                    @restrict const dlong * SplitFlag,
