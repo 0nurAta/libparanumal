@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-@kernel void CombineTri2D(const dlong Nelements,
+/*@kernel void CombineTri2D(const dlong Nelements,
                                    const dlong Ncoarse,
                                    @restrict dfloat * Qold,
                                    @restrict dfloat * Q,
@@ -113,6 +113,93 @@ SOFTWARE.
       Q[id_p+n+p_Np*4] = qn9+qn10;
       Q[id_p+n+p_Np*5] = qn11+qn12;
 
+      //printf("Q[%d]=%f\n",id_p+n,Q[id_p+n]); 
+      //printf("e=%f\n",qn);
+      }                  
+    }
+      }
+}
+*/
+
+ /*   for(int n=0;n<p_Np;++n;@inner(0)){
+      const dlong id = e*p_Np;
+
+      dfloat qn=0;
+
+      if (e!=PToC[2*e+0]&&IntFlag[e]!=0&&CombineFlag[e]==-1)
+      {
+      const dlong id_p = PToC[2*e+0]*p_Np;
+      const dlong id_int = IntFlag[e]-1;
+        //printf("id_p=%d\n",id);
+        for(int i=0;i<p_Np;++i){
+        const dfloat Ri = RM[n+i*p_Np+id_int*p_Np*p_Np];
+             qn += Ri*Qold[id+i];         
+        }
+      Q[id_p+n] += qn;
+      //printf("e=%f\n",qn);
+      }                  
+    }
+*/
+
+
+@kernel void CombineTri2D(const dlong Nelements,
+                                   const dlong Ncoarse,
+                                   @restrict dfloat * Qold,
+                                   @restrict dfloat * Q,
+                                   @restrict const dlong * CombineFlag,
+                                   @restrict const dlong * IntFlag,
+                                   @restrict const dlong * PToC,
+                                   @restrict const dfloat * RM){ 
+
+    for(dlong e=0;e<Nelements;++e;@outer(0)){
+
+    for(int n=0;n<p_Np;++n;@inner(0)){
+      const dlong id = e*p_Np;
+      const dlong id_p = (e==PToC[4*e+0])? id:(PToC[4*e+0]*p_Np);
+      //const dlong id_int = IntFlag[e]-1;
+      dfloat qn=0;
+
+      if (IntFlag[e]!=0&&CombineFlag[e]==-1)
+      {
+        //printf("id_p=%d,id_c=%d\n",id_p,PToC[2*e+1]*p_Np);
+      Q[id_p+n] = 0.0;
+      }                  
+    }
+  }
+
+    for(dlong e=0;e<Nelements;++e;@outer(0)){
+
+    for(int n=0;n<p_Np;++n;@inner(0)){
+      const dlong id = e*p_Np;
+      dfloat qn1=0.;
+      dfloat qn2=0.;
+
+      if (e==PToC[4*e+0] && IntFlag[e]!=0&&CombineFlag[e]==-1)
+      {
+      const dlong id_p = id;
+      const dlong id_c = PToC[4*e+1]*p_Np;
+      const dlong id_int_p = IntFlag[e]-1;
+      const dlong id_int_c = IntFlag[PToC[4*e+1]]-1;
+        //printf("id_p=%d,id_c=%d\n",id,id_c);
+      //printf("id_int_p=%d\n",id_int_p);
+      //printf("PToC[2*e+1]=%d\n",IntFlag[PToC[2*e+1]]);
+        for(int i=0;i<p_Np;++i){
+        const dfloat Ri = RM[2*n*p_Np+i+id_int_p*p_Np*p_Np];
+
+             qn1 += Ri*Qold[id+i];      
+             //printf("Q_C1[%d]=%f ,Ri[%d]=%f \n",id+i,Qold[id+i],2*n*p_Np+i+id_int_p*p_Np*p_Np,Ri); 
+        }
+       for(int i=0;i<p_Np;++i){
+        const dfloat Ri = RM[2*n*p_Np+i+id_int_p*p_Np*p_Np+p_Np];
+             qn2 += Ri*Qold[id_c+i]; 
+             //printf("Q_C2[%d]=%f\n",id_c+i,Qold[id_c+i]); 
+             //printf("Qold[id_c+i]=%f\n",Qold[id_c+i]);        
+            // printf("Ri[%d]=%f\n",2*n*p_Np+i+id_int_p*p_Np*p_Np+p_Np,Ri);   
+        }
+        //printf("qn1=%f\n",qn1); 
+        //printf("qn2=%f\n",qn2); 
+        
+      Q[id_p+n] = qn1+qn2;
       //printf("Q[%d]=%f\n",id_p+n,Q[id_p+n]); 
       //printf("e=%f\n",qn);
       }                  

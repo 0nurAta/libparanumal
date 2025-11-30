@@ -75,7 +75,7 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     o_q.copyTo(q);
 
     // Coarse
-    //Coarse(o_q,refFlag,Ncoarse);
+    //Coarse(o_q,q,refFlag,Ncoarse);
     
     // Conform
     //Conform(refFlag,FaceFlag,Nrefine);

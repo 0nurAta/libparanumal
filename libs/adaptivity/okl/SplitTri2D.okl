@@ -24,7 +24,7 @@ SOFTWARE.
 
 */
 
-@kernel void SplitTri2D(const dlong Nelements,
+/*@kernel void SplitTri2D(const dlong Nelements,
                                    @restrict const dfloat * Qold,
                                    @restrict dfloat * Q,
                                    @restrict const dlong * SplitFlag,
@@ -69,7 +69,38 @@ SOFTWARE.
       }                  
     }
   }
+}*/
+
+
+@kernel void SplitTri2D(const dlong Nelements,
+                                   @restrict const dfloat * Qold,
+                                   @restrict dfloat * Q,
+                                   @restrict const dlong * SplitFlag,
+                                   @restrict const dlong * IntFlag,
+                                   @restrict const dlong * PToC,
+                                   @restrict const dfloat * IM){ 
+
+    for(dlong e=0;e<Nelements;++e;@outer(0)){
+
+    for(int n=0;n<p_Np;++n;@inner(0)){
+      const dlong id = e*p_Np;
+      const dlong id_p = (e==PToC[4*e+0])? id:(PToC[4*e+0]*p_Np);
+      const dlong id_int = IntFlag[e]-1;
+      dfloat qn=0;
+
+      if (IntFlag[e]!=0 && SplitFlag[e]==1)
+      {
+        //printf("IntFlag[e]_split=%d\n",IntFlag[e]);
+        //printf("id=%d,id_p=%d,IntFlag=%d\n",id,id_p,IntFlag[e]);
+        for(int i=0;i<p_Np;++i){
+        const dfloat Ii = IM[n+i*p_Np+id_int*p_Np*p_Np];
+             qn += Ii*Qold[id_p+i];         
+        }
+        //printf("Q[%d]=%f\n",id+n,Q[id+n]);
+      Q[id+n] = qn;
+      
+      }                  
+    }
+  }
 }
-
-
 

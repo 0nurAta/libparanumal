@@ -65,7 +65,7 @@ void advection_t::Setup(platform_t& _platform, mesh_t& _mesh,
         printf("I reached callback function!!\n");
         adaptivity.adaptivity(o_q, &_N); 
         N = _N;
-
+        this->mesh = adaptivity.mesh;
         });
   } else if (settings.compareSetting("TIME INTEGRATOR","DOPRI5")){
     timeStepper.Setup<TimeStepper::dopri5>(mesh.Nelements,
@@ -133,4 +133,6 @@ void advection_t::Setup(platform_t& _platform, mesh_t& _mesh,
 
   maxWaveSpeedKernel = platform.buildKernel(fileName, kernelName, kernelInfo);
 
+
+  adaptivity.mesh = mesh;
 }

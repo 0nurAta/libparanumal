@@ -37,9 +37,9 @@ SOFTWARE.
         if(e<Nelements){
 
           const dlong id = e*p_Nfields*p_Np + n;
-          const dfloat qn = Q[id+1*p_Np]; // q1
-          Flag[es][n] = ((qn)>=0.06)? 1.0:0.0;
-          Flag[es][n] = ((qn)<=0.03)? -1.0:Flag[es][n];
+          const dfloat qn = Q[id]; // q1
+          Flag[es][n] = ((qn)>=0.08)? 1.0:0.0;
+          Flag[es][n] = ((qn)<=0.05)? -1.0:Flag[es][n];
 
         }
       }

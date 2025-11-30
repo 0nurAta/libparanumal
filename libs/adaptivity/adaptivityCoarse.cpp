@@ -29,6 +29,7 @@ SOFTWARE.
 
 namespace libp {
 void adaptivity_t::Coarse(deviceMemory<dfloat>& o_q,
+                         memory<dfloat>& Q,
                          memory<dlong>& RefFlag,
                          dlong Ncoarse){
 
@@ -411,13 +412,11 @@ void adaptivity_t::Coarse(deviceMemory<dfloat>& o_q,
 
 
         deviceMemory<dlong> o_combineFlag = platform.malloc<dlong>(CombineFlag);
-        deviceMemory<dfloat> o_qOld = platform.reserve<dfloat>(mesh.Nelements*6*mesh.Np);
-    
-        o_qOld.copyFrom(o_q, mesh.Nelements*6*mesh.Np, 0, properties_t("async", true));
+        
+        deviceMemory<dfloat> o_qOld = platform.malloc<dfloat>(Q);
 
         combineKernel(mesh.Nelements,Ncoarse,o_qOld ,o_q, o_combineFlag,o_IntFlag,o_PToC,o_RM);        
         
-        memory<dfloat> Q(mesh.Nelements*6*mesh.Np);
         o_q.copyTo(Q);
         
         e_new = 0; 
@@ -456,16 +455,10 @@ void adaptivity_t::Coarse(deviceMemory<dfloat>& o_q,
                     
                     for (int n = 0; n < mesh.Np; ++n)
                     {
-                    dlong id = e*6*mesh.Np;
-                    dlong id_new = e_new*6*mesh.Np; 
+                    dlong id = e*mesh.Np+n;
+                    dlong id_new = e_new*mesh.Np+n; 
           
-                    //Q[id_new] = Q[id];
-                    Q[id_new+n+mesh.Np*0] = Q[id+n+mesh.Np*0];
-                    Q[id_new+n+mesh.Np*1] = Q[id+n+mesh.Np*1];
-                    Q[id_new+n+mesh.Np*2] = Q[id+n+mesh.Np*2];
-                    Q[id_new+n+mesh.Np*3] = Q[id+n+mesh.Np*3];
-                    Q[id_new+n+mesh.Np*4] = Q[id+n+mesh.Np*4];
-                    Q[id_new+n+mesh.Np*5] = Q[id+n+mesh.Np*5];
+                    Q[id_new] = Q[id];
                     
                     //printf("EToV=%lld\n",mesh.EToV[id]);
                     //printf("EX=%g\n",mesh.EX[id]);
@@ -499,10 +492,10 @@ void adaptivity_t::Coarse(deviceMemory<dfloat>& o_q,
         printf("del_vertex_count=%lld\n",del_vertex);
         
         mesh = mesh.SetupUpdate(Ncoarse);
-        mesh.PmlSetup();
-        deviceMemory<dfloat> o_oldq = platform.reserve<dfloat>(mesh.Nelements*6*mesh.Np);
+        //mesh.PmlSetup();
+        deviceMemory<dfloat> o_oldq = platform.reserve<dfloat>(mesh.Nelements*1*mesh.Np);
         o_oldq = platform.malloc<dfloat>(Q);
-        o_q.copyFrom(o_oldq, mesh.Nelements*6*mesh.Np, 0, properties_t("async", true));
+        o_q.copyFrom(o_oldq, mesh.Nelements*1*mesh.Np, 0, properties_t("async", true));
       }         
 }
 }

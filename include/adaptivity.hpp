@@ -94,7 +94,7 @@ class adaptivity_t {
                                                                               memory<dlong>& SplitFlag,                                                                           
                                                                               hlong* nn);
 
-  void Coarse(deviceMemory<dfloat>& o_q,memory<dlong>& RefFlag, dlong Ncoarse);
+  void Coarse(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Ncoarse);
   void LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag);
 
   // Interpolation for AMR Setup

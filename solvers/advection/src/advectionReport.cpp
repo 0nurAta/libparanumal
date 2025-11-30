@@ -34,8 +34,9 @@ void advection_t::Report(dfloat time, int tstep){
   dlong Nentries = mesh.Nelements*mesh.Np;
 
    
-        printf("New Element Number in report=%d\n",mesh.Nelements);
+        
   deviceMemory<dfloat> o_Mq = platform.reserve<dfloat>(Nentries);
+  printf("New Element Number in report=%d\n",mesh.Nelements);
   mesh.MassMatrixApply(o_q, o_Mq);
 
   dfloat norm2 = sqrt(platform.linAlg().innerProd(Nentries, o_q, o_Mq, mesh.comm));
