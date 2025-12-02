@@ -74,9 +74,17 @@ class adaptivity_t {
   void Setup(platform_t& _platform, 
              mesh_t& _mesh,
              adaptivitySettings_t& _settings);
-  void Conform(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong Nrefine);
+  void Conform(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong& Nrefine);
+  void ConformLE(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong& Nrefine);
   void Refine(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
   void Bisect(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
+                                                                              memory<hlong>& EToV_new,
+                                                                              memory<int>& EToB_new,
+                                                                              memory<dlong>& SplitFlag,                                                                           
+                                                                              hlong* nn,
+                                                                              hlong* new_vertex,
+                                                                              dlong RefLevel);
+  void BisectNEW(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
                                                                               memory<hlong>& EToV_new,
                                                                               memory<int>& EToB_new,
                                                                               memory<dlong>& SplitFlag,                                                                           
@@ -99,6 +107,7 @@ class adaptivity_t {
 
   // Interpolation for AMR Setup
   void InterpolateToChildTri2D();
+  void InterpolateToChildTri2DLE();
   void InterpolateToParentTri2D();
 
   //  Kernels

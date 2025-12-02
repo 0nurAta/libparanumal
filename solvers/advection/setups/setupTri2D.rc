@@ -29,7 +29,7 @@ data/advectionTest2D.h
 -1
 
 [POLYNOMIAL DEGREE]
-3
+4
 
 [THREAD MODEL]
 CUDA
@@ -47,7 +47,7 @@ LSERK4
 0
 
 [FINAL TIME]
-60
+2
 
 [OUTPUT INTERVAL]
 1

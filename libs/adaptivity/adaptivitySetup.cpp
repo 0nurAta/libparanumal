@@ -43,7 +43,7 @@ void adaptivity_t::Setup(platform_t& _platform,
   //size = comm.size();
   
   // compute interpolation matrices for amr
-  InterpolateToChildTri2D();
+  InterpolateToChildTri2DLE();
   InterpolateToParentTri2D();
 
   // Set Lists related to AMR

@@ -67,21 +67,37 @@ void adaptivity_t::Refine(deviceMemory<dfloat>& o_q,
   hlong new_vertex = 0; // Counts each new_vertex that will be created
   
   // Determine elements to be refined by using Refine Flag
-  
+   hlong nn = 0 ; // Counts each refinement
   LongestEdge(FaceFlag,RefFlag);
-  Conform(RefFlag,FaceFlag,Nrefine);
-
+  //dlong* _Nrefine = &Nrefine;
+  //ConformLE(RefFlag,FaceFlag,Nrefine);
+  //LongestEdge(FaceFlag,RefFlag);
+  //Nrefine* = _Nrefine;
+  printf("Number_of_Elements_to_be_refined= %d\n",Nrefine);
+  
   // Refinement Loop
   // Determine ids of new vertices and EToV
 
-  hlong nn = 0 ; // Counts each refinement
+  //hlong nn = 0 ; // Counts each refinement
   
   printf("Refinement Start!\n");
   printf("Old Element Number=%d\n",mesh.Nelements);
 
-  //Bisect(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn);
-  Bisect(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+  //Bisect(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,2);
+  BisectNEW(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,2);
     
+  // Longest Edge Bisection Loop
+  /*dlong Nrefine_old = Nrefine;
+  dlong Counter = 1;
+  while (Counter) {
+  printf("Counter=%d\n", Counter);
+  Nrefine_old = Nrefine;
+  ConformLE(RefFlag,FaceFlag,Nrefine);
+  LongestEdge(FaceFlag,RefFlag);
+  BisectNEW(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,3);
+  Counter = Counter-1;
+  }*/
+
       if (Nrefine!=0 && nn!=0)
       {
         // Update mesh connectivity and physical coordinates
