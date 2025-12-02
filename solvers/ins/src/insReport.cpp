@@ -58,8 +58,9 @@ void ins_t::Report(dfloat time, int tstep){
     std::string name;
     settings.getSetting("OUTPUT FILE NAME", name);
     char fname[BUFSIZ];
-    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
-
-    PlotFields(u, p, Vort, std::string(fname));
+    //sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    sprintf(fname, "%s_%04d_%04d.txt", name.c_str(), mesh.rank, frame++);
+    WriteFieldsTxt(u, p, std::string(fname),time);
+    //PlotFields(u, p, Vort, std::string(fname));
   }
 }

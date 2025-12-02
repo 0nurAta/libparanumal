@@ -156,6 +156,8 @@ public:
 
   void PlotFields(memory<dfloat>& U, memory<dfloat>& P, memory<dfloat>& V, std::string fileName);
 
+  void WriteFieldsTxt(memory<dfloat>& U, memory<dfloat>& P, std::string fileName, dfloat time);
+
   dfloat MaxWaveSpeed(deviceMemory<dfloat>& o_U, const dfloat T);
 
   // void rhsf(deviceMemory<dfloat>& o_q, deviceMemory<dfloat>& o_rhs, const dfloat time);
