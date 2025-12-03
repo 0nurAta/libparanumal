@@ -110,13 +110,11 @@ dlong const MAX_REFINEMENT_LEVEL = 2;
           hlong const ne_id = mesh.EToE[id+0];
           
           if(RefFlag[ne_id]!=1 && mesh.EToE[id+0]!=-1){
-            if (mesh.EToV[id+2]!=mesh.EToV[ne_id+2])
+            if (mesh.EToV[id+2]!=mesh.EToV[ne_id*mesh.Nfaces+2])
             {
-             RefFlag[ne_id]=1;          
+             RefFlag[ne_id]=1;
              Nrefine++;
             }
- 
-             
                           //new_vertex--;
           }
         }
@@ -126,7 +124,7 @@ dlong const MAX_REFINEMENT_LEVEL = 2;
           hlong const ne_id = mesh.EToE[id+1];
           //printf("f1=%d,f2=%lld,f3=%d,\n",RefFlag[ne_id],mesh.EToE[id+1],EToRefLevel[ne_id]);
           if(RefFlag[ne_id]!=1 && mesh.EToE[id+1]!=-1){
-            if (mesh.EToV[id+2]!=mesh.EToV[ne_id+2])
+            if (mesh.EToV[id+2]!=mesh.EToV[ne_id*mesh.Nfaces+2])
             {
              RefFlag[ne_id]=1;          
              Nrefine++;
@@ -139,7 +137,7 @@ dlong const MAX_REFINEMENT_LEVEL = 2;
           hlong const ne_id = mesh.EToE[id+2];
           
           if(RefFlag[ne_id]!=1 && mesh.EToE[id+2]!=-1){
-            if (mesh.EToV[id+2]!=mesh.EToV[ne_id+2])
+            if (mesh.EToV[id+2]!=mesh.EToV[ne_id*mesh.Nfaces+2])
             {
              RefFlag[ne_id]=1;          
              Nrefine++;

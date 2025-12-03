@@ -81,7 +81,6 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     //Conform(refFlag,FaceFlag,Nrefine);
     // Refine
     Refine(o_q,q,refFlag,FaceFlag,Nrefine);
-    
     *_N = mesh.Nelements*1*mesh.Np;
     printf("_N_after=%d\n",*_N );
     printf("Number_of_Elements_after= %d\n",mesh.Nelements);

@@ -104,7 +104,7 @@ class adaptivity_t {
 
   void Coarse(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Ncoarse);
   void LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag);
-
+  void LongestEdgeNEW(memory<dlong>& FaceFlag, memory<dlong>& RefFlag);
   // Interpolation for AMR Setup
   void InterpolateToChildTri2D();
   void InterpolateToChildTri2DLE();

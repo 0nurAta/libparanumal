@@ -75,7 +75,7 @@ SOFTWARE.
 @kernel void SplitTri2D(const dlong Nelements,
                                    @restrict const dfloat * Qold,
                                    @restrict dfloat * Q,
-                                   @restrict const dlong * SplitFlag,
+                                   @restrict dlong * SplitFlag,
                                    @restrict const dlong * IntFlag,
                                    @restrict const dlong * PToC,
                                    @restrict const dfloat * IM){ 
@@ -98,6 +98,7 @@ SOFTWARE.
         }
         //printf("Q[%d]=%f\n",id+n,Q[id+n]);
       Q[id+n] = qn;
+      SplitFlag[e] = 0;
       
       }                  
     }

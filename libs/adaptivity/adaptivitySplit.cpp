@@ -50,6 +50,8 @@ void adaptivity_t::BisectNEW(memory<dlong>& RefFlag,
       
       //int e = Ref[i];
       const dlong id = e*mesh.Nverts; 
+      const dlong idf = e*mesh.Nfaces; 
+
       if (RefFlag[e]==1 && EToRefLevel[e]<level)
       {
         // Extract Vertex Number of Element to Refine
@@ -67,7 +69,7 @@ void adaptivity_t::BisectNEW(memory<dlong>& RefFlag,
         // Modify EToV with new vertex ids for bisection (3 different configurations)
         // & Calculate Physical Coordinates of new vertices
         // & Store boundary conditions of new faces
-        if (FaceFlag[id+0]==1)
+        if (FaceFlag[idf+0]==1)
         { 
 
           // Uniquely number new vertex 
@@ -139,7 +141,7 @@ void adaptivity_t::BisectNEW(memory<dlong>& RefFlag,
           nv++;
         }
 
-        if (FaceFlag[id+1]==1)
+        if (FaceFlag[idf+1]==1)
         {
           
           hlong Local_id = 1+mesh.Nfaces*e+mesh.Nnodes;
@@ -193,7 +195,7 @@ void adaptivity_t::BisectNEW(memory<dlong>& RefFlag,
           nv++;
         }
 
-        if (FaceFlag[id+2]==1)
+        if (FaceFlag[idf+2]==1)
         {
           hlong Local_id = 2+mesh.Nfaces*e+mesh.Nnodes;
           hlong Neigh_id = mesh.EToF[id+2]+mesh.Nfaces*mesh.EToE[id+2]+mesh.Nnodes;
