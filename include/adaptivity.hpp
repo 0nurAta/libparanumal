@@ -77,6 +77,7 @@ class adaptivity_t {
   void Conform(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong& Nrefine);
   void ConformLE(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong& Nrefine);
   void Refine(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
+  void RefineLE(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
   void Bisect(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
                                                                               memory<hlong>& EToV_new,
                                                                               memory<int>& EToB_new,

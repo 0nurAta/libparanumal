@@ -35,6 +35,7 @@ dlong const MAX_REFINEMENT_LEVEL = 2;
   {
       //int e = Ref[i];
       const dlong id = e*mesh.Nfaces; 
+      const dlong idf = e*mesh.Nfaces;
       
       if (RefFlag[e]==1 && EToRefLevel[e]<MAX_REFINEMENT_LEVEL)
       {
@@ -42,11 +43,11 @@ dlong const MAX_REFINEMENT_LEVEL = 2;
         if (FaceFlag[id+0]==1)
         {
 
-          hlong const ne_id = mesh.EToE[id+0];
+          hlong const ne_id = mesh.EToE[idf+0];
           
           if(RefFlag[ne_id]!=1 && mesh.EToE[id+0]!=-1 && EToRefLevel[ne_id]<MAX_REFINEMENT_LEVEL){
              RefFlag[ne_id]=1;
-             hlong const fN = mesh.EToF[id+0];
+             hlong const fN = mesh.EToF[idf+0];
              
              FaceFlag[ne_id*mesh.Nfaces+fN] = 1;
              Nrefine++; 
@@ -57,11 +58,11 @@ dlong const MAX_REFINEMENT_LEVEL = 2;
 
         if (FaceFlag[id+1]==1)
         {         
-          hlong const ne_id = mesh.EToE[id+1];
+          hlong const ne_id = mesh.EToE[idf+1];
           //printf("f1=%d,f2=%lld,f3=%d,\n",RefFlag[ne_id],mesh.EToE[id+1],EToRefLevel[ne_id]);
           if(RefFlag[ne_id]!=1 && mesh.EToE[id+1]!=-1 && EToRefLevel[ne_id]<MAX_REFINEMENT_LEVEL){
              RefFlag[ne_id]=1;
-             hlong const fN = mesh.EToF[id+1];
+             hlong const fN = mesh.EToF[idf+1];
              
              FaceFlag[ne_id*mesh.Nfaces+fN] = 1;
              Nrefine++; 
@@ -72,11 +73,11 @@ dlong const MAX_REFINEMENT_LEVEL = 2;
 
         if (FaceFlag[id+2]==1)
         {          
-          hlong const ne_id = mesh.EToE[id+2];
+          hlong const ne_id = mesh.EToE[idf+2];
           
           if(RefFlag[ne_id]!=1 && mesh.EToE[id+2]!=-1 && EToRefLevel[ne_id]<MAX_REFINEMENT_LEVEL){
              RefFlag[ne_id]=1;
-             hlong const fN = mesh.EToF[id+2];
+             hlong const fN = mesh.EToF[idf+2];
              
              FaceFlag[ne_id*mesh.Nfaces+fN] = 1; 
              Nrefine++;
@@ -96,20 +97,21 @@ void adaptivity_t::ConformLE(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dl
 dlong const MAX_REFINEMENT_LEVEL = 2;
   
     //#pragma omp parallel for
-  for (int e = 0; e < mesh.Nelements; ++e)
+  for (dlong e = 0; e < mesh.Nelements; ++e)
   {
       //int e = Ref[i];
-      const dlong id = e*mesh.Nfaces; 
-      
+      const dlong id = e*mesh.Nverts; 
+      const dlong idf = e*mesh.Nfaces;
+
       if (RefFlag[e]==1)
       {
 
-        if (FaceFlag[id+0]==1)
+        if (FaceFlag[idf+0]==1)
         {
 
-          hlong const ne_id = mesh.EToE[id+0];
+          hlong const ne_id = mesh.EToE[idf+0];
           
-          if(RefFlag[ne_id]!=1 && mesh.EToE[id+0]!=-1){
+          if(ne_id!=-1 && RefFlag[ne_id]!=1){
             if (mesh.EToV[id+2]!=mesh.EToV[ne_id*mesh.Nfaces+2])
             {
              RefFlag[ne_id]=1;
@@ -119,11 +121,11 @@ dlong const MAX_REFINEMENT_LEVEL = 2;
           }
         }
 
-        if (FaceFlag[id+1]==1)
+        if (FaceFlag[idf+1]==1)
         {         
-          hlong const ne_id = mesh.EToE[id+1];
+          hlong const ne_id = mesh.EToE[idf+1];
           //printf("f1=%d,f2=%lld,f3=%d,\n",RefFlag[ne_id],mesh.EToE[id+1],EToRefLevel[ne_id]);
-          if(RefFlag[ne_id]!=1 && mesh.EToE[id+1]!=-1){
+          if(ne_id!=-1 && RefFlag[ne_id]!=1){
             if (mesh.EToV[id+2]!=mesh.EToV[ne_id*mesh.Nfaces+2])
             {
              RefFlag[ne_id]=1;          
@@ -132,11 +134,11 @@ dlong const MAX_REFINEMENT_LEVEL = 2;
           }
         }
 
-        if (FaceFlag[id+2]==1)
+        if (FaceFlag[idf+2]==1)
         {          
-          hlong const ne_id = mesh.EToE[id+2];
+          hlong const ne_id = mesh.EToE[idf+2];
           
-          if(RefFlag[ne_id]!=1 && mesh.EToE[id+2]!=-1){
+          if(ne_id!=-1 && RefFlag[ne_id]!=1){
             if (mesh.EToV[id+2]!=mesh.EToV[ne_id*mesh.Nfaces+2])
             {
              RefFlag[ne_id]=1;          

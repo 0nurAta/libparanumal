@@ -67,6 +67,9 @@ void adaptivity_t::Refine(deviceMemory<dfloat>& o_q,
   hlong new_vertex = 0; // Counts each new_vertex that will be created
   
   // Determine elements to be refined by using Refine Flag
+  /*for (dlong i = 0; i < mesh.Nelements*mesh.Nfaces; ++i){
+  FaceFlag[i] = 0;}*/
+
    hlong nn = 0 ; // Counts each refinement
   LongestEdge(FaceFlag,RefFlag);
   //dlong* _Nrefine = &Nrefine;
@@ -82,7 +85,7 @@ void adaptivity_t::Refine(deviceMemory<dfloat>& o_q,
   
   printf("Refinement Start!\n");
   printf("Old Element Number=%d\n",mesh.Nelements);
-
+  printf("Old Element Number=%d\n",mesh.Nelements);
   //Bisect(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,2);
   BisectNEW(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
   printf("Bisect Done!\n");
@@ -96,7 +99,152 @@ void adaptivity_t::Refine(deviceMemory<dfloat>& o_q,
 
         // Update total number of elements and nodes
         mesh.Nelements = mesh.Nelements + nn;
+        mesh.Nnodes = mesh.Nnodes + new_vertex;
+        
+        // Update mesh
+        mesh = mesh.SetupUpdate(Nrefine);
+        // mesh.PmlSetup();
+        mesh.o_EToB = platform.malloc<int>(mesh.EToB);  // NEW!!
+        o_PToC = platform.malloc<dlong>(PToC);  
+        o_IntFlag = platform.malloc<dlong>(IntFlag);   
+      
+
+        deviceMemory<dfloat> o_Q = platform.malloc<dfloat>(Q);
+        deviceMemory<dlong> o_splitFlag = platform.malloc<dlong>(SplitFlag);
+        
+        // Interpolate Solution
+        splitKernel(mesh.Nelements,o_Q ,o_q, o_splitFlag,o_IntFlag,o_PToC,o_IM);
+        o_q.copyTo(Q);
+        printf("Refinement Done!, Nrefine=%d\n",Nrefine);
+        printf("new_vertex_count=%lld\n",new_vertex);
+        printf("New Element Number=%d\n",mesh.Nelements);
+      }
+
+  // Longest Edge Bisection Loop
+  /*dlong Nrefine_old = Nrefine;
+  dlong Counter = 1;
+  while (Counter) {
+    nn=0;
+  printf("Counter=%d\n", Counter);
+  Nrefine_old = Nrefine;
+  ConformLE(RefFlag,FaceFlag,Nrefine);
+  LongestEdge(FaceFlag,RefFlag);
+  BisectNEW(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,2);
+  printf("nn=%lld\n", nn);
+
+  Counter = Counter-1;
+        if (Nrefine!=0 && nn!=0)
+      {
+        //Reset nn
+
+        // Update mesh connectivity and physical coordinates
+        mesh.EToV = EToV_new;
+        mesh.EToB = EToB_new;
+        mesh.EX = EX_new;
+        mesh.EY = EY_new;
+
+        // Update total number of elements and nodes
+        mesh.Nelements = mesh.Nelements + nn;
         //mesh.Nnodes = mesh.Nnodes + new_vertex;
+        
+        // Update mesh
+        mesh = mesh.SetupUpdate(Nrefine);
+        // mesh.PmlSetup();
+        mesh.o_EToB = platform.malloc<int>(mesh.EToB);  // NEW!!
+        o_PToC = platform.malloc<dlong>(PToC);  
+        o_IntFlag = platform.malloc<dlong>(IntFlag);   
+      
+
+        deviceMemory<dfloat> o_Q = platform.malloc<dfloat>(Q);
+        deviceMemory<dlong> o_splitFlag = platform.malloc<dlong>(SplitFlag);
+        
+        // Interpolate Solution
+        splitKernel(mesh.Nelements,o_Q ,o_q, o_splitFlag,o_IntFlag,o_PToC,o_IM);
+
+        printf("Refinement Done!, Nrefine=%d\n",Nrefine);
+        printf("new_vertex_count=%lld\n",new_vertex);
+        printf("New Element Number=%d\n",mesh.Nelements);
+      }
+  }*/
+        
+}
+
+
+void adaptivity_t::RefineLE(deviceMemory<dfloat>& o_q,
+                          memory<dfloat>& Q,
+                          memory<dlong>& RefFlag,
+                          memory<dlong>& FaceFlag,
+                          dlong Nrefine)
+{
+
+  // Longest Edge Refinement algorithm by Rivara 1984
+  // Algorithm 2
+  
+  //dlong const MAX_REFINEMENT_LEVEL = 1;
+
+  // Store old info & Allocate new arrays
+  // Element to vertex & Element to boundary connectivity 
+
+  memory<hlong>EToV_new(2*mesh.Nelements*mesh.Nverts);
+  memory<int>EToB_new(2*mesh.Nelements*mesh.Nverts);
+
+  // Vertex physical coordinates
+  memory<dfloat>EX_new(2*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EY_new(2*mesh.Nelements*mesh.Nverts);
+  
+  // A flag to be used in split kernel, initialized with zero values.
+  memory<dlong> SplitFlag(2*mesh.Nelements,0);
+
+  // Copy old Element to Vertex Connectivity to the New One
+  #pragma omp parallel for
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    for (int n = 0; n < 3; ++n)
+    {
+    const dlong id = e*mesh.Nverts+n;
+    EToB_new[id] = mesh.EToB[id];
+    EToV_new[id] = mesh.EToV[id];
+    EX_new[id] = mesh.EX[id]; 
+    EY_new[id] = mesh.EY[id]; 
+    }
+  }
+  
+  hlong new_vertex = 0; // Counts each new_vertex that will be created
+  
+  // Determine elements to be refined by using Refine Flag
+  /*for (dlong i = 0; i < mesh.Nelements*mesh.Nfaces; ++i){
+  FaceFlag[i] = 0;}*/
+
+   hlong nn = 0 ; // Counts each refinement
+  LongestEdge(FaceFlag,RefFlag);
+  //dlong* _Nrefine = &Nrefine;
+  ConformLE(RefFlag,FaceFlag,Nrefine);
+  LongestEdge(FaceFlag,RefFlag);
+  //Nrefine* = _Nrefine;
+  printf("Number_of_Elements_to_be_refined= %d\n",Nrefine);
+  
+  // Refinement Loop
+  // Determine ids of new vertices and EToV
+
+  //hlong nn = 0 ; // Counts each refinement
+  
+  printf("Refinement Start!\n");
+  printf("Old Element Number=%d\n",mesh.Nelements);
+  printf("Old Element Number=%d\n",mesh.Nelements);
+  //Bisect(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,2);
+  BisectNEW(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+  printf("Bisect Done!\n");
+      if (Nrefine!=0 && nn!=0)
+      {
+        // Update mesh connectivity and physical coordinates
+        mesh.EToV = EToV_new;
+        mesh.EToB = EToB_new;
+        mesh.EX = EX_new;
+        mesh.EY = EY_new;
+
+        // Update total number of elements and nodes
+        mesh.Nelements = mesh.Nelements + nn;
+        mesh.Nnodes = mesh.Nnodes + new_vertex;
         
         // Update mesh
         mesh = mesh.SetupUpdate(Nrefine);

@@ -45,7 +45,7 @@ void adaptivity_t::BisectNEW(memory<dlong>& RefFlag,
   hlong nn = 0 ; // Counts each refinement
   dlong const level = RefLevel;
 
-  for (int e = 0; e < mesh.Nelements; ++e)
+  for (dlong e = 0; e < mesh.Nelements; ++e)
   {
       
       //int e = Ref[i];
@@ -73,10 +73,10 @@ void adaptivity_t::BisectNEW(memory<dlong>& RefFlag,
         { 
 
           // Uniquely number new vertex 
-          hlong Local_id = 0+mesh.Nfaces*e+mesh.Nnodes;
+          hlong Local_id = 0+idf+mesh.Nnodes;
 
           // To have unique global vertex number
-          hlong Neigh_id = mesh.EToF[id+0]+mesh.Nfaces*mesh.EToE[id+0]+mesh.Nnodes;
+          hlong Neigh_id = mesh.EToF[idf+0]+mesh.Nfaces*mesh.EToE[idf+0]+mesh.Nnodes;
           hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
           
           // 1st child vertex ids
@@ -144,8 +144,9 @@ void adaptivity_t::BisectNEW(memory<dlong>& RefFlag,
         if (FaceFlag[idf+1]==1)
         {
           
-          hlong Local_id = 1+mesh.Nfaces*e+mesh.Nnodes;
-          hlong Neigh_id = mesh.EToF[id+1]+mesh.Nfaces*mesh.EToE[id+1]+mesh.Nnodes;
+          hlong Local_id = 1+idf+mesh.Nnodes;
+
+          hlong Neigh_id = mesh.EToF[idf+1]+mesh.Nfaces*mesh.EToE[idf+1]+mesh.Nnodes;
           hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
           
           EToV_new[id+2] = newNode;
@@ -197,8 +198,9 @@ void adaptivity_t::BisectNEW(memory<dlong>& RefFlag,
 
         if (FaceFlag[idf+2]==1)
         {
-          hlong Local_id = 2+mesh.Nfaces*e+mesh.Nnodes;
-          hlong Neigh_id = mesh.EToF[id+2]+mesh.Nfaces*mesh.EToE[id+2]+mesh.Nnodes;
+          hlong Local_id = 2+idf+mesh.Nnodes;
+          
+          hlong Neigh_id = mesh.EToF[idf+2]+mesh.Nfaces*mesh.EToE[idf+2]+mesh.Nnodes;
           hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
           
           EToV_new[id+2] = newNode;
@@ -246,10 +248,10 @@ void adaptivity_t::BisectNEW(memory<dlong>& RefFlag,
           nv++;
           } 
       }
-      *new_vertex = nv;
-      *NN = nn;             
-  }   
         
+  }   
+      *new_vertex = nv;
+      *NN = nn;      
 }
 
 
