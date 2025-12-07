@@ -74,10 +74,16 @@ class adaptivity_t {
   void Setup(platform_t& _platform, 
              mesh_t& _mesh,
              adaptivitySettings_t& _settings);
-  void Conform(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong& Nrefine);
+  void Conform(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag,dlong& Nrefine);
   void ConformLE(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong& Nrefine);
+  void ConformByVertex(memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag, dlong& Nrefine);
+  void ConformByID(memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,memory<dlong>& new_v_id, dlong& Nrefine);
+  
   void Refine(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
   void RefineLE(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
+  void RefinebyID(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& ConfFlag,memory<dlong>& FaceFlag, dlong Nrefine);
+  void RefinebyID2(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& ConfFlag,memory<dlong>& FaceFlag, dlong Nrefine, dlong Nelements_old);
+  
   void Bisect(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
                                                                               memory<hlong>& EToV_new,
                                                                               memory<int>& EToB_new,
@@ -85,7 +91,27 @@ class adaptivity_t {
                                                                               hlong* nn,
                                                                               hlong* new_vertex,
                                                                               dlong RefLevel);
-  void BisectNEW(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
+  void BisectNEW(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dlong>& ConfFlag, 
+                                                                              memory<dfloat>& EX_new, 
+                                                                              memory<dfloat>& EY_new,
+                                                                              memory<hlong>& EToV_new,
+                                                                              memory<int>& EToB_new,
+                                                                              memory<dlong>& SplitFlag,                                                                           
+                                                                              hlong* nn,
+                                                                              hlong* new_vertex,
+                                                                              dlong RefLevel);
+  void BisectbyID(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dlong>& ConfFlag, 
+                                                                              memory<dfloat>& EX_new, 
+                                                                              memory<dfloat>& EY_new,
+                                                                              memory<hlong>& EToV_new,
+                                                                              memory<int>& EToB_new,
+                                                                              memory<dlong>& SplitFlag,                                                                           
+                                                                              hlong* nn,
+                                                                              hlong* new_vertex,
+                                                                              dlong RefLevel);
+  void BisectbyID2(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dlong>& ConfFlag, memory<dlong>& new_v_id,
+                                                                              memory<dfloat>& EX_new, 
+                                                                              memory<dfloat>& EY_new,
                                                                               memory<hlong>& EToV_new,
                                                                               memory<int>& EToB_new,
                                                                               memory<dlong>& SplitFlag,                                                                           

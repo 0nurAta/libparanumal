@@ -48,13 +48,15 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
                                     
     // A flag to address that which face will be used for bisection
     memory<dlong> FaceFlag(mesh.Nfaces*mesh.Nelements,0);
-    
-    memory<dlong> refFlag(2*mesh.Nelements);
+    memory<dlong> refFlag(2*mesh.Nelements,0);
+    memory<dlong> confFlag(2*mesh.Nelements,0);
     o_refFlag.copyTo(refFlag); // copy data back to host
-    
+    refFlag.copyTo(confFlag);
     dlong Nrefine = 0;   
     dlong Ncoarse = 0; 
     
+    dlong Nelements_old = mesh.Nelements ;
+
     for (int e = 0; e < mesh.Nelements; ++e)
     {
       if (refFlag[e]==1)
@@ -80,7 +82,8 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     // Conform
     //Conform(refFlag,FaceFlag,Nrefine);
     // Refine
-    Refine(o_q,q,refFlag,FaceFlag,Nrefine);
+    RefinebyID(o_q,q,refFlag,confFlag,FaceFlag,Nrefine);
+    RefinebyID2(o_q,q,refFlag,confFlag,FaceFlag,Nrefine,Nelements_old);
     *_N = mesh.Nelements*1*mesh.Np;
     printf("_N_after=%d\n",*_N );
     printf("Number_of_Elements_after= %d\n",mesh.Nelements);
