@@ -78,6 +78,17 @@ class adaptivity_t {
   void ConformLE(memory<dlong>& RefFlag,  memory<dlong>& FaceFlag, dlong& Nrefine);
   void ConformByVertex(memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag, dlong& Nrefine);
   void ConformByID(memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,memory<dlong>& new_v_id, dlong& Nrefine);
+  void ConformByBisect(memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
+                                                                        memory<dlong>& new_v_id, 
+                                                                        dlong& Nrefine,
+                                                                        memory<dfloat>& EX_new, 
+                                                                        memory<dfloat>& EY_new,
+                                                                        memory<hlong>& EToV_new,
+                                                                        memory<int>& EToB_new,
+                                                                        memory<dlong>& SplitFlag,                                                                           
+                                                                        hlong* nn,
+                                                                        hlong* new_vertex,
+                                                                        dlong RefLevel);
   
   void Refine(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
   void RefineLE(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
@@ -110,6 +121,33 @@ class adaptivity_t {
                                                                               hlong* new_vertex,
                                                                               dlong RefLevel);
   void BisectbyID2(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dlong>& ConfFlag, memory<dlong>& new_v_id,
+                                                                              memory<dfloat>& EX_new, 
+                                                                              memory<dfloat>& EY_new,
+                                                                              memory<hlong>& EToV_new,
+                                                                              memory<int>& EToB_new,
+                                                                              memory<dlong>& SplitFlag,                                                                           
+                                                                              hlong* nn,
+                                                                              hlong* new_vertex,
+                                                                              dlong RefLevel);
+  void BisectLocal0(dlong e,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dlong>& ConfFlag, memory<dlong>& new_v_id,
+                                                                              memory<dfloat>& EX_new, 
+                                                                              memory<dfloat>& EY_new,
+                                                                              memory<hlong>& EToV_new,
+                                                                              memory<int>& EToB_new,
+                                                                              memory<dlong>& SplitFlag,                                                                           
+                                                                              hlong* nn,
+                                                                              hlong* new_vertex,
+                                                                              dlong RefLevel);
+  void BisectLocal1(dlong e,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dlong>& ConfFlag, memory<dlong>& new_v_id,
+                                                                              memory<dfloat>& EX_new, 
+                                                                              memory<dfloat>& EY_new,
+                                                                              memory<hlong>& EToV_new,
+                                                                              memory<int>& EToB_new,
+                                                                              memory<dlong>& SplitFlag,                                                                           
+                                                                              hlong* nn,
+                                                                              hlong* new_vertex,
+                                                                              dlong RefLevel);
+  void BisectLocal2(dlong e,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dlong>& ConfFlag, memory<dlong>& new_v_id,
                                                                               memory<dfloat>& EX_new, 
                                                                               memory<dfloat>& EY_new,
                                                                               memory<hlong>& EToV_new,

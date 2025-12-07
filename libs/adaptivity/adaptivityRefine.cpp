@@ -538,11 +538,11 @@ void adaptivity_t::RefinebyID2(deviceMemory<dfloat>& o_q,
   // Determine ids of new vertices and EToV
 
   //hlong nn = 0 ; // Counts each refinement
-  
-  ConformByID(RefFlag,ConfFlag,FaceFlag,new_v_id,Nrefine);
-  printf("Bisect Start! Nrefine=%d, nn=%d\n", Nrefine,nn);
-  BisectbyID2(RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
-  printf("Bisect Done! Nrefine=%d, nn=%d\n", Nrefine,nn);
+  ConformByBisect(RefFlag,ConfFlag,FaceFlag,new_v_id,Nrefine,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+  //ConformByID(RefFlag,ConfFlag,FaceFlag,new_v_id,Nrefine);
+  //printf("Bisect Start! Nrefine=%d, nn=%d\n", Nrefine,nn);
+  //BisectbyID2(RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+  printf("2nd Bisect Done! Nrefine=%d, nn=%d\n", Nrefine,nn);
   //dlong const count = mesh.Nelements+nn-Nelements_old;
 
       if (Nrefine!=0 && nn!=0)

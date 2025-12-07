@@ -296,4 +296,98 @@ printf("Conforming Start!, Nrefine=%d\n",Nrefine);
 printf("Conforming Done!, Nrefine=%d\n",Nrefine);        
 }
 
+void adaptivity_t::ConformByBisect(memory<dlong>& RefFlag,memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
+                                                                                   memory<dlong>& new_v_id, 
+                                                                                   dlong& Nrefine, 
+                                                                                   memory<dfloat>& EX_new, 
+                                                                                   memory<dfloat>& EY_new,
+                                                                                   memory<hlong>& EToV_new,
+                                                                                   memory<int>& EToB_new,
+                                                                                   memory<dlong>& SplitFlag,                                                                           
+                                                                                   hlong* NN,
+                                                                                   hlong* New_vertex,
+                                                                                   dlong RefLevel){ 
+dlong const MAX_REFINEMENT_LEVEL = 1;
+printf("Conforming Start!, Nrefine=%d\n",Nrefine);
+hlong nn = 0;
+hlong new_vertex = 0;
+    #pragma omp parallel for
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+      //int e = Ref[i];
+      const dlong id = e*mesh.Nfaces; 
+      
+      //printf("e=%d,conform_e=%d\n",e, ConfFlag[e]);  
+      if (ConfFlag[e]!=0)
+      {
+          
+      const dlong ef = ConfFlag[e];   
+      const dlong idf = ConfFlag[e]*mesh.Nfaces;  
+       // hlong const ne_id_0 = mesh.EToE[idf+0];
+       // hlong const ne_id_1 = mesh.EToE[idf+1];
+       // hlong const ne_id_2 = mesh.EToE[idf+2];
+
+        if (mesh.EToF[idf+0]==-1 && mesh.EToB[idf+0]==-1)
+        {
+             printf("conform_e0=%d\n",e );    
+             RefFlag[ef]=1;
+             hlong const fN = mesh.EToF[idf+0];    
+             FaceFlag[idf+0] = 1;
+             new_v_id[ef] = mesh.EToV[id+2];
+             Nrefine++;
+             if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL)
+             {
+              BisectLocal0(ef,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+              *NN =nn;
+               *New_vertex=new_vertex;
+                          //new_vertex--;
+             }
+
+        }
+
+                if (mesh.EToF[idf+1]==-1 && mesh.EToB[idf+1]==-1)
+        {    
+             printf("conform_e1=%d\n",e );     
+             RefFlag[ef]=1;
+             hlong const fN = mesh.EToF[idf+1];    
+             FaceFlag[idf+1] = 1;
+             new_v_id[ef] = mesh.EToV[id+2];
+             Nrefine++;
+                          if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL)
+             {
+             BisectLocal1(ef,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+               *NN =nn;
+               *New_vertex=new_vertex;
+                          //new_vertex--;
+             }
+        }
+
+                if (mesh.EToF[idf+2]==-1 && mesh.EToB[idf+2]==-1)
+        {    
+             printf("conform_e2=%d\n",e );      
+             RefFlag[ef]=1;
+             hlong const fN = mesh.EToF[idf+2];    
+             FaceFlag[idf+2] = 1;
+             new_v_id[ef] = mesh.EToV[id+2];
+             Nrefine++;
+                          if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL)
+             {
+             BisectLocal2(ef,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+               *NN =nn;
+               *New_vertex=new_vertex;
+                          //new_vertex--;
+        }
+        }  
+
+        //printf("new_vertex_count_conf=%lld\n",new_vertex);
+      }
+
+
+
+
+  }
+
+printf("Conforming Done!, Nrefine=%d\n",Nrefine);        
+}
+
 }
