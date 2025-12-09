@@ -47,14 +47,25 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     //memory<dlong> Ref(mesh.Nelements,0); 
                                     
     // A flag to address that which face will be used for bisection
-    memory<dlong> FaceFlag(mesh.Nfaces*mesh.Nelements,0);
+    memory<dlong> FaceFlag(2*mesh.Nfaces*mesh.Nelements,0);
     memory<dlong> refFlag(2*mesh.Nelements,0);
     memory<dlong> confFlag(2*mesh.Nelements,0);
     o_refFlag.copyTo(refFlag); // copy data back to host
-    refFlag.copyTo(confFlag);
+    //refFlag.copyTo(confFlag);
     dlong Nrefine = 0;   
     dlong Ncoarse = 0; 
-    
+   /* refFlag[21] = 1;
+    refFlag[486] = 1;
+    refFlag[26] = 1;
+    refFlag[489] = 1;
+    refFlag[31] = 1;
+    refFlag[492] = 1;
+    refFlag[37] = 1;
+    refFlag[495] = 1;
+    refFlag[51] = 1;
+    refFlag[498] = 1;
+    refFlag[58] = 1;
+    refFlag[501] = 1;*/
     dlong Nelements_old = mesh.Nelements ;
 
     for (int e = 0; e < mesh.Nelements; ++e)
@@ -82,7 +93,9 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     // Conform
     //Conform(refFlag,FaceFlag,Nrefine);
     // Refine
+    printf("FIRST STAGE STARTS\n");
     RefinebyID(o_q,q,refFlag,confFlag,FaceFlag,Nrefine);
+    printf("SECOND STAGE STARTS\n");
     RefinebyID2(o_q,q,refFlag,confFlag,FaceFlag,Nrefine,Nelements_old);
     *_N = mesh.Nelements*1*mesh.Np;
     printf("_N_after=%d\n",*_N );

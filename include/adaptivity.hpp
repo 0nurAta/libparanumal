@@ -63,6 +63,7 @@ class adaptivity_t {
   dlong Ncoarse=0;            // Coarsened element count
   memory<dlong> EToRefLevel;  // Element Refinement List: size->(Nelements)
   memory<dlong> PToC;         // Parent to Child Connectivity: size->(Nelements*Nchild)
+  memory<dlong> PCS;         // Parent, Child, Sibling Connectivity: size->(Nelements*(3))
   memory<dlong> IntFlag;      // Interpolation flag for identify different type of configurations: size->(Nelements)
   
   deviceMemory<dlong> o_IntFlag; 
@@ -79,6 +80,17 @@ class adaptivity_t {
   void ConformByVertex(memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag, dlong& Nrefine);
   void ConformByID(memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,memory<dlong>& new_v_id, dlong& Nrefine);
   void ConformByBisect(memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
+                                                                        memory<dlong>& new_v_id, 
+                                                                        dlong& Nrefine,
+                                                                        memory<dfloat>& EX_new, 
+                                                                        memory<dfloat>& EY_new,
+                                                                        memory<hlong>& EToV_new,
+                                                                        memory<int>& EToB_new,
+                                                                        memory<dlong>& SplitFlag,                                                                           
+                                                                        hlong* nn,
+                                                                        hlong* new_vertex,
+                                                                        dlong RefLevel);
+  void ConformByBisectMultiLvl(memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
                                                                         memory<dlong>& new_v_id, 
                                                                         dlong& Nrefine,
                                                                         memory<dfloat>& EX_new, 

@@ -374,9 +374,6 @@ void adaptivity_t::RefinebyID(deviceMemory<dfloat>& o_q,
 
   // Store old info & Allocate new arrays
   // Element to vertex & Element to boundary connectivity 
-  printf("EToE[26*mesh.Nverts+0]=%lld,EToF[26*mesh.Nverts+0]=%d\n",mesh.EToE[26*mesh.Nverts+0],mesh.EToF[26*mesh.Nverts+0]);
-  printf("EToE[26*mesh.Nverts+1]=%lld,EToF[26*mesh.Nverts+0]=%d\n",mesh.EToE[26*mesh.Nverts+1],mesh.EToF[26*mesh.Nverts+1]);
-  printf("EToE[26*mesh.Nverts+2]=%lld,EToF[26*mesh.Nverts+0]=%d\n",mesh.EToE[26*mesh.Nverts+2],mesh.EToF[26*mesh.Nverts+2]);
 
   memory<hlong>EToV_new(2*mesh.Nelements*mesh.Nverts);
   memory<int>EToB_new(2*mesh.Nelements*mesh.Nverts);
@@ -486,11 +483,15 @@ void adaptivity_t::RefinebyID2(deviceMemory<dfloat>& o_q,
 
   // Store old info & Allocate new arrays
   // Element to vertex & Element to boundary connectivity 
-  
-
-  printf("EToE[26*mesh.Nverts+1]=%lld,EToF[26*mesh.Nverts+0]=%d\n",mesh.EToE[26*mesh.Nverts+1],mesh.EToF[26*mesh.Nverts+1]);
-  printf("EToV[26*mesh.Nverts+2]=%lld,EToV[26*mesh.Nverts+0]=%lld\n",mesh.EToV[26*mesh.Nverts+2],mesh.EToV[26*mesh.Nverts+0]);
-
+  printf("CONFORMING_STARTS, number of total elements=%d\n",mesh.Nelements);
+for (dlong e = 0; e < mesh.Nelements; ++e){
+  dlong id =  e*mesh.Nfaces;
+  FaceFlag[id+0] = 0;
+  FaceFlag[id+1]=0;
+  FaceFlag[id+2]=0;}
+  printf("EToE[31*mesh.Nverts+0]=%lld,EToF[31*mesh.Nverts+0]=%d\n",mesh.EToE[26*mesh.Nverts+0],mesh.EToF[26*mesh.Nverts+0]);
+  printf("EToE[31*mesh.Nverts+1]=%lld,EToF[31*mesh.Nverts+0]=%d\n",mesh.EToE[26*mesh.Nverts+1],mesh.EToF[26*mesh.Nverts+1]);
+  printf("EToE[31*mesh.Nverts+2]=%lld,EToF[31*mesh.Nverts+0]=%d\n",mesh.EToE[26*mesh.Nverts+2],mesh.EToF[26*mesh.Nverts+2]);
   memory<hlong>EToV_new(2*mesh.Nelements*mesh.Nverts);
   memory<int>EToB_new(2*mesh.Nelements*mesh.Nverts);
 
@@ -500,7 +501,7 @@ void adaptivity_t::RefinebyID2(deviceMemory<dfloat>& o_q,
   
   // A flag to be used in split kernel, initialized with zero values.
   memory<dlong> SplitFlag(2*mesh.Nelements,0);
-  memory<dlong> new_v_id(2*mesh.Nelements,0);
+  memory<dlong> new_v_id(2*mesh.Nelements*mesh.Nverts,0);
   
   // A flag for conforming
   //memory<dlong> ConfFlag(2*mesh.Nelements,0);
@@ -527,7 +528,7 @@ void adaptivity_t::RefinebyID2(deviceMemory<dfloat>& o_q,
   FaceFlag[i] = 0;}*/
 
    hlong nn = 0 ; // Counts each refinement
-  LongestEdge(FaceFlag,RefFlag);
+  //LongestEdge(FaceFlag,RefFlag);
   //dlong* _Nrefine = &Nrefine;
   //ConformByVertex(RefFlag,FaceFlag,Nrefine);
   //LongestEdge(FaceFlag,RefFlag);
@@ -538,7 +539,7 @@ void adaptivity_t::RefinebyID2(deviceMemory<dfloat>& o_q,
   // Determine ids of new vertices and EToV
 
   //hlong nn = 0 ; // Counts each refinement
-  ConformByBisect(RefFlag,ConfFlag,FaceFlag,new_v_id,Nrefine,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+  ConformByBisectMultiLvl(RefFlag,ConfFlag,FaceFlag,new_v_id,Nrefine,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
   //ConformByID(RefFlag,ConfFlag,FaceFlag,new_v_id,Nrefine);
   //printf("Bisect Start! Nrefine=%d, nn=%d\n", Nrefine,nn);
   //BisectbyID2(RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);

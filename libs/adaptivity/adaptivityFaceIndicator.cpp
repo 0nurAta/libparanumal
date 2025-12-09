@@ -68,7 +68,7 @@ void adaptivity_t::LongestEdgeNEW(memory<dlong>& FaceFlag,
 
 
 void adaptivity_t::LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag){ 
- dlong const MAX_REFINEMENT_LEVEL = 1;
+ dlong const MAX_REFINEMENT_LEVEL = 4;
   printf("Finding Longest Edge!\n");
 
   for (int e = 0; e < mesh.Nelements; ++e)

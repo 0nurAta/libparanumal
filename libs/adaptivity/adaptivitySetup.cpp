@@ -49,6 +49,7 @@ void adaptivity_t::Setup(platform_t& _platform,
   // Set Lists related to AMR
   EToRefLevel.calloc(2*mesh.Nelements); //
   PToC.calloc(2*mesh.Nelements*4); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  PCS.calloc(2*mesh.Nelements*3); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
   IntFlag.calloc(2*mesh.Nelements); //
 
 // OCCA build stuff

@@ -53,10 +53,24 @@ void adaptivity_t::BisectLocal0(dlong e,
       const dlong id = e*mesh.Nverts; 
       const dlong idf = e*mesh.Nfaces; 
 
-        // Extract Vertex Number of Element to Refine
-        const hlong v0 = mesh.EToV[id+0]; 
-        const hlong v1 = mesh.EToV[id+1]; 
-        const hlong v2 = mesh.EToV[id+2];
+      // Parent vertex ids
+      const hlong v0 = EToV_new[id + 0];
+      const hlong v1 = EToV_new[id + 1];
+      const hlong v2 = EToV_new[id + 2];
+      
+      // Parent coords
+      const dfloat x0 = EX_new[id + 0];
+      const dfloat x1 = EX_new[id + 1];
+      const dfloat x2 = EX_new[id + 2];
+      
+      const dfloat y0 = EY_new[id + 0];
+      const dfloat y1 = EY_new[id + 1];
+      const dfloat y2 = EY_new[id + 2];
+      
+      // Parent BC
+      const int b0 = EToB_new[id + 0];
+      const int b1 = EToB_new[id + 1];
+      const int b2 = EToB_new[id + 2];
         
         // Number the new Vertex at the Longest Edge
         const hlong id_new = (mesh.Nelements+nn)*mesh.Nverts;
@@ -70,16 +84,17 @@ void adaptivity_t::BisectLocal0(dlong e,
         // & Store boundary conditions of new faces
 
           // Uniquely number new vertex 
-          hlong Local_id = 0+idf+mesh.Nnodes;
+          //hlong Local_id = 0+idf+mesh.Nnodes;
 
           // To have unique global vertex number
-          hlong Neigh_id = mesh.EToF[idf+0]+mesh.Nfaces*mesh.EToE[idf+0]+mesh.Nnodes;
+          //hlong Neigh_id = mesh.EToF[idf+0]+mesh.Nfaces*mesh.EToE[idf+0]+mesh.Nnodes;
           //hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
-          hlong newNode = new_v_id[e];
-          printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
+          //hlong newNode = new_v_id[e];
+          hlong newNode = new_v_id[id+0];
+          printf("newNode=%lld\n",newNode );
           // 1st child vertex ids
-          EToV_new[id+0] = mesh.EToV[id+2];
-          EToV_new[id+1] = mesh.EToV[id+0];
+          EToV_new[id+0] = v2;
+          EToV_new[id+1] = v0;
           EToV_new[id+2] = newNode;
           
           // 2nd child vertex ids
@@ -88,41 +103,48 @@ void adaptivity_t::BisectLocal0(dlong e,
           EToV_new[id_new+2] = newNode;
 
           // 2nd child vertex coordinates
-          EX_new[id_new+0] = mesh.EX[id+1];
-          EX_new[id_new+1] = mesh.EX[id+2];
-          EX_new[id_new+2] = 0.5*(mesh.EX[id+0]+mesh.EX[id+1]);
+          EX_new[id_new+0] = x1;
+          EX_new[id_new+1] = x2;
+          EX_new[id_new+2] = 0.5*(x0+x1);
 
           // 1st child vertex coordinates
-          EX_new[id+0] = mesh.EX[id+2];
-          EX_new[id+1] = mesh.EX[id+0];
-          EX_new[id+2] = 0.5*(mesh.EX[id+0]+mesh.EX[id+1]);
+          EX_new[id+0] = x2;
+          EX_new[id+1] = x0;
+          EX_new[id+2] = 0.5*(x0+x1);
 
           // 2nd child vertex coordinates
-          EY_new[id_new+0] = mesh.EY[id+1];
-          EY_new[id_new+1] = mesh.EY[id+2];
-          EY_new[id_new+2] = 0.5*(mesh.EY[id+0]+mesh.EY[id+1]);
+          EY_new[id_new+0] = y1;
+          EY_new[id_new+1] = y2;
+          EY_new[id_new+2] = 0.5*(y0+y1);
 
           // 1st child vertex coordinates
-          EY_new[id+0] = mesh.EY[id+2];
-          EY_new[id+1] = mesh.EY[id+0];
-          EY_new[id+2] = 0.5*(mesh.EY[id+0]+mesh.EY[id+1]);
+          EY_new[id+0] = y2;
+          EY_new[id+1] = y0;
+          EY_new[id+2] = 0.5*(y0+y1);
           
 
           // Boundary information
 
           // 1st child
-          EToB_new[id+0] = mesh.EToB[id+2]; 
-          EToB_new[id+1] = mesh.EToB[id+0]; // New face will be inner in any situation
+          EToB_new[id+0] = b2; 
+          EToB_new[id+1] = b0; // New face will be inner in any situation
           EToB_new[id+2] = -1;
           // 2nd child
-          EToB_new[id_new+0] = mesh.EToB[id+1];
+          EToB_new[id_new+0] = b1;
           EToB_new[id_new+1] = -1;
-          EToB_new[id_new+2] = mesh.EToB[id+0]; // New face will be inner in any situation
+          EToB_new[id_new+2] = b0; // New face will be inner in any situation
 
           // Update lists related to AMR
           EToRefLevel[e] = EToRefLevel[e]+1;
           EToRefLevel[(mesh.Nelements+nn)] = EToRefLevel[e];
           
+          PCS[e*3+0] = e;
+          PCS[e*3+1] = e;
+          PCS[e*3+2] = mesh.Nelements+nn;
+
+          PCS[(mesh.Nelements+nn)*3+0] = e;
+          PCS[(mesh.Nelements+nn)*3+1] = (mesh.Nelements+nn);
+          PCS[(mesh.Nelements+nn)*3+2] = e;
 
           PToC[e*4+0]   = e;
           PToC[e*4+EToRefLevel[e]] = mesh.Nelements+nn;
@@ -165,10 +187,26 @@ void adaptivity_t::BisectLocal1(dlong e,
       //int e = Ref[i];
       const dlong id = e*mesh.Nverts; 
       const dlong idf = e*mesh.Nfaces; 
-        // Extract Vertex Number of Element to Refine
-        const hlong v0 = mesh.EToV[id+0]; 
-        const hlong v1 = mesh.EToV[id+1]; 
-        const hlong v2 = mesh.EToV[id+2];
+
+
+      // Parent vertex ids
+      const hlong v0 = EToV_new[id + 0];
+      const hlong v1 = EToV_new[id + 1];
+      const hlong v2 = EToV_new[id + 2];
+      
+      // Parent coords
+      const dfloat x0 = EX_new[id + 0];
+      const dfloat x1 = EX_new[id + 1];
+      const dfloat x2 = EX_new[id + 2];
+      
+      const dfloat y0 = EY_new[id + 0];
+      const dfloat y1 = EY_new[id + 1];
+      const dfloat y2 = EY_new[id + 2];
+      
+      // Parent BC
+      const int b0 = EToB_new[id + 0];
+      const int b1 = EToB_new[id + 1];
+      const int b2 = EToB_new[id + 2];
         
         // Number the new Vertex at the Longest Edge
         const hlong id_new = (mesh.Nelements+nn)*mesh.Nverts;
@@ -180,45 +218,53 @@ void adaptivity_t::BisectLocal1(dlong e,
         // Modify EToV with new vertex ids for bisection (3 different configurations)
         // & Calculate Physical Coordinates of new vertices
         // & Store boundary conditions of new faces
-          hlong Local_id = 1+idf+mesh.Nnodes;
+          //hlong Local_id = 1+idf+mesh.Nnodes;
 
-          hlong Neigh_id = mesh.EToF[idf+1]+mesh.Nfaces*mesh.EToE[idf+1]+mesh.Nnodes;
+          //hlong Neigh_id = mesh.EToF[idf+1]+mesh.Nfaces*mesh.EToE[idf+1]+mesh.Nnodes;
           //hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
-          hlong newNode = new_v_id[e];
-          printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
+          //hlong newNode = new_v_id[e];
+          hlong newNode = new_v_id[id+1];
+          printf("newNode=%lld\n",newNode );
           EToV_new[id+2] = newNode;
 
           EToV_new[id_new+0] = v2;
           EToV_new[id_new+1] = v0;
           EToV_new[id_new+2] = newNode;
 
-          EX_new[id+2] = 0.5*(mesh.EX[id+1]+mesh.EX[id+2]); 
+          EX_new[id+2] = 0.5*(x1+x2); 
 
           
-          EX_new[id_new+0] = mesh.EX[id+2];
-          EX_new[id_new+1] = mesh.EX[id+0]; 
-          EX_new[id_new+2] = EX_new[id+2];  
+          EX_new[id_new+0] = x2;
+          EX_new[id_new+1] = x0; 
+          EX_new[id_new+2] = 0.5*(x1+x2);  
 
-          EY_new[id+2] = 0.5*(mesh.EY[id+1]+mesh.EY[id+2]); 
+          EY_new[id+2] = 0.5*(y1+y2); 
 
            
-          EY_new[id_new+0] = mesh.EY[id+2];
-          EY_new[id_new+1] = mesh.EY[id+0]; 
-          EY_new[id_new+2] = EY_new[id+2]; 
+          EY_new[id_new+0] = y2;
+          EY_new[id_new+1] = y0; 
+          EY_new[id_new+2] = 0.5*(y1+y2); 
 
-          EToB_new[id+0] = mesh.EToB[id+0];
-          EToB_new[id+1] = mesh.EToB[id+1];
+          EToB_new[id+0] = b0;
+          EToB_new[id+1] = b1;
           EToB_new[id+2] = -1;
 
-          EToB_new[id_new+0] = mesh.EToB[id+2];
+          EToB_new[id_new+0] = b2;
           EToB_new[id_new+1] = -1;
-          EToB_new[id_new+2] = mesh.EToB[id+1];
+          EToB_new[id_new+2] = b1;
 
           // Update lists related to AMR
           EToRefLevel[e] = EToRefLevel[e]+1;
           EToRefLevel[(mesh.Nelements+nn)] = EToRefLevel[e];
 
-          
+          PCS[e*3+0] = e;
+          PCS[e*3+1] = e;
+          PCS[e*3+2] = mesh.Nelements+nn;
+
+          PCS[(mesh.Nelements+nn)*3+0] = e;
+          PCS[(mesh.Nelements+nn)*3+1] = (mesh.Nelements+nn);
+          PCS[(mesh.Nelements+nn)*3+2] = e;
+
           PToC[e*4]   = e;
           PToC[e*4+EToRefLevel[e]] = mesh.Nelements+nn;
           PToC[(mesh.Nelements+nn)*4]   = e;
@@ -257,10 +303,25 @@ void adaptivity_t::BisectLocal2(dlong e,
       //int e = Ref[i];
       const dlong id = e*mesh.Nverts; 
       const dlong idf = e*mesh.Nfaces; 
-        // Extract Vertex Number of Element to Refine
-        const hlong v0 = mesh.EToV[id+0]; 
-        const hlong v1 = mesh.EToV[id+1]; 
-        const hlong v2 = mesh.EToV[id+2];
+      
+      // Parent vertex ids
+      const hlong v0 = EToV_new[id + 0];
+      const hlong v1 = EToV_new[id + 1];
+      const hlong v2 = EToV_new[id + 2];
+      
+      // Parent coords
+      const dfloat x0 = EX_new[id + 0];
+      const dfloat x1 = EX_new[id + 1];
+      const dfloat x2 = EX_new[id + 2];
+      
+      const dfloat y0 = EY_new[id + 0];
+      const dfloat y1 = EY_new[id + 1];
+      const dfloat y2 = EY_new[id + 2];
+      
+      // Parent BC
+      const int b0 = EToB_new[id + 0];
+      const int b1 = EToB_new[id + 1];
+      const int b2 = EToB_new[id + 2];
         
         // Number the new Vertex at the Longest Edge
         const hlong id_new = (mesh.Nelements+nn)*mesh.Nverts;
@@ -269,43 +330,51 @@ void adaptivity_t::BisectLocal2(dlong e,
         //mesh.Nnodes++;
         printf("e=%d,id_new=%lld\n",e,id_new );
         
-          hlong Local_id = 2+idf+mesh.Nnodes;
+          //hlong Local_id = 2+idf+mesh.Nnodes;
           
-          hlong Neigh_id = mesh.EToF[idf+2]+mesh.Nfaces*mesh.EToE[idf+2]+mesh.Nnodes;
+          //hlong Neigh_id = mesh.EToF[idf+2]+mesh.Nfaces*mesh.EToE[idf+2]+mesh.Nnodes;
           //hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
-          hlong newNode = new_v_id[e];
-          printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
+          //hlong newNode = new_v_id[e];
+          hlong newNode = new_v_id[id+2];
+          printf("newNode=%lld\n",newNode );
           EToV_new[id+2] = newNode;
 
           EToV_new[id_new+0] = v1;
           EToV_new[id_new+1] = v2;
           EToV_new[id_new+2] = newNode;
 
-          EX_new[id+2] = 0.5*(mesh.EX[id+2]+mesh.EX[id+0]);
+          EX_new[id+2] = 0.5*(x2+x0);
 
-          EX_new[id_new+0] = mesh.EX[id+1];
-          EX_new[id_new+1] = mesh.EX[id+2];
-          EX_new[id_new+2] = EX_new[id+2];
+          EX_new[id_new+0] = x1;
+          EX_new[id_new+1] = x2;
+          EX_new[id_new+2] = 0.5*(x2+x0);
 
-          EY_new[id+2] = 0.5*(mesh.EY[id+2]+mesh.EY[id+0]);
+          EY_new[id+2] = 0.5*(y2+y0);
 
-          EY_new[id_new+0] = mesh.EY[id+1];
-          EY_new[id_new+1] = mesh.EY[id+2];
-          EY_new[id_new+2] = EY_new[id+2];
+          EY_new[id_new+0] = y1;
+          EY_new[id_new+1] = y2;
+          EY_new[id_new+2] = 0.5*(y2+y0);
 
-          EToB_new[id+0] = mesh.EToB[id+0];
+          EToB_new[id+0] = b0;
           EToB_new[id+1] = -1;
-          EToB_new[id+2] = mesh.EToB[id+2];
+          EToB_new[id+2] = b2;
 
-          EToB_new[id_new+0] = mesh.EToB[id+1];
-          EToB_new[id_new+1] = mesh.EToB[id+2];
+          EToB_new[id_new+0] = b1;
+          EToB_new[id_new+1] = b2;
           EToB_new[id_new+2] = -1;
 
           // Update lists related to AMR
           EToRefLevel[e] = EToRefLevel[e]+1;
           EToRefLevel[(mesh.Nelements+nn)] = EToRefLevel[e];
 
-          
+          PCS[e*3+0] = e;
+          PCS[e*3+1] = e;
+          PCS[e*3+2] = mesh.Nelements+nn;
+
+          PCS[(mesh.Nelements+nn)*3+0] = e;
+          PCS[(mesh.Nelements+nn)*3+1] = (mesh.Nelements+nn);
+          PCS[(mesh.Nelements+nn)*3+2] = e;
+
           PToC[e*4]   = e;
           PToC[e*4+EToRefLevel[e]] = mesh.Nelements+nn;
           PToC[(mesh.Nelements+nn)*4]   = e;
@@ -339,7 +408,6 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
   hlong nv = 0 ; // new vertex
   hlong nn = 0 ; // Counts each refinement
   dlong const level = RefLevel;
-  printf("EToRefLevel[21]=%d,RefFlag[21]=%d\n", RefFlag[21],EToRefLevel[21]);
   for (dlong e = 0; e < mesh.Nelements; ++e)
   {
       
@@ -359,7 +427,7 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
         
         //hlong newNode = mesh.Nnodes;
         //mesh.Nnodes++;
-        printf("e=%d,id_new=%lld\n",e,id_new );
+        
         
         // Modify EToV with new vertex ids for bisection (3 different configurations)
         // & Calculate Physical Coordinates of new vertices
@@ -369,7 +437,7 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
 
           // Uniquely number new vertex 
           hlong Local_id = 0+idf+mesh.Nnodes;
-
+          printf("e0=%d,id_new0=%lld,mesh.EToF=%d\n",e,id_new,mesh.EToF[idf+0] );
           // To have unique global vertex number
           hlong Neigh_id = mesh.EToF[idf+0]+mesh.Nfaces*mesh.EToE[idf+0]+mesh.Nnodes;
           hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
@@ -421,6 +489,14 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
           EToRefLevel[(mesh.Nelements+nn)] = EToRefLevel[e];
           
 
+          PCS[e*3+0] = e;
+          PCS[e*3+1] = e;
+          PCS[e*3+2] = mesh.Nelements+nn;
+
+          PCS[(mesh.Nelements+nn)*3+0] = e;
+          PCS[(mesh.Nelements+nn)*3+1] = (mesh.Nelements+nn);
+          PCS[(mesh.Nelements+nn)*3+2] = e;
+
           PToC[e*4+0]   = e;
           PToC[e*4+EToRefLevel[e]] = mesh.Nelements+nn;
           PToC[(mesh.Nelements+nn)*4]   = e;
@@ -434,6 +510,7 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
 
           //
           ConfFlag[e]=mesh.EToE[idf+0]; 
+          printf("confFlag[e]=%d\n",mesh.EToE[idf+0] );
           RefFlag[e]=0;
           nn++;
           nv++;
@@ -443,7 +520,7 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
         {
           
           hlong Local_id = 1+idf+mesh.Nnodes;
-
+          printf("e1=%d,id_new1=%lld\n",e,id_new );
           hlong Neigh_id = mesh.EToF[idf+1]+mesh.Nfaces*mesh.EToE[idf+1]+mesh.Nnodes;
           hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
           printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
@@ -479,7 +556,14 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
           EToRefLevel[e] = EToRefLevel[e]+1;
           EToRefLevel[(mesh.Nelements+nn)] = EToRefLevel[e];
 
-          
+          PCS[e*3+0] = e;
+          PCS[e*3+1] = e;
+          PCS[e*3+2] = mesh.Nelements+nn;
+
+          PCS[(mesh.Nelements+nn)*3+0] = e;
+          PCS[(mesh.Nelements+nn)*3+1] = (mesh.Nelements+nn);
+          PCS[(mesh.Nelements+nn)*3+2] = e;
+
           PToC[e*4]   = e;
           PToC[e*4+EToRefLevel[e]] = mesh.Nelements+nn;
           PToC[(mesh.Nelements+nn)*4]   = e;
@@ -492,6 +576,7 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
 
           //
           ConfFlag[e]=mesh.EToE[idf+1]; 
+          printf("confFlag[e]=%d\n",mesh.EToE[idf+1] );
           RefFlag[e]=0;
           nn++;
           nv++;
@@ -500,7 +585,7 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
         if (FaceFlag[idf+2]==1)
         {
           hlong Local_id = 2+idf+mesh.Nnodes;
-          
+          printf("e2=%d,id_new2=%lld\n",e,id_new );
           hlong Neigh_id = mesh.EToF[idf+2]+mesh.Nfaces*mesh.EToE[idf+2]+mesh.Nnodes;
           hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
           printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
@@ -535,6 +620,14 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
           EToRefLevel[(mesh.Nelements+nn)] = EToRefLevel[e];
 
           
+          PCS[e*3+0] = e;
+          PCS[e*3+1] = e;
+          PCS[e*3+2] = mesh.Nelements+nn;
+
+          PCS[(mesh.Nelements+nn)*3+0] = e;
+          PCS[(mesh.Nelements+nn)*3+1] = (mesh.Nelements+nn);
+          PCS[(mesh.Nelements+nn)*3+2] = e;
+
           PToC[e*4]   = e;
           PToC[e*4+EToRefLevel[e]] = mesh.Nelements+nn;
           PToC[(mesh.Nelements+nn)*4]   = e;
@@ -547,6 +640,7 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
 
           //
           ConfFlag[e]=mesh.EToE[idf+2]; 
+          printf("confFlag[e]=%d,LocalFace=%d\n",mesh.EToE[idf+2],mesh.EToF[idf+2] );
           RefFlag[e]=0;
           nn++;
           nv++;
