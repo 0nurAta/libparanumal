@@ -425,7 +425,7 @@ void adaptivity_t::RefinebyID(deviceMemory<dfloat>& o_q,
   printf("Refinement Start!\n");
   printf("Old Element Number=%d\n",mesh.Nelements);
   //Bisect(RefFlag,FaceFlag,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,2);
-  BisectbyID(RefFlag,FaceFlag, ConfFlag, EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,2);
+  BisectbyID(RefFlag,FaceFlag, ConfFlag, EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,3);
    printf("Bisect Done! Nrefine=%d, nn=%d\n", Nrefine,nn);
 
      for (int e = 0; e < mesh.Nelements; ++e)
@@ -502,7 +502,9 @@ for (dlong e = 0; e < mesh.Nelements; ++e){
   // A flag to be used in split kernel, initialized with zero values.
   memory<dlong> SplitFlag(2*mesh.Nelements,0);
   memory<dlong> new_v_id(2*mesh.Nelements*mesh.Nverts,0);
-  
+  // For local interpolation
+  memory<dfloat>Qold(2*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+  Q.copyTo(Qold);
   // A flag for conforming
   //memory<dlong> ConfFlag(2*mesh.Nelements,0);
   //RefFlag.copyTo(ConfFlag);
@@ -537,15 +539,16 @@ for (dlong e = 0; e < mesh.Nelements; ++e){
   
   // Refinement Loop
   // Determine ids of new vertices and EToV
-
+  // printf("Q_inrefinebefore=%f\n",Q[1621] );
   //hlong nn = 0 ; // Counts each refinement
-  ConformByBisectMultiLvl(RefFlag,ConfFlag,FaceFlag,new_v_id,Nrefine,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+  ConformByBisectMultiLvl(Q,Qold,RefFlag,ConfFlag,FaceFlag,new_v_id,Nrefine,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+
   //ConformByID(RefFlag,ConfFlag,FaceFlag,new_v_id,Nrefine);
   //printf("Bisect Start! Nrefine=%d, nn=%d\n", Nrefine,nn);
   //BisectbyID2(RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
   printf("2nd Bisect Done! Nrefine=%d, nn=%d\n", Nrefine,nn);
   //dlong const count = mesh.Nelements+nn-Nelements_old;
-
+  printf("Q_inrefine=%f\n",Q[1690] );
       if (Nrefine!=0 && nn!=0)
       {
         // Update mesh connectivity and physical coordinates
@@ -565,18 +568,32 @@ for (dlong e = 0; e < mesh.Nelements; ++e){
         o_PToC = platform.malloc<dlong>(PToC);  
         o_IntFlag = platform.malloc<dlong>(IntFlag);   
       
-
+        o_q.copyFrom(Q);
         deviceMemory<dfloat> o_Q = platform.malloc<dfloat>(Q);
         deviceMemory<dlong> o_splitFlag = platform.malloc<dlong>(SplitFlag);
-        
+       
         // Interpolate Solution
         splitKernel(mesh.Nelements,o_Q ,o_q, o_splitFlag,o_IntFlag,o_PToC,o_IM);
+
         o_q.copyTo(Q);
+         printf("Q_inrefine=%f\n",Q[1690] );
         printf("Refinement Done!, Nrefine=%d\n",Nrefine);
         printf("new_vertex_count=%lld\n",new_vertex);
         printf("New Element Number=%d\n",mesh.Nelements);
       }
-  printf("EToE[26*mesh.Nverts+1]=%lld,EToF[26*mesh.Nverts+0]=%d\n",mesh.EToE[26*mesh.Nverts+1],mesh.EToF[26*mesh.Nverts+1]);
-  printf("EToV[26*mesh.Nverts+0]=%lld,EToV[26*mesh.Nverts+1]=%lld,EToV[26*mesh.Nverts+2],=%lld\n",mesh.EToV[26*mesh.Nverts+0],mesh.EToV[26*mesh.Nverts+1],mesh.EToV[26*mesh.Nverts+2]);
+
+  printf("EToE[163*mesh.Nverts+0]=%lld,EToF[163*mesh.Nverts+0]=%d\n",mesh.EToE[163*mesh.Nverts+0],mesh.EToF[163*mesh.Nverts+0]);
+  printf("EToE[163*mesh.Nverts+1]=%lld,EToF[163*mesh.Nverts+0]=%d\n",mesh.EToE[163*mesh.Nverts+1],mesh.EToF[163*mesh.Nverts+1]);
+  printf("EToE[163*mesh.Nverts+2]=%lld,EToF[163*mesh.Nverts+0]=%d\n",mesh.EToE[163*mesh.Nverts+2],mesh.EToF[163*mesh.Nverts+2]);
+  printf("EToV[171*mesh.Nverts+0]=%d,\n",mesh.EToV[171*mesh.Nverts+0],mesh.EToF[171*mesh.Nverts+0]);
+  printf("EToV[171*mesh.Nverts+1]=%d,\n",mesh.EToV[171*mesh.Nverts+1],mesh.EToF[171*mesh.Nverts+1]);
+  printf("EToV[171*mesh.Nverts+2]=%d,\n",mesh.EToV[171*mesh.Nverts+2],mesh.EToF[171*mesh.Nverts+2]);
+  
+  printf("EToE[171*mesh.Nverts+0]=%lld,EToF[171*mesh.Nverts+0]=%d\n",mesh.EToE[171*mesh.Nverts+0],mesh.EToF[171*mesh.Nverts+0]);
+  printf("EToE[171*mesh.Nverts+1]=%lld,EToF[171*mesh.Nverts+0]=%d\n",mesh.EToE[171*mesh.Nverts+1],mesh.EToF[171*mesh.Nverts+1]);
+  printf("EToE[171*mesh.Nverts+2]=%lld,EToF[171*mesh.Nverts+0]=%d\n",mesh.EToE[171*mesh.Nverts+2],mesh.EToF[171*mesh.Nverts+2]);
+  printf("EX[164*mesh.Nverts+0]=%f,EY[164*mesh.Nverts+0]=%f\n",mesh.EX[171*mesh.Nverts+0],mesh.EY[171*mesh.Nverts+0]);
+  printf("EX[164*mesh.Nverts+1]=%f,EY[164*mesh.Nverts+0]=%f\n",mesh.EX[171*mesh.Nverts+1],mesh.EY[171*mesh.Nverts+1]);
+  printf("EX[164*mesh.Nverts+2]=%f,EY[164*mesh.Nverts+0]=%f\n",mesh.EX[171*mesh.Nverts+2],mesh.EY[171*mesh.Nverts+2]);
  }
 }

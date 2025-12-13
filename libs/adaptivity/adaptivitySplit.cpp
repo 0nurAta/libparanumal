@@ -31,6 +31,8 @@ SOFTWARE.
 namespace libp {
 
 void adaptivity_t::BisectLocal0(dlong e,
+                          memory<dfloat>& Q,
+                          memory<dfloat>& Qold,
                           memory<dlong>& RefFlag,
                           memory<dlong>& FaceFlag,
                           memory<dlong>& ConfFlag,
@@ -77,7 +79,7 @@ void adaptivity_t::BisectLocal0(dlong e,
         
         //hlong newNode = mesh.Nnodes;
         //mesh.Nnodes++;
-        printf("e=%d,id_new=%lld\n",e,id_new );
+        printf("e=%d,e_new=%lld\n",e,(mesh.Nelements+nn));
         
         // Modify EToV with new vertex ids for bisection (3 different configurations)
         // & Calculate Physical Coordinates of new vertices
@@ -156,8 +158,44 @@ void adaptivity_t::BisectLocal0(dlong e,
 
           SplitFlag[e]=1;
           SplitFlag[mesh.Nelements+nn]=1;
+          const dlong Np = (mesh.N+1)*(mesh.N+2)/2;
+          memory<dfloat> IM(6*Np*Np,0);
+          o_IM.copyTo(IM);
+          
+                    // Update solution Local
+              const dlong id1 = e*Np;
+              const dlong id2 = (mesh.Nelements+nn)*Np;
+              
+              const dlong id1_int = IntFlag[e]-1;
+              const dlong id2_int = IntFlag[(mesh.Nelements+nn)]-1;
+              //printf("id1=%d,id2=%d\n", e*Np,(mesh.Nelements+nn)*Np);
+              //const dlong n=0;        
+            for(int n=0;n<Np;++n){
+              dfloat qn1=0.; dfloat qn2=0.; 
+              for(int i=0;i<Np;++i){
+                const dfloat Ii1 = IM[n+i*Np+id1_int*Np*Np];
+                     qn1 += Ii1*Qold[id1+i];
+                const dfloat Ii2 = IM[n+i*Np+id2_int*Np*Np];
+                     qn2 += Ii2*Qold[id1+i];                         
+                
+              }                  
+              Q[id1+n] = qn1;
+              Q[id2+n] = qn2;
+            //    printf("Q[%d]=%f,qn1[%d]=%f\n",id2+n,Q[id2+n],id2+n,qn2);
+             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
+            }
 
-          // 
+            for(int n=0;n<Np;++n){
+                        
+              Qold[id1+n] = Q[id1+n];
+              Qold[id2+n] = Q[id2+n];
+                
+             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
+            }
+            SplitFlag[e] = 0;
+            SplitFlag[mesh.Nelements+nn]=0;
+            //printf("Q_inbisect=%f\n",Q[1621] );
+          //
           RefFlag[e]=0;
           nn++;
           nv++;
@@ -167,6 +205,8 @@ void adaptivity_t::BisectLocal0(dlong e,
 }
 
 void adaptivity_t::BisectLocal1(dlong e,
+                          memory<dfloat>& Q,
+                          memory<dfloat>& Qold,
                           memory<dlong>& RefFlag,
                           memory<dlong>& FaceFlag,
                           memory<dlong>& ConfFlag,
@@ -275,6 +315,43 @@ void adaptivity_t::BisectLocal1(dlong e,
           SplitFlag[e]=1;
           SplitFlag[mesh.Nelements+nn]=1;
 
+            const dlong Np = (mesh.N+1)*(mesh.N+2)/2;
+          memory<dfloat> IM(6*Np*Np,0);
+          o_IM.copyTo(IM);
+          
+                    // Update solution Local
+              const dlong id1 = e*Np;
+              const dlong id2 = (mesh.Nelements+nn)*Np;
+              
+              const dlong id1_int = IntFlag[e]-1;
+              const dlong id2_int = IntFlag[(mesh.Nelements+nn)]-1;
+              //printf("id1=%d,id2=%d\n", e*Np,(mesh.Nelements+nn)*Np);
+              //const dlong n=0;        
+            for(int n=0;n<Np;++n){
+              dfloat qn1=0.; dfloat qn2=0.; 
+              for(int i=0;i<Np;++i){
+                const dfloat Ii1 = IM[n+i*Np+id1_int*Np*Np];
+                     qn1 += Ii1*Qold[id1+i];
+                const dfloat Ii2 = IM[n+i*Np+id2_int*Np*Np];
+                     qn2 += Ii2*Qold[id1+i];                         
+                
+              }                  
+              Q[id1+n] = qn1;
+              Q[id2+n] = qn2;
+              //  printf("Q[%d]=%f,qn1[%d]=%f\n",id2+n,Q[id2+n],id2+n,qn2);
+             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
+            }
+
+                        for(int n=0;n<Np;++n){
+                        
+              Qold[id1+n] = Q[id1+n];
+              Qold[id2+n] = Q[id2+n];
+                
+             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
+            }
+
+            SplitFlag[e] = 0;
+            SplitFlag[mesh.Nelements+nn]=0;
           //
           RefFlag[e]=0;
           nn++;
@@ -284,6 +361,8 @@ void adaptivity_t::BisectLocal1(dlong e,
 }
 
 void adaptivity_t::BisectLocal2(dlong e,
+                          memory<dfloat>& Q,
+                          memory<dfloat>& Qold,
                           memory<dlong>& RefFlag,
                           memory<dlong>& FaceFlag,
                           memory<dlong>& ConfFlag,
@@ -384,7 +463,42 @@ void adaptivity_t::BisectLocal2(dlong e,
 
           SplitFlag[e]=1;
           SplitFlag[mesh.Nelements+nn]=1;
+            const dlong Np = (mesh.N+1)*(mesh.N+2)/2;
+          memory<dfloat> IM(6*Np*Np,0);
+          o_IM.copyTo(IM);
+          
+                    // Update solution Local
+              const dlong id1 = e*Np;
+              const dlong id2 = (mesh.Nelements+nn)*Np;
+              
+              const dlong id1_int = IntFlag[e]-1;
+              const dlong id2_int = IntFlag[(mesh.Nelements+nn)]-1;
+              //printf("id1=%d,id2=%d\n", e*Np,(mesh.Nelements+nn)*Np);
+              //const dlong n=0;        
+            for(int n=0;n<Np;++n){
+              dfloat qn1=0.; dfloat qn2=0.; 
+              for(int i=0;i<Np;++i){
+                const dfloat Ii1 = IM[n+i*Np+id1_int*Np*Np];
+                     qn1 += Ii1*Qold[id1+i];
+                const dfloat Ii2 = IM[n+i*Np+id2_int*Np*Np];
+                     qn2 += Ii2*Qold[id1+i];                         
+                
+              }                  
+              Q[id1+n] = qn1;
+              Q[id2+n] = qn2;
+                //printf("Q[%d]=%f,qn1[%d]=%f\n",id2+n,Q[id2+n],id2+n,qn2);
+             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
+            }
 
+             for(int n=0;n<Np;++n){
+                        
+              Qold[id1+n] = Q[id1+n];
+              Qold[id2+n] = Q[id2+n];
+                
+             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
+            }
+            SplitFlag[e] = 0;
+            SplitFlag[mesh.Nelements+nn]=0;
           //
           RefFlag[e]=0;
           nn++;
@@ -436,12 +550,18 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
         { 
 
           // Uniquely number new vertex 
-          hlong Local_id = 0+idf+mesh.Nnodes;
+          //hlong Local_id = 0+idf+mesh.Nnodes+EToRefLevel[e];
+          hlong  Local_id = 0*(level+3)+(mesh.Nfaces+3*(level+3))*e+mesh.Nnodes+EToRefLevel[e];
           printf("e0=%d,id_new0=%lld,mesh.EToF=%d\n",e,id_new,mesh.EToF[idf+0] );
           // To have unique global vertex number
-          hlong Neigh_id = mesh.EToF[idf+0]+mesh.Nfaces*mesh.EToE[idf+0]+mesh.Nnodes;
+          hlong Neigh_id = mesh.EToF[idf+0]*(level+3)+(mesh.Nfaces+3*(level+3))*mesh.EToE[idf+0]+mesh.Nnodes+EToRefLevel[mesh.EToE[idf+0]];
+          //printf("Neigh_e=%lld,MeshLevel=%d,NeighLevel=%d\n",mesh.EToE[idf+0],EToRefLevel[e],EToRefLevel[mesh.EToE[idf+0]]);
+          //if (mesh.EToF[idf+0]==0){Neigh_id+=EToRefLevel[mesh.EToE[idf+0]] ;}
+          //else {Neigh_id+=level;}
           hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
+          //hlong newNode = v0+v1+mesh.Nnodes;
           printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
+          //printf("v1=%d,v0=%d\n",Local_id,Neigh_id,newNode );
           // 1st child vertex ids
           EToV_new[id+0] = mesh.EToV[id+2];
           EToV_new[id+1] = mesh.EToV[id+0];
@@ -519,10 +639,17 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
         if (FaceFlag[idf+1]==1)
         {
           
-          hlong Local_id = 1+idf+mesh.Nnodes;
-          printf("e1=%d,id_new1=%lld\n",e,id_new );
-          hlong Neigh_id = mesh.EToF[idf+1]+mesh.Nfaces*mesh.EToE[idf+1]+mesh.Nnodes;
+          //hlong Local_id = 1+idf+mesh.Nnodes;
+          hlong  Local_id = 1*(level+3)+(mesh.Nfaces+3*(level+3))*e+mesh.Nnodes+EToRefLevel[e];
+          printf("e0=%d,id_new0=%lld,mesh.EToF=%d\n",e,id_new,mesh.EToF[idf+1] );
+          // To have unique global vertex number
+          hlong Neigh_id = mesh.EToF[idf+1]*(level+3)+(mesh.Nfaces+3*(level+3))*mesh.EToE[idf+1]+mesh.Nnodes+EToRefLevel[mesh.EToE[idf+1]];
+         // if (mesh.EToF[idf+1]==0){Neigh_id+=EToRefLevel[mesh.EToE[idf+1]] ;}
+         //  else {Neigh_id+=level;}
+
           hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
+          //hlong newNode = v1+v2+mesh.Nnodes;
+           printf("Neigh_e=%lld,MeshLevel=%d,NeighLevel=%d\n",mesh.EToE[idf+1],EToRefLevel[e],EToRefLevel[mesh.EToE[idf+1]]);
           printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
           EToV_new[id+2] = newNode;
 
@@ -584,10 +711,16 @@ void adaptivity_t::BisectbyID(memory<dlong>& RefFlag,
 
         if (FaceFlag[idf+2]==1)
         {
-          hlong Local_id = 2+idf+mesh.Nnodes;
-          printf("e2=%d,id_new2=%lld\n",e,id_new );
-          hlong Neigh_id = mesh.EToF[idf+2]+mesh.Nfaces*mesh.EToE[idf+2]+mesh.Nnodes;
+          //hlong Local_id = 2+idf+mesh.Nnodes;
+           hlong  Local_id = 2*(level+3)+(mesh.Nfaces+3*(level+3))*e+mesh.Nnodes+EToRefLevel[e];
+          printf("e0=%d,id_new0=%lld,mesh.EToF=%d\n",e,id_new,mesh.EToF[idf+1] );
+          // To have unique global vertex number
+          hlong Neigh_id = mesh.EToF[idf+2]*(level+3)+(mesh.Nfaces+3*(level+3))*mesh.EToE[idf+2]+mesh.Nnodes+EToRefLevel[mesh.EToE[idf+2]];
+          //if (mesh.EToF[idf+2]==0){Neigh_id+=EToRefLevel[mesh.EToE[idf+2]] ;}
+          //else {Neigh_id+=level;} 
           hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
+          //hlong newNode = v0+v2+mesh.Nnodes;
+           printf("Neigh_e=%lld,MeshLevel=%d,NeighLevel=%d\n",mesh.EToE[idf+2],EToRefLevel[e],EToRefLevel[mesh.EToE[idf+2]]);
           printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
           EToV_new[id+2] = newNode;
 

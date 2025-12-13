@@ -296,7 +296,7 @@ printf("Conforming Start!, Nrefine=%d\n",Nrefine);
 printf("Conforming Done!, Nrefine=%d\n",Nrefine);        
 }
 
-void adaptivity_t::ConformByBisect(memory<dlong>& RefFlag,memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
+void adaptivity_t::ConformByBisect(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
                                                                                    memory<dlong>& new_v_id, 
                                                                                    dlong& Nrefine, 
                                                                                    memory<dfloat>& EX_new, 
@@ -337,7 +337,7 @@ hlong new_vertex = 0;
              Nrefine++;
              if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL)
              {
-              BisectLocal0(ef,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+              BisectLocal0(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
               *NN =nn;
                *New_vertex=new_vertex;
                           //new_vertex--;
@@ -355,7 +355,7 @@ hlong new_vertex = 0;
              Nrefine++;
                           if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL)
              {
-             BisectLocal1(ef,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+             BisectLocal1(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
                *NN =nn;
                *New_vertex=new_vertex;
                           //new_vertex--;
@@ -372,7 +372,7 @@ hlong new_vertex = 0;
              Nrefine++;
                           if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL)
              {
-             BisectLocal2(ef,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+             BisectLocal2(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
                *NN =nn;
                *New_vertex=new_vertex;
                           //new_vertex--;
@@ -391,7 +391,7 @@ printf("Conforming Done!, Nrefine=%d\n",Nrefine);
 }
 
 
-void adaptivity_t::ConformByBisectMultiLvl(memory<dlong>& RefFlag,memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
+void adaptivity_t::ConformByBisectMultiLvl(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
                                                                                    memory<dlong>& new_v_id, 
                                                                                    dlong& Nrefine, 
                                                                                    memory<dfloat>& EX_new, 
@@ -402,17 +402,17 @@ void adaptivity_t::ConformByBisectMultiLvl(memory<dlong>& RefFlag,memory<dlong>&
                                                                                    hlong* NN,
                                                                                    hlong* New_vertex,
                                                                                    dlong RefLevel){ 
-dlong const MAX_REFINEMENT_LEVEL = 4;
+dlong const MAX_REFINEMENT_LEVEL = 6;
 printf("Conforming Start!, Nrefine=%d, Elements=%d\n",Nrefine,mesh.Nelements);
 hlong nn = 0;
 hlong new_vertex = 0;
     //#pragma omp parallel for
-  printf("EToE[163*mesh.Nverts+0]=%lld,EToF[163*mesh.Nverts+0]=%d\n",mesh.EToE[164*mesh.Nverts+0],mesh.EToF[164*mesh.Nverts+0]);
-  printf("EToE[163*mesh.Nverts+1]=%lld,EToF[163*mesh.Nverts+0]=%d\n",mesh.EToE[164*mesh.Nverts+1],mesh.EToF[164*mesh.Nverts+1]);
-  printf("EToE[163*mesh.Nverts+2]=%lld,EToF[163*mesh.Nverts+0]=%d\n",mesh.EToE[164*mesh.Nverts+2],mesh.EToF[164*mesh.Nverts+2]);
-  printf("EX[164*mesh.Nverts+0]=%f,EY[164*mesh.Nverts+0]=%f\n",mesh.EX[164*mesh.Nverts+0],mesh.EY[164*mesh.Nverts+0]);
-  printf("EX[164*mesh.Nverts+1]=%f,EY[164*mesh.Nverts+0]=%f\n",mesh.EX[164*mesh.Nverts+1],mesh.EY[164*mesh.Nverts+1]);
-  printf("EX[164*mesh.Nverts+2]=%f,EY[164*mesh.Nverts+0]=%f\n",mesh.EX[164*mesh.Nverts+2],mesh.EY[164*mesh.Nverts+2]);
+  printf("EToE[163*mesh.Nverts+0]=%lld,EToF[163*mesh.Nverts+0]=%d\n",mesh.EToE[163*mesh.Nverts+0],mesh.EToF[163*mesh.Nverts+0]);
+  printf("EToE[163*mesh.Nverts+1]=%lld,EToF[163*mesh.Nverts+0]=%d\n",mesh.EToE[163*mesh.Nverts+1],mesh.EToF[163*mesh.Nverts+1]);
+  printf("EToE[163*mesh.Nverts+2]=%lld,EToF[163*mesh.Nverts+0]=%d\n",mesh.EToE[163*mesh.Nverts+2],mesh.EToF[163*mesh.Nverts+2]);
+  printf("EX[164*mesh.Nverts+0]=%f,EY[164*mesh.Nverts+0]=%f\n",mesh.EX[163*mesh.Nverts+0],mesh.EY[163*mesh.Nverts+0]);
+  printf("EX[164*mesh.Nverts+1]=%f,EY[164*mesh.Nverts+0]=%f\n",mesh.EX[163*mesh.Nverts+1],mesh.EY[163*mesh.Nverts+1]);
+  printf("EX[164*mesh.Nverts+2]=%f,EY[164*mesh.Nverts+0]=%f\n",mesh.EX[163*mesh.Nverts+2],mesh.EY[163*mesh.Nverts+2]);
 
   for (int e = 0; e < mesh.Nelements; ++e)
   {
@@ -439,9 +439,6 @@ hlong new_vertex = 0;
              FaceFlag[idf+0] = 1;
              new_v_id[idf+0] = mesh.EToV[id+2];
              printf("e=%d,conform_e0=%d,new_id=%d\n",e,ef,new_v_id[idf+0] ); 
-              printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+0],e,mesh.EToB[e*mesh.Nverts+0]);
-              printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+1],e,mesh.EToB[e*mesh.Nverts+1]);
-              printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+2],e,mesh.EToB[e*mesh.Nverts+2]);
              
              Nrefine++;
              }
@@ -452,9 +449,6 @@ hlong new_vertex = 0;
              FaceFlag[sib_id+0] = 1;
              new_v_id[sib_id+0] = mesh.EToV[id+2];
              printf("e=%d,conform_e1=%d,new_id=%d\n",e,ef,new_v_id[sib_id+0] ); 
-                           printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+0],e,mesh.EToB[e*mesh.Nverts+0]);
-              printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+1],e,mesh.EToB[e*mesh.Nverts+1]);
-              printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+2],e,mesh.EToB[e*mesh.Nverts+2]);
              Nrefine++;
              }}
 
@@ -468,9 +462,6 @@ hlong new_vertex = 0;
              FaceFlag[idf+1] = 1;
              new_v_id[idf+1] = mesh.EToV[id+2];
              printf("e=%d,conform_e1=%d,new_id=%d\n",e,ef,new_v_id[idf+1] ); 
-                           printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+0],e,mesh.EToB[e*mesh.Nverts+0]);
-              printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+1],e,mesh.EToB[e*mesh.Nverts+1]);
-              printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+2],e,mesh.EToB[e*mesh.Nverts+2]);
              Nrefine++;
              } else if (abs(mesh.EX[id+2]-0.5*(mesh.EX[sib_id+1]+mesh.EX[sib_id+2]))<1e-5&&abs(mesh.EY[id+2]-0.5*(mesh.EY[sib_id+1]+mesh.EY[sib_id+2]))<1e-5) { 
              printf("e=%d,conform_e1=%d\n",e,ef );     
@@ -478,9 +469,6 @@ hlong new_vertex = 0;
              FaceFlag[sib_id+1] = 1;
              new_v_id[sib_id+1] = mesh.EToV[id+2];
              printf("e=%d,conform_e1=%d,new_id=%d\n",e,ef,new_v_id[idf+1] ); 
-                           printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+0],e,mesh.EToB[e*mesh.Nverts+0]);
-              printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+1],e,mesh.EToB[e*mesh.Nverts+1]);
-              printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+2],e,mesh.EToB[e*mesh.Nverts+2]);
              Nrefine++;
              }
                           
@@ -499,12 +487,9 @@ hlong new_vertex = 0;
               else if (abs(mesh.EX[id+2]-0.5*(mesh.EX[sib_id+2]+mesh.EX[sib_id+0]))<1e-5&&abs(mesh.EY[id+2]-0.5*(mesh.EY[sib_id+2]+mesh.EY[sib_id+0]))<1e-5) { 
              printf("e=%d,conform_e1=%d\n",e,ef );     
              RefFlag[sib_id]=1;  
-             FaceFlag[sib_id+1] = 1;
-             new_v_id[sib_id+1] = mesh.EToV[id+2];
+             FaceFlag[sib_id+2] = 1;
+             new_v_id[sib_id+2] = mesh.EToV[id+2];
              printf("e=%d,conform_e1=%d,new_id=%d\n",e,ef,new_v_id[idf+1] ); 
-                           printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+0],e,mesh.EToB[e*mesh.Nverts+0]);
-              printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+1],e,mesh.EToB[e*mesh.Nverts+1]);
-              printf("EToF[%d+0]=%d,EToB[%d+0]=%d\n",e,mesh.EToF[e*mesh.Nverts+2],e,mesh.EToB[e*mesh.Nverts+2]);
              Nrefine++;
              }           
         
@@ -519,7 +504,7 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
             if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL&&  FaceFlag[idf+0] == 1)
              {
               printf("Rule 0: ef=%d,nn=%d\n",ef,nn );
-              BisectLocal0(ef,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+              BisectLocal0(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
               FaceFlag[idf+0]=0;
                *NN =nn;
                *New_vertex=new_vertex;
@@ -531,7 +516,7 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
                new_v_id[ef_second*mesh.Nfaces+0] = new_v_id[idf+1];
                FaceFlag[ef_second*mesh.Nfaces+0] = FaceFlag[idf+1];
                FaceFlag[idf+1]=0;
-               BisectLocal0(ef_second,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);              
+               BisectLocal0(ef_second,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);              
                FaceFlag[ef_second*mesh.Nfaces+1] = 0;
                *NN =nn;
                *New_vertex=new_vertex; 
@@ -543,7 +528,7 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
                new_v_id[idf+0] = new_v_id[idf+2];
                FaceFlag[idf+2] = 0;
                printf("Rule 02: ef=%d,nn=%d\n",ef,nn );
-               BisectLocal0(ef,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+               BisectLocal0(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
                FaceFlag[idf+0] = 0;
                
                *NN =nn;
@@ -555,21 +540,23 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
              if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL&&  FaceFlag[idf+1] == 1)
              {
               printf("Rule 1: ef=%d,nn=%d\n",ef,nn );
-             BisectLocal1(ef,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+             BisectLocal1(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
              FaceFlag[idf+1]=0;
                *NN =nn;
                *New_vertex=new_vertex;
                           //new_vertex--;
 
                if(FaceFlag[idf+2] == 1){
+               
                dlong ef_second = PCS[ef*3+2];
                new_v_id[ef_second*mesh.Nfaces+0] = new_v_id[idf+2];
                FaceFlag[ef_second*mesh.Nfaces+0] = FaceFlag[idf+2];
                new_v_id[idf+2]=0;
-               FaceFlag[idf+2]=0; 
-               printf("Rule 12: ef=%d,nn=%d\n",ef_second,nn );
-               BisectLocal0(ef,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+               FaceFlag[idf+2]=0;   
+               printf("Rule 12: ef=%d,nn=%d\n",ef_second,nn );             
+               BisectLocal0(ef_second,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
                FaceFlag[ef_second*mesh.Nfaces+0] = 0;
+
                *NN =nn;
                *New_vertex=new_vertex; 
                }
@@ -579,7 +566,7 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
               if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL&&  FaceFlag[idf+2] == 1)
              {
               printf("Rule 2: ef=%d,nn=%d\n",ef,nn );
-             BisectLocal2(ef,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+             BisectLocal2(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
              FaceFlag[idf+2]=0;
                *NN =nn;
                *New_vertex=new_vertex;

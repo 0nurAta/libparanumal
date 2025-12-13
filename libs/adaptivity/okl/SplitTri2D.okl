@@ -90,7 +90,7 @@ SOFTWARE.
 
       if (IntFlag[e]!=0 && SplitFlag[e]==1)
       {
-        //printf("IntFlag[e]_split=%d\n",IntFlag[e]);
+        //printf("n=%d\n",n);
         //printf("id=%d,id_p=%d,IntFlag=%d\n",id,id_p,IntFlag[e]);
         for(int i=0;i<p_Np;++i){
         const dfloat Ii = IM[n+i*p_Np+id_int*p_Np*p_Np];
@@ -98,9 +98,11 @@ SOFTWARE.
         }
         //printf("Q[%d]=%f\n",id+n,Q[id+n]);
       Q[id+n] = qn;
-      SplitFlag[e] = 0;
+      //printf("Q[%d]=%f,qn1[%d]=%f\n",id+n,Q[id+n],id+n,qn);
+      //printf("Qold[%d]=%f\n",id_p+n,Qold[id_p+n]);
       
-      }                  
+      }    
+      SplitFlag[e] = 0;              
     }
   }
 }

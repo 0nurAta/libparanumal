@@ -81,6 +81,7 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
       }   
     }
     printf("_N_before=%d\n",mesh.Nelements*1*mesh.Np );
+    printf("Nnodes=%d\n",mesh.Nnodes );
     printf("Number_of_Elements_to_be_refined= %d\n",Nrefine);
     printf("Number_of_Elements_to_be_coarsened= %d\n",Ncoarse);
     memory<dfloat> q(mesh.Np*2*mesh.Nelements);
