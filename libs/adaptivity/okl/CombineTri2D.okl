@@ -148,18 +148,20 @@ SOFTWARE.
                                    @restrict dfloat * Q,
                                    @restrict const dlong * CombineFlag,
                                    @restrict const dlong * IntFlag,
+                                   @restrict const dlong * EToRefLevel,
                                    @restrict const dlong * PToC,
-                                   @restrict const dfloat * RM){ 
+                                   @restrict const dfloat * RM,
+                                   const dlong level){ 
 
     for(dlong e=0;e<Nelements;++e;@outer(0)){
 
     for(int n=0;n<p_Np;++n;@inner(0)){
       const dlong id = e*p_Np;
-      const dlong id_p = (e==PToC[4*e+0])? id:(PToC[4*e+0]*p_Np);
+      const dlong id_p = (e==PToC[e*(level+3)+0])? id:(PToC[e*(level+3)+0]*p_Np);
       //const dlong id_int = IntFlag[e]-1;
       dfloat qn=0;
 
-      if (IntFlag[e]!=0&&CombineFlag[e]==-1)
+      if (IntFlag[e*(level+3)+EToRefLevel[e]]!=0&&CombineFlag[e]==-1)
       {
         //printf("id_p=%d,id_c=%d\n",id_p,PToC[2*e+1]*p_Np);
       Q[id_p+n] = 0.0;
@@ -174,12 +176,12 @@ SOFTWARE.
       dfloat qn1=0.;
       dfloat qn2=0.;
 
-      if (e==PToC[4*e+0] && IntFlag[e]!=0&&CombineFlag[e]==-1)
+      if (e==PToC[e*(level+3)+0] && IntFlag[e*(level+3)+EToRefLevel[e]]!=0&&CombineFlag[e]==-1)
       {
       const dlong id_p = id;
-      const dlong id_c = PToC[4*e+1]*p_Np;
-      const dlong id_int_p = IntFlag[e]-1;
-      const dlong id_int_c = IntFlag[PToC[4*e+1]]-1;
+      const dlong id_c = PToC[e*(level+3)+1]*p_Np;
+      const dlong id_int_p = IntFlag[e*(level+3)+EToRefLevel[e]]-1;
+      const dlong id_int_c = IntFlag[PToC[e*(level+3)+1]*(level+3)+EToRefLevel[e]]-1;
         //printf("id_p=%d,id_c=%d\n",id,id_c);
       //printf("id_int_p=%d\n",id_int_p);
       //printf("PToC[2*e+1]=%d\n",IntFlag[PToC[2*e+1]]);
@@ -192,7 +194,7 @@ SOFTWARE.
        for(int i=0;i<p_Np;++i){
         const dfloat Ri = RM[2*n*p_Np+i+id_int_p*p_Np*p_Np+p_Np];
              qn2 += Ri*Qold[id_c+i]; 
-             //printf("Q_C2[%d]=%f\n",id_c+i,Qold[id_c+i]); 
+             printf("Q_C2[%d]=%f\n",id_c+i,Qold[id_c+i]); 
              //printf("Qold[id_c+i]=%f\n",Qold[id_c+i]);        
             // printf("Ri[%d]=%f\n",2*n*p_Np+i+id_int_p*p_Np*p_Np+p_Np,Ri);   
         }

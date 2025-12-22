@@ -43,14 +43,25 @@ void adaptivity_t::Setup(platform_t& _platform,
   //size = comm.size();
   
   // compute interpolation matrices for amr
+  //InterpolateToChildTri2D();
   InterpolateToChildTri2DLE();
-  InterpolateToParentTri2D();
-
+  InterpolateToParentTri2DLE();
+   dlong const MAX_LEVEL = 2;
   // Set Lists related to AMR
   EToRefLevel.calloc(2*mesh.Nelements); //
-  PToC.calloc(2*mesh.Nelements*4); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  PToC.calloc(2*mesh.Nelements*(MAX_LEVEL+3)); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
   PCS.calloc(2*mesh.Nelements*3); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  IntFlag.calloc(2*mesh.Nelements); //
+  IntFlag.calloc(2*mesh.Nelements*(MAX_LEVEL+3)); //
+
+  for (int i = 0; i < 2*mesh.Nelements; ++i)
+  {
+    for (int n = 0; n < (MAX_LEVEL+3); ++n)
+    {
+      dlong id = i*(MAX_LEVEL+3)+n;
+       PToC[id] = -1;
+    }
+    
+  }
 
 // OCCA build stuff
 

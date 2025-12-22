@@ -67,6 +67,7 @@ class adaptivity_t {
   memory<dlong> IntFlag;      // Interpolation flag for identify different type of configurations: size->(Nelements)
   
   deviceMemory<dlong> o_IntFlag; 
+  deviceMemory<dlong> o_EToRefLevel; 
   deviceMemory<dlong> o_PToC;
   deviceMemory<dfloat> o_IM;
   deviceMemory<dfloat> o_RM;
@@ -101,11 +102,22 @@ class adaptivity_t {
                                                                         hlong* nn,
                                                                         hlong* new_vertex,
                                                                         dlong RefLevel);
+  void ConformByCoarse(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
+                                                                        memory<dlong>& new_v_id, 
+                                                                        dlong& Nrefine,
+                                                                        memory<dfloat>& EX_new, 
+                                                                        memory<dfloat>& EY_new,
+                                                                        memory<hlong>& EToV_new,
+                                                                        memory<int>& EToB_new,
+                                                                        memory<dlong>& SplitFlag,                                                                           
+                                                                        hlong* nn,
+                                                                        hlong* new_vertex,
+                                                                        dlong RefLevel);
   
   void Refine(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
   void RefineLE(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, dlong Nrefine);
-  void RefinebyID(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& ConfFlag,memory<dlong>& FaceFlag, dlong Nrefine);
-  void RefinebyID2(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, memory<dlong>& ConfFlag,memory<dlong>& FaceFlag, dlong Nrefine, dlong Nelements_old);
+  void RefinebyID(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& ConfFlag,memory<dlong>& FaceFlag, dlong Nrefine);
+  void RefinebyID2(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& ConfFlag,memory<dlong>& FaceFlag, dlong Nrefine, dlong Nelements_old);
   
   void Bisect(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dfloat>& EX_new, memory<dfloat>& EY_new,
                                                                               memory<hlong>& EToV_new,
@@ -123,7 +135,7 @@ class adaptivity_t {
                                                                               hlong* nn,
                                                                               hlong* new_vertex,
                                                                               dlong RefLevel);
-  void BisectbyID(memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dlong>& ConfFlag, 
+  void BisectbyID(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dlong>& ConfFlag, 
                                                                               memory<dfloat>& EX_new, 
                                                                               memory<dfloat>& EY_new,
                                                                               memory<hlong>& EToV_new,
@@ -180,12 +192,14 @@ class adaptivity_t {
                                                                               hlong* nn);
 
   void Coarse(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dlong>& RefFlag, dlong Ncoarse);
+  void CoarsebyID(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, dlong Ncoarse,dlong level);
   void LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag);
   void LongestEdgeNEW(memory<dlong>& FaceFlag, memory<dlong>& RefFlag);
   // Interpolation for AMR Setup
   void InterpolateToChildTri2D();
   void InterpolateToChildTri2DLE();
   void InterpolateToParentTri2D();
+  void InterpolateToParentTri2DLE();
 
   //  Kernels
   kernel_t indicatorKernel;

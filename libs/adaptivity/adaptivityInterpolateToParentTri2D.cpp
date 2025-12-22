@@ -485,4 +485,216 @@ void adaptivity_t::InterpolateToParentTri2D(){
   
 }
 
+
+void adaptivity_t::InterpolateToParentTri2DLE(){
+
+  // Purpose: Constructing 3 different RM to interpolate solution from child to parent
+  // where r_p = (IM^T*IM)^-1*IM^T*r_c
+  
+  const dfloat Np = (mesh.N+1)*(mesh.N+2)/2; // Number of points in a triangular element
+
+  const memory<dfloat>r_child(Np);
+  const memory<dfloat>s_child(Np);
+
+  memory<dfloat>R12(2*Np*Np);
+  memory<dfloat>R34(2*Np*Np);
+  memory<dfloat>R56(2*Np*Np);
+  
+  //memory<dfloat>R1 = R12 + 0*Np*Np;
+  //memory<dfloat>R2 = R12 + 1*Np*Np;
+  //memory<dfloat>R3 = R34 + 0*Np*Np;
+  //memory<dfloat>R4 = R34 + 1*Np*Np;
+  //memory<dfloat>R5 = R56 + 0*Np*Np;
+  //memory<dfloat>R6 = R56 + 1*Np*Np;
+
+  memory<dfloat>R1;
+  memory<dfloat>R2;
+  memory<dfloat>R3;
+  memory<dfloat>R4;
+  memory<dfloat>R5;
+  memory<dfloat>R6;
+
+  memory<dfloat>R12T(2*Np*Np);
+  memory<dfloat>R34T(2*Np*Np);
+  memory<dfloat>R56T(2*Np*Np);
+
+  memory<dfloat>B1(Np*Np);
+  memory<dfloat>B2(Np*Np);
+  memory<dfloat>B3(Np*Np);
+
+
+  memory<dfloat>MRMT(6*Np*Np);
+
+  // Calculate IM for 3 different bisection config.
+
+ /*   for (int i = 0; i < Np; ++i)
+  {
+    printf("r[%d]=%f\n",i,r[i]);
+    
+  }
+    for (int i = 0; i < Np; ++i)
+  {
+    printf("s[%d]=%f\n",i,s[i]);
+  }
+*/
+    
+// First: r_child = (r-1)/2
+  for (int i = 0; i < Np; ++i)
+  {
+    r_child[i] = 0.5*(mesh.s[i]-1);
+    s_child[i] = -1-mesh.r[i]-mesh.s[i];
+  }
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R1);
+  
+  // Second: r_child = (r+1)/2
+  for (int i = 0; i < Np; ++i)
+  {
+    r_child[i] = 0.5*(-1-mesh.s[i])-mesh.r[i];
+    s_child[i] = mesh.r[i];
+  }
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R2);
+  
+  // Third: s_child = (s-1)/2
+  for (int i = 0; i < Np; ++i)
+  {
+    s_child[i] = 0.5*(mesh.s[i]-1);
+    r_child[i] = mesh.r[i];
+  }
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R3);
+  
+  // Fourth: s_child = (s+1)/2
+  for (int i = 0; i < Np; ++i)
+  { 
+    r_child[i] = -1-mesh.r[i]-mesh.s[i];
+    s_child[i] = 0.5*(mesh.s[i]+1)+mesh.r[i];
+    
+  }
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R4);
+
+  // Fifth: 
+  for (int i = 0; i < Np; ++i)
+  {
+    r_child[i] = 0.5*(mesh.s[i]+1)+mesh.r[i];
+    s_child[i] = 0.5*(mesh.s[i]-1);
+  }
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R5);
+
+  // Sixth: 
+  for (int i = 0; i < Np; ++i)
+  {
+    s_child[i] = -0.5*(1+mesh.s[i])-mesh.r[i];
+    r_child[i] = 0.5*(mesh.s[i]-1);
+  }
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,R6);
+
+  /*for (int i = 0; i < Np*Np; ++i)
+  {
+    printf("R1[%d]=%f\n",i, R1[i]);
+  }
+    for (int i = 0; i < Np*Np; ++i)
+  {
+    printf("R2[%d]=%f\n",i, R2[i]);
+  }*/
+
+    for (int i = 0; i < Np*Np; ++i)
+  {
+    R12[i] = R1[i];
+    R12[i+Np*Np] = R2[i];
+    R34[i] = R3[i];
+    R34[i+Np*Np] = R4[i];
+    R56[i] = R5[i];
+    R56[i+Np*Np] = R6[i];
+    //printf("R12[%d]=%f\n",i, R12[i]);
+  }
+
+  //  for (int i = 0; i < 2*Np*Np; ++i)
+  //{
+  //  printf("R12[%d]=%f\n",i, R12[i]);
+  //}
+
+  linAlg_t::matrixTranspose(2*Np, Np, R12, Np, R12T, 2*Np);
+  linAlg_t::matrixTranspose(2*Np, Np, R34, Np, R34T, 2*Np);
+  linAlg_t::matrixTranspose(2*Np, Np, R56, Np, R56T, 2*Np);
+
+
+// Calculating B=(IM^T*IM)
+
+    for (int i = 0; i < Np; ++i) {
+  for (int j = 0; j < Np; ++j) {
+    dfloat sum1 = 0.0;
+    dfloat sum2 = 0.0;
+    dfloat sum3 = 0.0;
+
+    for (int k = 0; k < 2*Np; ++k) {
+      sum1 += R12T[i*2*Np + k] * R12[k*Np + j];
+      sum2 += R34T[i*2*Np + k] * R34[k*Np + j];
+      sum3 += R56T[i*2*Np + k] * R56[k*Np + j];
+
+    }
+    B1[i*Np + j] = sum1;
+    //printf("B1[%d]=%f\n",i*Np + j, B1[i*Np + j]);
+    B2[i*Np + j] = sum2;
+    B3[i*Np + j] = sum3;
+  
+  }
+}
+  
+  linAlg_t::matrixInverse(Np, B1);
+  linAlg_t::matrixInverse(Np, B2);
+  linAlg_t::matrixInverse(Np, B3);
+  /*for (int i = 0; i < Np*Np; ++i)
+  {
+    printf("B1_inv[%d]=%f\n",i, B1[i]);
+  }*/
+  
+  //memory<dfloat>RM12(2*Np*Np);
+  //memory<dfloat>RM34(2*Np*Np);
+  //memory<dfloat>RM56(2*Np*Np);
+
+  memory<dfloat>RM12 = MRMT + 0*Np*Np;
+  memory<dfloat>RM34 = MRMT + 2*Np*Np;
+  memory<dfloat>RM56 = MRMT + 4*Np*Np;
+
+ 
+
+    for (int i = 0; i < Np; ++i) {
+  for (int j = 0; j < 2*Np; ++j) {
+    dfloat sum1 = 0.0;
+    dfloat sum2 = 0.0;
+    dfloat sum3 = 0.0;
+
+    for (int k = 0; k < Np; ++k) {
+      sum1 += B1[i*Np + k] * R12T[2*k*Np + j];
+      sum2 += B2[i*Np + k] * R34T[2*k*Np + j];
+      sum3 += B3[i*Np + k] * R56T[2*k*Np + j];
+
+    }
+    RM12[2*i*Np + j] = sum1;
+    RM34[2*i*Np + j] = sum2;
+    RM56[2*i*Np + j] = sum3;
+    //printf("RM56[%d]=%f\n",2*i*Np + j, RM56[2*i*Np + j]);
+  
+  }
+}
+
+ // memory<dfloat>RMT12 = MRMT + 0*Np*Np;
+ // memory<dfloat>RMT34 = MRMT + 2*Np*Np;
+ // memory<dfloat>RMT56 = MRMT + 4*Np*Np;
+//  linAlg_t::matrixRightSolve( Np, 2*Np, R12T, Np,Np, B1,  RM12);
+//  linAlg_t::matrixRightSolve( Np, 2*Np, R34T, Np,Np, B2,  RM34);
+//  linAlg_t::matrixRightSolve( Np, 2*Np, R56T, Np,Np, B3,  RM56);
+
+
+
+
+  //linAlg_t::matrixTranspose(Np, 2*Np, RM12, 2*Np, RMT12, Np);
+  //linAlg_t::matrixTranspose(Np, 2*Np, RM34, 2*Np, RMT34, Np);
+  //linAlg_t::matrixTranspose(Np, 2*Np, RM56, 2*Np, RMT56, Np);
+
+
+  o_RM = platform.malloc<dfloat>(MRMT);
+
+
+  
+}
 } //namespace libp

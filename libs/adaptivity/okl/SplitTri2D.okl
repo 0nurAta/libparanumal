@@ -77,33 +77,37 @@ SOFTWARE.
                                    @restrict dfloat * Q,
                                    @restrict dlong * SplitFlag,
                                    @restrict const dlong * IntFlag,
+                                   @restrict const dlong * EToRefLevel,
                                    @restrict const dlong * PToC,
-                                   @restrict const dfloat * IM){ 
+                                   @restrict const dfloat * IM,
+                                   const dlong level){ 
 
     for(dlong e=0;e<Nelements;++e;@outer(0)){
 
     for(int n=0;n<p_Np;++n;@inner(0)){
-      const dlong id = e*p_Np;
-      const dlong id_p = (e==PToC[4*e+0])? id:(PToC[4*e+0]*p_Np);
-      const dlong id_int = IntFlag[e]-1;
-      dfloat qn=0;
 
-      if (IntFlag[e]!=0 && SplitFlag[e]==1)
+      dfloat qn=0;
+       //printf("id_int=%d\n",id_int);
+      if (PToC[e*(level+3)+0]!=-1 && EToRefLevel[e]>0 && IntFlag[e*(level+3)+EToRefLevel[e]-1]!=0 && SplitFlag[e]==1)
       {
+      const dlong id = e*p_Np;
+      const dlong id_p = (e==PToC[e*(level+3)+0])? id:(PToC[e*(level+3)+0]*p_Np);
+      const dlong id_int = IntFlag[e*(level+3)+EToRefLevel[e]-1]-1;
         //printf("n=%d\n",n);
-        //printf("id=%d,id_p=%d,IntFlag=%d\n",id,id_p,IntFlag[e]);
+        printf("e=%d,id_p=%d,IntFlag=%d,Level_parent=%d\n",e,id_p,IntFlag[e*(level+3)+EToRefLevel[e]-1],EToRefLevel[e]);
         for(int i=0;i<p_Np;++i){
         const dfloat Ii = IM[n+i*p_Np+id_int*p_Np*p_Np];
              qn += Ii*Qold[id_p+i];         
         }
-        //printf("Q[%d]=%f\n",id+n,Q[id+n]);
+       
       Q[id+n] = qn;
       //printf("Q[%d]=%f,qn1[%d]=%f\n",id+n,Q[id+n],id+n,qn);
       //printf("Qold[%d]=%f\n",id_p+n,Qold[id_p+n]);
       
       }    
-      SplitFlag[e] = 0;              
+                  
     }
+    SplitFlag[e] = 0;  
   }
 }
 
