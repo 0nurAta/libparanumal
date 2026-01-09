@@ -198,6 +198,8 @@ void adaptivity_t::BisectLocal0(dlong e,
             SplitFlag[mesh.Nelements+nn]=0;
             //printf("Q_inbisect=%f\n",Q[1621] );
           //
+          ConfFlag[e]=mesh.EToE[idf+0];   
+          ConfFlag[(mesh.Nelements+nn)]=mesh.EToE[idf+0];   
           RefFlag[e]=0;
           nn++;
           nv++;
@@ -357,6 +359,8 @@ void adaptivity_t::BisectLocal1(dlong e,
             SplitFlag[mesh.Nelements+nn]=0;
           //
           RefFlag[e]=0;
+          ConfFlag[e]=mesh.EToE[idf+1];   
+          ConfFlag[(mesh.Nelements+nn)]=mesh.EToE[idf+1];   
           nn++;
           nv++;            
      *new_vertex = nv;
@@ -504,6 +508,8 @@ void adaptivity_t::BisectLocal2(dlong e,
             SplitFlag[mesh.Nelements+nn]=0;
           //
           RefFlag[e]=0;
+          ConfFlag[e]=mesh.EToE[idf+2];   
+          ConfFlag[(mesh.Nelements+nn)]=mesh.EToE[idf+2];   
           nn++;
           nv++;
       *new_vertex = nv;
@@ -568,7 +574,7 @@ void adaptivity_t::BisectbyID(  memory<dfloat>& Q,
           hlong vmax = (vA > vB) ? vA : vB;
 
           hlong newNode = mesh.Nnodes + (vmin * 10000 + vmax);
-
+          //hlong newNode = mesh.Nnodes + ( (vA + vB) * (vA + vB + 1) / 2 + vB );
           //hlong newNode = v0+v1+mesh.Nnodes;
           //printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
           printf("newNode=%lld,vA=%lld,vB=%lld\n",newNode,vA,vB );
@@ -698,6 +704,7 @@ void adaptivity_t::BisectbyID(  memory<dfloat>& Q,
           hlong vmax = (vA > vB) ? vA : vB;
 
           hlong newNode = mesh.Nnodes + (vmin * 10000 + vmax);
+          // hlong newNode = mesh.Nnodes + ( (vA + vB) * (vA + vB + 1) / 2 + vB );
            printf("newNode=%d,vA=%d,vB=%d\n",newNode,vA,vB );
           //hlong newNode = v1+v2+mesh.Nnodes;
           // printf("Neigh_e=%lld,MeshLevel=%d,NeighLevel=%d\n",mesh.EToE[idf+1],EToRefLevel[e],EToRefLevel[mesh.EToE[idf+1]]);
@@ -809,6 +816,7 @@ void adaptivity_t::BisectbyID(  memory<dfloat>& Q,
           hlong vmax = (vA > vB) ? vA : vB;
 
           hlong newNode = mesh.Nnodes + (vmin * 10000 + vmax);
+          //hlong newNode = mesh.Nnodes + ( (vA + vB) * (vA + vB + 1) / 2 + vB );
            printf("newNode=%d,vA=%d,vB=%d\n",newNode,vA,vB );
           printf("e2=%d,id_new2=%lld,mesh.EToF=%d\n",e,mesh.Nelements+nn,mesh.EToF[idf+1] );
           //hlong newNode = v0+v2+mesh.Nnodes;
@@ -1572,14 +1580,21 @@ void adaptivity_t::Bisect(memory<dlong>& RefFlag,
 
 
 // Red refinement of triangle i.e. regular refinement
-void adaptivity_t::Red(memory<dlong>& RefFlag,
-                       memory<dlong>& FaceFlag,
-                       memory<dfloat>& EX_new,
-                       memory<dfloat>& EY_new,
-                       memory<hlong>& EToV_new,
-                       memory<int>& EToB_new,
-                       memory<dlong>& SplitFlag,
-                       hlong* NN){
+void adaptivity_t::Red( deviceMemory<dfloat>& o_q,
+                          memory<dfloat>& Q,
+                          memory<dfloat>& Qold,
+                          memory<dlong>& RefFlag,
+                          memory<dlong>& FaceFlag,
+                          memory<dlong>& ConfFlag,
+                          memory<dfloat>& EX_new,
+                          memory<dfloat>& EY_new,
+                          memory<hlong>& EToV_new,
+                          memory<int>& EToB_new,
+                          memory<dlong>& SplitFlag,
+                          memory<dlong>& RedFlag,
+                          hlong* NN,
+                          hlong* new_vertex,
+                          dlong RefLevel){
 
   hlong nn = 0 ; // Counts each refinement
   dlong const MAX_REFINEMENT_LEVEL = 1;
@@ -1587,8 +1602,10 @@ void adaptivity_t::Red(memory<dlong>& RefFlag,
   for (int e = 0; e < mesh.Nelements; ++e)
   {
       const dlong id = e*mesh.Nverts; 
-      if (RefFlag[e]==1 && EToRefLevel[e]<MAX_REFINEMENT_LEVEL)
+      if (RefFlag[e]==1 && (EToRefLevel[e]<MAX_REFINEMENT_LEVEL))
       {
+        printf("Red Refined Element = %d\n",e );
+
         // Extract Vertex Number of Element to Refine
         const hlong v0 = mesh.EToV[id+0]; 
         const hlong v1 = mesh.EToV[id+1]; 
@@ -1603,20 +1620,236 @@ void adaptivity_t::Red(memory<dlong>& RefFlag,
         // Modify EToV with new vertex ids for bisection (3 different configurations)
         // & Calculate Physical Coordinates of new vertices
         // & Store boundary conditions of new faces
-        if (FaceFlag[id+0]==1)
-        { 
+
           // Uniquely number each vertex 
-          hlong Local_id_3 = 0+mesh.Nfaces*e+mesh.Nnodes;
-          hlong Local_id_4 = 1+mesh.Nfaces*e+mesh.Nnodes;
-          hlong Local_id_5 = 2+mesh.Nfaces*e+mesh.Nnodes;
 
-          hlong Neigh_id_3 = mesh.EToF[id+0]+mesh.Nfaces*mesh.EToE[id+0]+mesh.Nnodes;
-          hlong Neigh_id_4 = mesh.EToF[id+1]+mesh.Nfaces*mesh.EToE[id+1]+mesh.Nnodes;
-          hlong Neigh_id_5 = mesh.EToF[id+2]+mesh.Nfaces*mesh.EToE[id+2]+mesh.Nnodes;
+          hlong vmin = (v0 < v1) ? v0 : v1;
+          hlong vmax = (v0 > v1) ? v0 : v1;
 
-          hlong v3 = (Local_id_3>=Neigh_id_3)? Local_id_3:Neigh_id_3 ;
-          hlong v4 = (Local_id_4>=Neigh_id_4)? Local_id_4:Neigh_id_4 ;
-          hlong v5 = (Local_id_5>=Neigh_id_5)? Local_id_5:Neigh_id_5 ;
+          hlong v3 = mesh.Nnodes + (vmin * 10000 + vmax);
+          
+          vmin = (v1 < v2) ? v1 : v2;
+          vmax = (v1 > v2) ? v1 : v2;
+
+          hlong v4 = mesh.Nnodes + (vmin * 10000 + vmax);
+
+          vmin = (v0 < v2) ? v0 : v2;
+          vmax = (v0 > v2) ? v0 : v2;
+
+          hlong v5 = mesh.Nnodes + (vmin * 10000 + vmax);
+
+          //hlong Local_id_3 = 0+mesh.Nfaces*e+mesh.Nnodes;
+          //hlong Local_id_4 = 1+mesh.Nfaces*e+mesh.Nnodes;
+          //hlong Local_id_5 = 2+mesh.Nfaces*e+mesh.Nnodes;
+
+          //hlong Neigh_id_3 = mesh.EToF[id+0]+mesh.Nfaces*mesh.EToE[id+0]+mesh.Nnodes;
+          //hlong Neigh_id_4 = mesh.EToF[id+1]+mesh.Nfaces*mesh.EToE[id+1]+mesh.Nnodes;
+          //hlong Neigh_id_5 = mesh.EToF[id+2]+mesh.Nfaces*mesh.EToE[id+2]+mesh.Nnodes;
+
+          //hlong v3 = (Local_id_3>=Neigh_id_3)? Local_id_3:Neigh_id_3 ;
+          //hlong v4 = (Local_id_4>=Neigh_id_4)? Local_id_4:Neigh_id_4 ;
+          //hlong v5 = (Local_id_5>=Neigh_id_5)? Local_id_5:Neigh_id_5 ;
+
+          // Replace original with triangle connecting edge centers
+          EToV_new[id+0] = v3;
+          EToV_new[id+1] = v4;
+          EToV_new[id+2] = v5;
+
+          // Add extra triangles to EToV
+          EToV_new[id_new+0] = v0; EToV_new[id_new+1] = v3; EToV_new[id_new+2] = v5;
+          EToV_new[id_new+3] = v1; EToV_new[id_new+4] = v4; EToV_new[id_new+5] = v3;
+          EToV_new[id_new+6] = v2; EToV_new[id_new+7] = v5; EToV_new[id_new+8] = v4;
+          
+          // Find vertex locations of elements to be refined
+          dfloat  Xv3 = 0.5*(mesh.EX[id+0]+mesh.EX[id+1]);  
+          dfloat  Xv4 = 0.5*(mesh.EX[id+1]+mesh.EX[id+2]);
+          dfloat  Xv5 = 0.5*(mesh.EX[id+2]+mesh.EX[id+0]);
+          
+          dfloat  Yv3 = 0.5*(mesh.EY[id+0]+mesh.EY[id+1]);  
+          dfloat  Yv4 = 0.5*(mesh.EY[id+1]+mesh.EY[id+2]);
+          dfloat  Yv5 = 0.5*(mesh.EY[id+2]+mesh.EY[id+0]);
+          
+          // Add coordinates for refined edge centers
+          EX_new[id+0] = Xv3; EY_new[id+0] = Yv3;
+          EX_new[id+1] = Xv4; EY_new[id+1] = Yv4;
+          EX_new[id+2] = Xv5; EY_new[id+2] = Yv5;
+          
+          EX_new[id_new+0] = mesh.EX[id+0]; EX_new[id_new+1] = Xv3; EX_new[id_new+2] = Xv5;
+          EX_new[id_new+3] = mesh.EX[id+1]; EX_new[id_new+4] = Xv4; EX_new[id_new+5] = Xv3;
+          EX_new[id_new+6] = mesh.EX[id+2]; EX_new[id_new+7] = Xv5; EX_new[id_new+8] = Xv4;
+
+          EY_new[id_new+0] = mesh.EY[id+0]; EY_new[id_new+1] = Yv3; EY_new[id_new+2] = Yv5;
+          EY_new[id_new+3] = mesh.EY[id+1]; EY_new[id_new+4] = Yv4; EY_new[id_new+5] = Yv3;
+          EY_new[id_new+6] = mesh.EY[id+2]; EY_new[id_new+7] = Yv5; EY_new[id_new+8] = Yv4;
+
+          // Create boundary condition type for refined elements
+
+          EToB_new[id+0] = -1; 
+          EToB_new[id+1] = -1; 
+          EToB_new[id+2] = -1;
+
+          EToB_new[id_new+0] = mesh.EToB[id+0]; EToB_new[id_new+3] = mesh.EToB[id+1]; EToB_new[id_new+6] = mesh.EToB[id+2];  
+          EToB_new[id_new+1] = -1;              EToB_new[id_new+4] = -1;              EToB_new[id_new+7] = -1;
+          EToB_new[id_new+2] = mesh.EToB[id+2]; EToB_new[id_new+5] = mesh.EToB[id+0]; EToB_new[id_new+8] = mesh.EToB[id+1];
+
+          // Update lists related to AMR
+          // Update cell levels
+          EToRefLevel[e] = EToRefLevel[e]+1;
+          EToRefLevel[(mesh.Nelements+nn+0)] = EToRefLevel[e];
+          EToRefLevel[(mesh.Nelements+nn+1)] = EToRefLevel[e];
+          EToRefLevel[(mesh.Nelements+nn+2)] = EToRefLevel[e];
+
+          // Parent to Child Connection
+          if (EToRefLevel[e]==1)
+          { PToC[e*4+0]   = e; }
+          PToC[e*4+1] = mesh.Nelements+nn+0;
+          PToC[e*4+2] = mesh.Nelements+nn+1;
+          PToC[e*4+3] = mesh.Nelements+nn+2; 
+          
+          IntFlag[e*(1+3)+EToRefLevel[e]-1] = 1;
+          IntFlag[(mesh.Nelements+nn+0)*(1+3)+EToRefLevel[e]-1] = 2;
+          IntFlag[(mesh.Nelements+nn+1)*(1+3)+EToRefLevel[e]-1] = 3;
+          IntFlag[(mesh.Nelements+nn+2)*(1+3)+EToRefLevel[e]-1] = 4;
+
+          SplitFlag[e]=2;
+          SplitFlag[mesh.Nelements+nn+0]=2;
+          SplitFlag[mesh.Nelements+nn+1]=2;
+          SplitFlag[mesh.Nelements+nn+2]=2;
+
+
+           const dlong Np = (mesh.N+1)*(mesh.N+2)/2;
+          memory<dfloat> IM(4*Np*Np,0);
+          o_IMRed.copyTo(IM);
+          
+                    // Update solution Local
+              const dlong id1 = e*Np;
+              const dlong id2 = (mesh.Nelements+nn+0)*Np;
+              const dlong id3 = (mesh.Nelements+nn+1)*Np;
+              const dlong id4 = (mesh.Nelements+nn+2)*Np;
+              
+              const dlong id1_int = 0;
+              const dlong id2_int = 1;
+              const dlong id3_int = 2;
+              const dlong id4_int = 3;
+                 //printf("id1_int=%d,id2_int=%d\n", id1_int,id2_int);
+              //printf("id1=%d,id2=%d\n", e*Np,(mesh.Nelements+nn)*Np);
+              //const dlong n=0;        
+            for(int n=0;n<Np;++n){
+              dfloat qn1=0.; dfloat qn2=0.; dfloat qn3=0.; dfloat qn4=0.; 
+              for(int i=0;i<Np;++i){
+                const dfloat Ii1 = IM[n+i*Np+id1_int*Np*Np];
+                     qn1 += Ii1*Qold[id1+i];
+                const dfloat Ii2 = IM[n+i*Np+id2_int*Np*Np];
+                     qn2 += Ii2*Qold[id1+i];
+                const dfloat Ii3 = IM[n+i*Np+id3_int*Np*Np];
+                     qn3 += Ii3*Qold[id1+i];
+                const dfloat Ii4 = IM[n+i*Np+id4_int*Np*Np];
+                     qn4 += Ii4*Qold[id1+i];                         
+                
+              }                  
+              Q[id1+n] = qn1;
+              Q[id2+n] = qn2;
+              Q[id3+n] = qn3;
+              Q[id4+n] = qn4;
+              //  printf("Q[%d]=%f,qn1[%d]=%f\n",id2+n,Q[id2+n],id2+n,qn2);
+             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
+            }
+
+                        for(int n=0;n<Np;++n){
+                        
+              Qold[id1+n] = Q[id1+n];
+              Qold[id2+n] = Q[id2+n];
+              Qold[id3+n] = Q[id3+n];
+              Qold[id4+n] = Q[id4+n];
+                
+             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
+            }
+
+          ConfFlag[(mesh.Nelements+nn+0)] = mesh.EToE[id+2];
+          ConfFlag[(mesh.Nelements+nn+1)] = mesh.EToE[id+0];
+          ConfFlag[(mesh.Nelements+nn+2)] = mesh.EToE[id+1];   
+
+          RedFlag[e] = 1;
+          RedFlag[(mesh.Nelements+nn+0)] = 1;
+          RedFlag[(mesh.Nelements+nn+1)] = 1;
+          RedFlag[(mesh.Nelements+nn+2)] = 1;     
+
+          
+
+          nn=nn+3;
+          //new_vertex++;
+      }
+
+      *NN = nn;             
+  }
+}   
+
+// Red refinement of triangle i.e. regular refinement
+void adaptivity_t::RedLocal( dlong e,
+                          memory<dfloat>& Q,
+                          memory<dfloat>& Qold,
+                          memory<dlong>& RefFlag,
+                          memory<dlong>& FaceFlag,
+                          memory<dlong>& ConfFlag,
+                          memory<dfloat>& EX_new,
+                          memory<dfloat>& EY_new,
+                          memory<hlong>& EToV_new,
+                          memory<int>& EToB_new,
+                          memory<dlong>& SplitFlag,
+                          memory<dlong>& RedFlag,
+                          hlong* NN,
+                          hlong* new_vertex,
+                          dlong RefLevel){
+
+  hlong nn = 0 ; // Counts each refinement
+  dlong const MAX_REFINEMENT_LEVEL = 1;
+      const dlong id = e*mesh.Nverts; 
+      if ((EToRefLevel[e]<MAX_REFINEMENT_LEVEL))
+      {
+
+        // Extract Vertex Number of Element to Refine
+        const hlong v0 = mesh.EToV[id+0]; 
+        const hlong v1 = mesh.EToV[id+1]; 
+        const hlong v2 = mesh.EToV[id+2];
+        
+        // Number the new Vertex at the Longest Edge
+        const hlong id_new = (mesh.Nelements+nn)*mesh.Nverts;
+        
+        //hlong newNode = mesh.Nnodes;
+        //mesh.Nnodes++;
+        
+        // Modify EToV with new vertex ids for bisection (3 different configurations)
+        // & Calculate Physical Coordinates of new vertices
+        // & Store boundary conditions of new faces
+
+          // Uniquely number each vertex 
+
+          hlong vmin = (v0 < v1) ? v0 : v1;
+          hlong vmax = (v0 > v1) ? v0 : v1;
+
+          hlong v3 = mesh.Nnodes + (vmin * 10000 + vmax);
+          
+          vmin = (v1 < v2) ? v1 : v2;
+          vmax = (v1 > v2) ? v1 : v2;
+
+          hlong v4 = mesh.Nnodes + (vmin * 10000 + vmax);
+
+          vmin = (v0 < v2) ? v0 : v2;
+          vmax = (v0 > v2) ? v0 : v2;
+
+          hlong v5 = mesh.Nnodes + (vmin * 10000 + vmax);
+
+          //hlong Local_id_3 = 0+mesh.Nfaces*e+mesh.Nnodes;
+          //hlong Local_id_4 = 1+mesh.Nfaces*e+mesh.Nnodes;
+          //hlong Local_id_5 = 2+mesh.Nfaces*e+mesh.Nnodes;
+
+          //hlong Neigh_id_3 = mesh.EToF[id+0]+mesh.Nfaces*mesh.EToE[id+0]+mesh.Nnodes;
+          //hlong Neigh_id_4 = mesh.EToF[id+1]+mesh.Nfaces*mesh.EToE[id+1]+mesh.Nnodes;
+          //hlong Neigh_id_5 = mesh.EToF[id+2]+mesh.Nfaces*mesh.EToE[id+2]+mesh.Nnodes;
+
+          //hlong v3 = (Local_id_3>=Neigh_id_3)? Local_id_3:Neigh_id_3 ;
+          //hlong v4 = (Local_id_4>=Neigh_id_4)? Local_id_4:Neigh_id_4 ;
+          //hlong v5 = (Local_id_5>=Neigh_id_5)? Local_id_5:Neigh_id_5 ;
 
           // Replace original with triangle connecting edge centers
           EToV_new[id+0] = v3;
@@ -1674,26 +1907,83 @@ void adaptivity_t::Red(memory<dlong>& RefFlag,
           PToC[e*4+2] = mesh.Nelements+nn+1;
           PToC[e*4+3] = mesh.Nelements+nn+2; 
           
-          IntFlag[e] = 1;
-          IntFlag[(mesh.Nelements+nn+0)] = 2;
-          IntFlag[(mesh.Nelements+nn+1)] = 3;
-          IntFlag[(mesh.Nelements+nn+2)] = 4;
+          IntFlag[e*(1+3)+EToRefLevel[e]-1] = 1;
+          IntFlag[(mesh.Nelements+nn+0)*(1+3)+EToRefLevel[e]-1] = 2;
+          IntFlag[(mesh.Nelements+nn+1)*(1+3)+EToRefLevel[e]-1] = 3;
+          IntFlag[(mesh.Nelements+nn+2)*(1+3)+EToRefLevel[e]-1] = 4;
 
-          SplitFlag[e]=1;
-          SplitFlag[mesh.Nelements+nn+0]=1;
-          SplitFlag[mesh.Nelements+nn+1]=1;
-          SplitFlag[mesh.Nelements+nn+2]=1;
+          SplitFlag[e]=2;
+          SplitFlag[mesh.Nelements+nn+0]=2;
+          SplitFlag[mesh.Nelements+nn+1]=2;
+          SplitFlag[mesh.Nelements+nn+2]=2;
+
+
+           const dlong Np = (mesh.N+1)*(mesh.N+2)/2;
+          memory<dfloat> IM(4*Np*Np,0);
+          o_IMRed.copyTo(IM);
+          
+                    // Update solution Local
+              const dlong id1 = e*Np;
+              const dlong id2 = (mesh.Nelements+nn+0)*Np;
+              const dlong id3 = (mesh.Nelements+nn+1)*Np;
+              const dlong id4 = (mesh.Nelements+nn+2)*Np;
+              
+              const dlong id1_int = 0;
+              const dlong id2_int = 1;
+              const dlong id3_int = 2;
+              const dlong id4_int = 3;
+                 //printf("id1_int=%d,id2_int=%d\n", id1_int,id2_int);
+              //printf("id1=%d,id2=%d\n", e*Np,(mesh.Nelements+nn)*Np);
+              //const dlong n=0;        
+            for(int n=0;n<Np;++n){
+              dfloat qn1=0.; dfloat qn2=0.; dfloat qn3=0.; dfloat qn4=0.; 
+              for(int i=0;i<Np;++i){
+                const dfloat Ii1 = IM[n+i*Np+id1_int*Np*Np];
+                     qn1 += Ii1*Qold[id1+i];
+                const dfloat Ii2 = IM[n+i*Np+id2_int*Np*Np];
+                     qn2 += Ii2*Qold[id1+i];
+                const dfloat Ii3 = IM[n+i*Np+id3_int*Np*Np];
+                     qn3 += Ii3*Qold[id1+i];
+                const dfloat Ii4 = IM[n+i*Np+id4_int*Np*Np];
+                     qn4 += Ii4*Qold[id1+i];                         
+                
+              }                  
+              Q[id1+n] = qn1;
+              Q[id2+n] = qn2;
+              Q[id3+n] = qn3;
+              Q[id4+n] = qn4;
+              //  printf("Q[%d]=%f,qn1[%d]=%f\n",id2+n,Q[id2+n],id2+n,qn2);
+             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
+            }
+
+                        for(int n=0;n<Np;++n){
+                        
+              Qold[id1+n] = Q[id1+n];
+              Qold[id2+n] = Q[id2+n];
+              Qold[id3+n] = Q[id3+n];
+              Qold[id4+n] = Q[id4+n];
+                
+             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
+            }
+
+          ConfFlag[(mesh.Nelements+nn+0)] = mesh.EToE[id+2];
+          ConfFlag[(mesh.Nelements+nn+1)] = mesh.EToE[id+0];
+          ConfFlag[(mesh.Nelements+nn+2)] = mesh.EToE[id+1];   
+
+          RedFlag[e] = 1;
+          RedFlag[(mesh.Nelements+nn+0)] = 1;
+          RedFlag[(mesh.Nelements+nn+1)] = 1;
+          RedFlag[(mesh.Nelements+nn+2)] = 1;     
+
+          
 
           nn=nn+3;
           //new_vertex++;
-        }
       }
 
       *NN = nn;             
-  }
+  
 }   
-
-
 // Blue refinement of triangle i.e. double bisect
 void adaptivity_t::Blue(memory<dlong>& RefFlag,
                         memory<dlong>& FaceFlag,

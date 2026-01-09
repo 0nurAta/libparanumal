@@ -196,4 +196,67 @@ void adaptivity_t::InterpolateToChildTri2DLE(){
 
 
 }
+
+void adaptivity_t::InterpolateToChildTri2DRed(){
+
+  // Purpose: Constructing 4 different IM to interpolate solution from parent to child,
+  
+  const dlong Np = (mesh.N+1)*(mesh.N+2)/2;
+  const memory<dfloat>r_child(Np);
+  const memory<dfloat>s_child(Np);
+
+  memory<dfloat>I1(Np*Np);
+  memory<dfloat>I2(Np*Np);
+  memory<dfloat>I3(Np*Np);
+  memory<dfloat>I4(Np*Np);
+  memory<dfloat> IMT(4*Np*Np);
+
+  // First: 
+  for (int i = 0; i < Np; ++i)
+  {
+    r_child[i] = 0.5*(-1-mesh.s[i]);
+    s_child[i] = 0.5*(mesh.r[i]+mesh.s[i]);
+  }
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,I1);
+  
+  // Second:
+  for (int i = 0; i < Np; ++i)
+  {
+    r_child[i] = 0.5*(-1+mesh.r[i]);
+    s_child[i] = 0.5*(-1+mesh.s[i]);
+  }
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,I2);
+  
+  // Third: 
+  for (int i = 0; i < Np; ++i)
+  {
+    r_child[i] = 0.5*(-mesh.r[i]-mesh.s[i]);
+    s_child[i] = 0.5*(-1+mesh.r[i]);
+  }
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,I3);
+  
+  // Fourth: s_child = (s+1)/2
+  for (int i = 0; i < Np; ++i)
+  { 
+    r_child[i] = 0.5*(-1+mesh.s[i]);
+    s_child[i] = 0.5*(-mesh.r[i]-mesh.s[i]);
+    
+  }
+  mesh.InterpolationMatrixTri2D(mesh.N,mesh.r,mesh.s,r_child,s_child,I4);
+
+ 
+  memory<dfloat>I1T = IMT + 0*Np*Np;
+  memory<dfloat>I2T = IMT + 1*Np*Np;
+  memory<dfloat>I3T = IMT + 2*Np*Np;
+  memory<dfloat>I4T = IMT + 3*Np*Np;
+
+  linAlg_t::matrixTranspose(Np, Np, I1, Np, I1T, Np);
+  linAlg_t::matrixTranspose(Np, Np, I2, Np, I2T, Np);
+  linAlg_t::matrixTranspose(Np, Np, I3, Np, I3T, Np);
+  linAlg_t::matrixTranspose(Np, Np, I4, Np, I4T, Np);
+  
+  o_IMRed = platform.malloc<dfloat>(IMT);
+
+
+}
 } //namespace libp

@@ -114,7 +114,7 @@ if (amrCallback) {
     // (optional fallback)
     printf("I am in old implementation!\n");
     dlong _N = N;
-    solver.Amr(o_q, &_N);
+    //solver.Amr(o_q, &_N);
     N = _N;
   }
 }
