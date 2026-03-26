@@ -188,6 +188,8 @@ public:
                      const dfloat gamma, const dfloat T);
   void PressureIncrementSolve(deviceMemory<dfloat>& o_P, deviceMemory<dfloat>& o_RHS,
                      const dfloat gamma, const dfloat T, const dfloat dt);
+
+  void EnergyTGV(memory<dfloat>& U, std::string fileName, dfloat time);
 };
 
 #endif

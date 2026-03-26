@@ -28,7 +28,7 @@ SOFTWARE.
 
 void ins_t::Report(dfloat time, int tstep){
 
-  static int frame=0;
+  // static int frame=0;
 
   //compute U.M*U
   dlong Nentries = mesh.Nelements*mesh.Np*NVfields;
@@ -54,12 +54,17 @@ void ins_t::Report(dfloat time, int tstep){
     o_p.copyTo(p);
     o_Vort.copyTo(Vort);
 
-    // output field files
-    std::string name;
-    settings.getSetting("OUTPUT FILE NAME", name);
-    char fname[BUFSIZ];
-    sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+    char fnameTGV[BUFSIZ];
+    char nameTGV[] = "KE";
+    sprintf(fnameTGV, "%s_%04d_%04d.txt", nameTGV, mesh.rank, mesh.Np);
+    EnergyTGV(u, std::string(fnameTGV), time);
 
-    PlotFields(u, p, Vort, std::string(fname));
+    // // output field files
+    // std::string name;
+    // settings.getSetting("OUTPUT FILE NAME", name);
+    // char fname[BUFSIZ];
+    // sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
+
+    // PlotFields(u, p, Vort, std::string(fname));
   }
 }
