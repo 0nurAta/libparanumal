@@ -26,47 +26,30 @@ SOFTWARE.
 
 #include "ins.hpp"
 
-// Calculate the kinetic energy for TGV test cases in HEXes
-void ins_t::EnergyTGV(memory<dfloat>& U, memory<dfloat>& V, std::string fileName, dfloat time){
+void ins_t::WriteFieldsTxt(memory<dfloat>& U, memory<dfloat>& P, std::string fileName, dfloat time){
 
 	FILE *fp;
-	dfloat KE  = 0.0;
-	dfloat Eps = 0.0;
-
-	if(mesh.rank==0)
-		fp = fopen(fileName.c_str(), "a+");
-
-	memory<dfloat> u_tgv(mesh.Np);
-	memory<dfloat> v_tgv(mesh.Np);
-	memory<dfloat> w_tgv(mesh.Np);
-
+	fp = fopen(fileName.c_str(), "w");
+	fprintf(fp, "Time: %.4f\n", time);
 	for(dlong e=0;e<mesh.Nelements;++e){
 		for(int n=0;n<mesh.Np;++n){
 
-			int id = n + e*mesh.Np*NVfields;
+			const dfloat x = mesh.x[e*mesh.Np+n];
+			const dfloat y = mesh.y[e*mesh.Np+n];
 
-			u_tgv[n] = U[id + 0*mesh.Np];
-			v_tgv[n] = U[id + 1*mesh.Np];
-			w_tgv[n] = U[id + 2*mesh.Np];
-
-			KE += mesh.wJ[n+e*mesh.Np]*(u_tgv[n]*u_tgv[n]+v_tgv[n]*v_tgv[n]+w_tgv[n]*w_tgv[n]);
-
-			// write enstrophy
-      Eps += mesh.wJ[mesh.Np*e+n]*(V[e*mesh.Np*3+n+mesh.Np*0]*V[e*mesh.Np*3+n+mesh.Np*0]
-            +V[e*mesh.Np*3+n+mesh.Np*1]*V[e*mesh.Np*3+n+mesh.Np*1]
-            +V[e*mesh.Np*3+n+mesh.Np*2]*V[e*mesh.Np*3+n+mesh.Np*2]);
+			const dfloat pp = P[e*mesh.Np+n];
+			const dfloat ux = U[e*mesh.Np*NVfields + n + 0*mesh.Np];
+			const dfloat uy = U[e*mesh.Np*NVfields + n + 1*mesh.Np];
+			if(mesh.dim==3){
+				const dfloat z  = mesh.z[e*mesh.Np+n];
+				const dfloat uz = U[e*mesh.Np*NVfields + n + 2*mesh.Np];
+				fprintf(fp, "%g,%g,%g,%g,%g,%g,%g\n", x, y, z, pp, ux, uy, uz);
+			}
+			else
+				fprintf(fp, "%g,%g,%g,%g,%g\n", x, y, pp, ux, uy);
 		}
 	}
+	
+	fclose(fp);
 
-	comm.Allreduce(KE, Comm::Sum);
-	comm.Allreduce(Eps, Comm::Sum);
-
-	const dfloat volScale = 0.5/(6.28318530718*6.28318530718*6.28318530718); 
-
-	KE *= volScale; Eps *= volScale;
-
-	if(mesh.rank==0){
-		fprintf(fp, "%5.4f %13.12f %13.12f\n", time, KE, Eps);
-		fclose(fp);
-	}
 }
