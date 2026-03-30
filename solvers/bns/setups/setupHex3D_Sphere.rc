@@ -2,41 +2,42 @@
 2.0
 
 [DATA FILE]
-data/bnsUniform2D_SC.h
-
+#data/bnsGaussian3D.h
+data/bnsUniform3D.h
 [MESH FILE]
-../../meshes/cylinder_pml_coarse.msh
+#PMLBOX
+../../meshes/sphere_v3_mid.msh
 
 [MESH DIMENSION]
-2
+3
 
 [ELEMENT TYPE] # number of edges
-4
+12
 
 #[BOX NX]
-#20
+#10
 
 #[BOX NY]
-#20
+#10
 
 #[BOX NZ]
-#20
+#10
 
 #[BOX BOUNDARY FLAG]
+
 #1
 
 [POLYNOMIAL DEGREE]
 4
 
-
 [PROBES]
 TRUE
 
 [PROBE FILE]
-probes.dat
+sphere_re3700_probes_v2.dat
 
 [PROBE OUTPUT FILE]
-probe_history
+/arf/scratch/onata/sphere_n4/sphere
 
 [PROBE OUTPUT INTERVAL]
 1
@@ -51,13 +52,13 @@ CUDA
 0
 
 [VISCOSITY]
-#0.0000541
-0.02
+0.00002702702
+
 [SPEED OF SOUND]
 1.0
 
 [PML PROFILE ORDER]
-4
+3
 
 [PML SIGMAX MAX]
 50
@@ -65,8 +66,11 @@ CUDA
 [PML SIGMAY MAX]
 50
 
+[PML SIGMAZ MAX]
+50
+
 [PML INTEGRATION]
-CUBATURE
+COLLOCATION
 
 [TIME INTEGRATOR]
 SARK4
@@ -75,15 +79,15 @@ SARK4
 0
 
 [FINAL TIME]
-4000
+15000
 
 [OUTPUT INTERVAL]
-10
+1
 
 [OUTPUT TO FILE]
 TRUE
 
 [OUTPUT FILE NAME]
-#/media/onur/Elements/ONUR/SquareCylinder_Bns_Outputs/Quad/bns
-bns
+#bns
+/arf/scratch/onata/sphere_n4/sphere
 

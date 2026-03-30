@@ -223,6 +223,22 @@ class mesh_t {
   memory<dfloat> plotR, plotS, plotT; // coordinates of plot nodes in reference element
   memory<dfloat> plotInterp;          // reference to plot node interpolation matrix
 
+    // probe info
+  memory<dlong>  probeElement;
+  memory<dfloat> probeR;
+  memory<dfloat> probeS;
+  memory<dfloat> probeT;
+  memory<dfloat> probeInterp;
+
+  memory<dfloat> probeX;
+  memory<dfloat> probeY;
+  memory<dfloat> probeZ; 
+
+  bool probesEnabled;
+  std::string probeOutputFile;
+  dlong probeOutputInterval;
+  dlong Nprobes;
+
   /*************************/
   /* Physical Space        */
   /*************************/
@@ -782,6 +798,57 @@ class mesh_t {
   }
   void CurvedNodesQuad2D();
   void CurvedNodesHex3D();
+
+  void ProbeSetup();
+
+void ReadProbeFile2D(const std::string& fileName,
+                             memory<dfloat>& pX,
+                             memory<dfloat>& pY);
+
+
+void ReadProbeFile3D(const std::string& fileName,
+                             memory<dfloat>& pX,
+                             memory<dfloat>& pY,
+                             memory<dfloat>& pZ);
+  
+  void ProbeQuad2D();
+
+void ProbeLocateQuad2D(const dfloat pX, const dfloat pY,
+                       dlong &elem,
+                       dfloat &rp,
+                       dfloat &sp);
+
+bool PhysicalToReferenceQuad2D(const dfloat pX, const dfloat pY, const dlong e,
+                               dfloat &rp,
+                               dfloat &sp);
+
+void BuildProbeInterpQuad2D(const memory<dfloat> &probeR_,
+                            const memory<dfloat> &probeS_,
+                            const memory<dlong>  &probeElement_,
+                            memory<dfloat> &probeInterp_);
+
+void ProbeHex3D();
+void ProbeLocateHex3D(const dfloat pX,
+                      const dfloat pY,
+                      const dfloat pZ,
+                      dlong &elem,
+                      dfloat &rp,
+                      dfloat &sp,
+                      dfloat &tp);
+
+bool PhysicalToReferenceHex3D(const dfloat pX,
+                              const dfloat pY,
+                              const dfloat pZ,
+                              const dlong e,
+                              dfloat &rp,
+                              dfloat &sp,
+                              dfloat &tp);
+
+void BuildProbeInterpHex3D(const memory<dfloat> &probeR_,
+                           const memory<dfloat> &probeS_,
+                           const memory<dfloat> &probeT_,
+                           const memory<dlong>  &probeElement_,
+                           memory<dfloat> &probeInterp_);
 
   /***************************************************************************/
   // Basic codes for generating nodes, polynomials, matrices, etc.

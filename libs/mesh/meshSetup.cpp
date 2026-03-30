@@ -106,6 +106,9 @@ void mesh_t::Setup(platform_t& _platform, meshSettings_t& _settings,
   // label local/global gather elements
   GatherScatterSetup();
 
+  // setting probes
+  ProbeSetup();
+
 
 }
 

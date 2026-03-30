@@ -118,8 +118,13 @@ public:
 
   void WriteFieldsTxt(memory<dfloat>& Q, std::string fileName, dfloat time);
 
+  void ReportProbes(memory<dfloat>& Q, memory<dfloat>& V,
+                    const dfloat time, const std::string& fileName,
+                    const bool writeHeader); 
   void writeForces(dfloat time, int tstep, int frame);
-
+  void writeSurfaceCoeffs(dfloat time, int frame);
+  void writeSurfaceCoeffsQuad2D(dfloat time, int frame);
+  void writeSurfaceCoeffsHex3D(dfloat time, int frame);
   dfloat MaxWaveSpeed();
 
   void rhsf_pml(deviceMemory<dfloat>& o_Q, deviceMemory<dfloat>& o_pmlQ,

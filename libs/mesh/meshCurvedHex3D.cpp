@@ -129,7 +129,7 @@ void mesh_t::CurvedHex3D(){
         
       
 
-  printf("bcnt = %lld\n", bcnt);
+  //printf("bcnt = %lld\n", bcnt);
 }
 
 } //namespace libp

@@ -14,13 +14,13 @@ BOX
 12
 
 [BOX GLOBAL NX]
-24
+32
 
 [BOX GLOBAL NY]
-24
+32
 
 [BOX GLOBAL NZ]
-24
+32
 
 [BOX DIMX]
 6.28318530718
@@ -35,7 +35,7 @@ BOX
 -1
 
 [POLYNOMIAL DEGREE]
-3
+6
 
 [THREAD MODEL]
 CUDA
@@ -63,6 +63,9 @@ EXTBDF3
 [NUMBER OF SUBCYCLES]
 4
 
+[CFL NUMBER]
+0.1
+
 [SUBCYCLING TIME INTEGRATOR]
 DOPRI5
 
@@ -79,7 +82,7 @@ DOPRI5
 TRUE
 
 [OUTPUT FILE NAME]
-/arf/scratch/aaygun/ins_tgv/ins
+/arf/scratch/onata/ins_tgv/ins
 
 #################################################
 ########## Velocity Solver Options ##############
@@ -170,7 +173,7 @@ MULTIGRID
 
 # can be LAST, ZERO, CLASSIC, QR, or EXTRAP
 [PRESSURE INITIAL GUESS STRATEGY]
-QR
+CLASSIC
 
 [PRESSURE INITIAL GUESS HISTORY SPACE DIMENSION]
 9

@@ -30,8 +30,8 @@ namespace libp {
 
 void mesh_t::CurvedQuad2D(){
 
-  printf("HELLO\n");
-  printf("Nbf = %lld\n", NboundaryFaces);
+  //printf("HELLO\n");
+  //printf("Nbf = %lld\n", NboundaryFaces);
 
   /* Origin coordinates and radius of the cylinder */
   dfloat x0 = 0.0;
@@ -73,7 +73,7 @@ void mesh_t::CurvedQuad2D(){
         
       
 
-  printf("bcnt = %lld\n", bcnt);
+  //printf("bcnt = %lld\n", bcnt);
 }
 
 } //namespace libp

@@ -87,6 +87,12 @@ meshSettings_t::meshSettings_t(comm_t _comm):
              "Degree of polynomial finite element space",
              {"1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"});
 
+    // Probe Settings
+  newSetting("PROBES", "FALSE", "Enable probe output", {"TRUE","FALSE"});
+  newSetting("PROBE FILE", "NONE", "Text file containing probe coordinates");
+  newSetting("PROBE OUTPUT FILE", "probes.dat", "Output file for probe history");
+  newSetting("PROBE OUTPUT INTERVAL", "1", "Write probe data every N time steps");
+
   paradogs::AddSettings(*this);
 }
 
