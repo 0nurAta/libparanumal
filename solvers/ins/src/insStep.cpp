@@ -87,7 +87,10 @@ void ins_t::rhs_imex_invg(deviceMemory<dfloat>& o_RHS, deviceMemory<dfloat>& o_U
   } else {
     //call velocty solver to solve
     // gamma*U - mu*Laplacian*U = RHS
+    timePoint_t startVelocity = GlobalTime(comm);
     VelocitySolve(o_U, o_RHS, gamma, T);
+    timePoint_t endVelocity = GlobalTime(comm);
+    velocityTime += ElapsedTime(startVelocity,endVelocity);
 
     // rhsP = -Div U
     deviceMemory<dfloat> o_rhsP = platform.reserve<dfloat>(Ntotal);
@@ -95,7 +98,10 @@ void ins_t::rhs_imex_invg(deviceMemory<dfloat>& o_RHS, deviceMemory<dfloat>& o_U
 
     //call pressure solver to solve
     // -dt*Laplacian*P = rhsP
+    timePoint_t startPressure = GlobalTime(comm);
     PressureSolve(o_p, o_rhsP, dt, T);
+    timePoint_t endPressure = GlobalTime(comm);
+    pressureTime += ElapsedTime(startPressure,endPressure);
 
     //update velocity with pressure correction
     // U = U - dt*grad P
@@ -113,7 +119,10 @@ void ins_t::rhs_imex_invg(deviceMemory<dfloat>& o_RHS, deviceMemory<dfloat>& o_U
 // Evaluation of rhs f function
 void ins_t::rhs_imex_f(deviceMemory<dfloat>& o_U, deviceMemory<dfloat>& o_RHS, const dfloat T){
   // RHS = N(U)
+  timePoint_t startAdvection = GlobalTime(comm);
   Advection(1.0, o_U, 0.0, o_RHS, T);
+  timePoint_t endAdvection = GlobalTime(comm);
+  advectionTime += ElapsedTime(startAdvection,endAdvection);
 }
 
 // Evolve rhs f function via a sub-timestepper

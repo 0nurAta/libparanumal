@@ -35,6 +35,7 @@
 #include "linAlg.hpp"
 #include "elliptic.hpp"
 #include "initialGuess.hpp"
+#include "timer.hpp"
 
 #define DINS LIBP_DIR"/solvers/ins/"
 
@@ -108,6 +109,9 @@ public:
 
   memory<dfloat> u, p;
   deviceMemory<dfloat> o_u, o_p;
+
+  // Timing
+  dfloat advectionTime, velocityTime, pressureTime;
 
   //subcycling
   int Nsubcycles;

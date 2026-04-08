@@ -63,7 +63,14 @@ void ins_t::Run(){
 
   timeStepper.SetTimeStep(dt);
 
+  timePoint_t startRun = GlobalTime(comm);
   timeStepper.Run(*this, o_u, startTime, finalTime);
+  timePoint_t endRun = GlobalTime(comm);
+  dfloat runTime = ElapsedTime(startRun,endRun);
+  printf("\nrunTime: %f\n", runTime);
+  printf("advectionTime: %f\n", advectionTime);
+  printf("velocityTime: %f\n", velocityTime);
+  printf("pressureTime: %f\n", pressureTime);
 
   // output norm of final solution
   {

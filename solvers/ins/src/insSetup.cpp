@@ -34,6 +34,9 @@ void ins_t::Setup(platform_t& _platform, mesh_t& _mesh,
   comm = _mesh.comm;
   settings = _settings;
 
+  // Initialize timing values
+  advectionTime = 0.0, velocityTime = 0.0, pressureTime = 0.0;
+
   //Trigger JIT kernel builds
   ogs::InitializeKernels(platform, ogs::Dfloat, ogs::Add);
 
