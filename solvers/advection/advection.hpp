@@ -80,6 +80,7 @@ public:
   void Report(dfloat time, int tstep);
 
   void PlotFields(memory<dfloat> Q,  const std::string fileName);
+  void PlotAdaptivity(std::string fileName, dfloat time, dfloat norm );
 
   void rhsf(deviceMemory<dfloat>& o_q, deviceMemory<dfloat>& o_rhs, const dfloat time);
 

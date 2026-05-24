@@ -45,7 +45,7 @@ void advection_t::Run(){
   // set time step
   dfloat vmax = MaxWaveSpeed(o_q, startTime);
 
-  dfloat dt = cfl/(vmax*(mesh.N+1.)*(mesh.N+1.));
+  dfloat dt = 0.1*cfl/(vmax*(mesh.N+1.)*(mesh.N+1.));
   timeStepper.SetTimeStep(dt);
   printf("dt=%f\n", dt);
   timeStepper.Run(*this, o_q, startTime, finalTime);

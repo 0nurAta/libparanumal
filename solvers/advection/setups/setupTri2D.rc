@@ -6,8 +6,8 @@ data/advectionTest2D.h
 #data/advectionLinear2D.h
 
 [MESH FILE]
-#../../meshes/advectionTest_unisotropic.msh
-../../meshes/advection_GaussianBump.msh
+../../meshes/advectionTest.msh
+#../../meshes/advection_GaussianBump_uns.msh
 #BOX
 
 [MESH DIMENSION]
@@ -47,13 +47,16 @@ LSERK4
 0
 
 [FINAL TIME]
-120
+90
 
 [OUTPUT INTERVAL]
-1
+1.0
 
 [OUTPUT TO FILE]
 TRUE
 
 [OUTPUT FILE NAME]
 advection
+
+[ADAPTIVITY]
+TRUE

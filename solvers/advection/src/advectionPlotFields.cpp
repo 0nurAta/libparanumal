@@ -90,17 +90,17 @@ void advection_t::PlotFields(memory<dfloat> Q, const std::string fileName){
   fprintf(fp, "       </DataArray>\n");
 
 
-  //// write out refflag
-  //fprintf(fp, "        <DataArray type=\"Int32\" Name=\"RefFlag\" Format=\"ascii\">\n");
-  //for(dlong e=0;e<mesh.Nelements;++e){
-  //  //mesh.PlotInterp(RefFlag + e*mesh.Np, Ip, scratch);
-//
-  //  for(int n=0;n<mesh.plotNp;++n){
-  //    fprintf(fp, "       ");
-  //    fprintf(fp, "%d\n", RefFlag[e]);
-  //  }
-  //}
-  //fprintf(fp, "       </DataArray>\n");
+  // write out refflag
+  fprintf(fp, "        <DataArray type=\"Int32\" Name=\"Level\" Format=\"ascii\">\n");
+  for(dlong e=0;e<mesh.Nelements;++e){
+    mesh.PlotInterp(adaptivity.EToRefLevel + e*mesh.Np, Ip, scratch);
+  
+    for(int n=0;n<mesh.plotNp;++n){
+      fprintf(fp, "       ");
+      fprintf(fp, "%d\n", adaptivity.EToRefLevel[e]);
+    }
+  }
+  fprintf(fp, "       </DataArray>\n");
   fprintf(fp, "     </PointData>\n");
   
   fprintf(fp, "    <Cells>\n");

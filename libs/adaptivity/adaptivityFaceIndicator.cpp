@@ -28,60 +28,25 @@ SOFTWARE.
 
 namespace libp {
 
-void adaptivity_t::LongestEdgeNEW(memory<dlong>& FaceFlag,
-                                  memory<dlong>& RefFlag)
-{
-  printf("Finding Longest Edge!\n");
-  dlong const MAX_REFINEMENT_LEVEL = 1;
-  const dlong Nverts = mesh.Nverts; // 3
-  const dlong Nfaces = mesh.Nfaces; // 3
-
-  for (dlong e = 0; e < mesh.Nelements; ++e) {
-    if (RefFlag[e] == 1 && EToRefLevel[e]<MAX_REFINEMENT_LEVEL){
-
-    const dlong id  = e * mesh.Nverts;
-    const dlong idf = e * mesh.Nfaces;
-
-    const dfloat x0 = mesh.EX[id+0], y0 = mesh.EY[id+0];
-    const dfloat x1 = mesh.EX[id+1], y1 = mesh.EY[id+1];
-    const dfloat x2 = mesh.EX[id+2], y2 = mesh.EY[id+2];
-
-    const dfloat mag0 = sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0)); // edge (0,1)
-    const dfloat mag1 = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)); // edge (1,2)
-    const dfloat mag2 = sqrt((x2-x0)*(x2-x0) + (y2-y0)*(y2-y0)); // edge (2,0)
-
-      
-      dlong Face_id;
-      if (mag0 >= mag1 && mag0 >= mag2) {
-        Face_id = idf+0;
-      } else if (mag1 >= mag2) {
-        Face_id = idf+1;
-      } else {
-        Face_id = idf+2;
-      }
-      FaceFlag[Face_id] = 1;        
-
-      
-  }
-  }
-}
-
-
-void adaptivity_t::LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag){ 
- dlong const MAX_REFINEMENT_LEVEL = 2;
-  printf("Finding Longest Edge!\n");
+void adaptivity_t::LongestEdge(memory<dlong>& FaceFlag, 
+                               memory<dlong>& RefFlag, 
+                               dlong level){
 
   for (int e = 0; e < mesh.Nelements; ++e)
   {
-      if (RefFlag[e]==1 && EToRefLevel[e]<MAX_REFINEMENT_LEVEL)
-      {      
-      //int e = Ref[i];
+      if (RefFlag[e]==1 && EToRefLevel[e]<level)
+      {
       const dlong id = e*mesh.Nverts;
       const dlong idf = e*mesh.Nfaces; 
               
       // Find vertex locations of elements to be refined
-      const dfloat x0 = mesh.EX[id+0]; const dfloat x1 = mesh.EX[id+1]; const dfloat x2 = mesh.EX[id+2];    
-      const dfloat y0 = mesh.EY[id+0]; const dfloat y1 = mesh.EY[id+1]; const dfloat y2 = mesh.EY[id+2];
+      const dfloat x0 = mesh.EX[id+0]; 
+      const dfloat x1 = mesh.EX[id+1]; 
+      const dfloat x2 = mesh.EX[id+2];
+
+      const dfloat y0 = mesh.EY[id+0]; 
+      const dfloat y1 = mesh.EY[id+1]; 
+      const dfloat y2 = mesh.EY[id+2];
       
       // Find Longest Edge
       const dfloat mag0 = sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)); 
@@ -89,60 +54,152 @@ void adaptivity_t::LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag){
       const dfloat mag2 = sqrt((x2-x0)*(x2-x0)+(y2-y0)*(y2-y0));
       
       dlong Face_id;
-      if (mag0 >= mag1 && mag0 >= mag2) {
-        Face_id = idf+0;
-      } else if (mag1 >= mag2) {
-        Face_id = idf+1;
-      } else {
-        Face_id = idf+2;
-      }
-      FaceFlag[Face_id] = 1;        
+      if (mag0 >= mag1 && mag0 >= mag2) {Face_id = idf+0;} 
+      else if (mag1 >= mag2) {Face_id = idf+1;} 
+      else {Face_id = idf+2;}
 
+      FaceFlag[Face_id] = 1;        
       }          
   }           
+}
+
+void adaptivity_t::LongestEdge2(memory<dlong>& FaceFlag, 
+                               memory<dlong>& RefFlag, 
+                               dlong level, dlong Nrefine,
+                               memory<hlong>& new_v_id,
+                               hlong* new_vertex){
+
+  dlong counter = 0;
+  memory<hlong> elemList(Nrefine*3,-1);
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+      if (RefFlag[e]==1 && EToRefLevel[e]<level)
+      {
+      const dlong id = e*mesh.Nverts;
+      const dlong idf = e*mesh.Nfaces; 
+              
+      // Find vertex locations of elements to be refined
+      const dfloat x0 = mesh.EX[id+0]; 
+      const dfloat x1 = mesh.EX[id+1]; 
+      const dfloat x2 = mesh.EX[id+2];
+
+      const dfloat y0 = mesh.EY[id+0]; 
+      const dfloat y1 = mesh.EY[id+1]; 
+      const dfloat y2 = mesh.EY[id+2];
+      
+      // Find Longest Edge
+      const dfloat mag0 = sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)); 
+      const dfloat mag1 = sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+      const dfloat mag2 = sqrt((x2-x0)*(x2-x0)+(y2-y0)*(y2-y0));
+      
+      dlong Face_id;
+      hlong vid0; hlong vid1;
+      if (mag0 >= mag1 && mag0 >= mag2) {Face_id = idf+0; 
+      vid0= mesh.EToV[idf+0]; vid1= mesh.EToV[idf+1];} 
+      else if (mag1 >= mag2) {Face_id = idf+1; vid0= mesh.EToV[idf+1]; vid1= mesh.EToV[idf+2];} 
+      else {Face_id = idf+2; vid0= mesh.EToV[idf+2]; vid1= mesh.EToV[idf+0];}
+
+      if (vid0>vid1)
+      {
+       hlong c;
+       c = vid0;
+       vid0=vid1;
+       vid1=c;
+
+      }
+         printf("e=%d,vid0=%d,vid1=%d\n", e,vid0,vid1);
+      FaceFlag[Face_id] = 1;   
+          
+      elemList[counter*3+0] = e;
+      elemList[counter*3+1] = vid0;
+      elemList[counter*3+2] = vid1;
+      counter ++; 
+      }          
+  } 
+
+  // sorting algorithm 
+    bool swp;
+    for (int i = 0; i < counter-1; ++i)
+  {
+    swp = false;
+    for (int j = 0; j < counter-i-1; ++j)
+    {
+      if (elemList[j*3+1] > elemList[(j+1)*3+1] ||
+   (elemList[j*3+1] == elemList[(j+1)*3+1] &&
+    elemList[j*3+2] > elemList[(j+1)*3+2])) {
+        std::swap(elemList[j*3+0],elemList[(j+1)*3+0]);
+        std::swap(elemList[j*3+1],elemList[(j+1)*3+1]);
+        std::swap(elemList[j*3+2],elemList[(j+1)*3+2]);
+        swp = true;
+      }
+    }
+       if (!swp)
+            break;
+  }           
+
+  //memory<dlong> new_v_id(counter*2,-1);
+  dlong k = 0;
+for (int i = 0; i < counter; ++i)
+{
+  if (i > 0) {
+    bool sameEdge =
+      (elemList[i*3+1] == elemList[(i-1)*3+1]) &&
+      (elemList[i*3+2] == elemList[(i-1)*3+2]);
+
+    if (!sameEdge) {k++;}
+  }
+
+  new_v_id[i*2+0] = elemList[i*3+0];
+  new_v_id[i*2+1] = mesh.Nnodes + k;
+}
+*new_vertex = (counter > 0) ? (k + 1) : 0;
+  printf("new_vertex=%d\n",*new_vertex );
+
+ /*for (int i = 0; i < Nrefine; ++i)
+  {
+
+   printf("e=%d,vid0=%d,vid1=%d\n", elemList[i*3+0],elemList[i*3+1],elemList[i*3+2]);
+   
+  }*/
 }
 
 
 void adaptivity_t::NewestVertex(memory<dlong>& FaceFlag, memory<dlong>& RefFlag){ 
  dlong const MAX_REFINEMENT_LEVEL = 2;
-  printf("Finding Longest Edge!\n");
 
   for (int e = 0; e < mesh.Nelements; ++e)
   {   
 
             if (RefFlag[e]==1 && EToRefLevel[e]<1)
-      {      
-      //int e = Ref[i];
+      {
       const dlong id = e*mesh.Nverts;
       const dlong idf = e*mesh.Nfaces; 
               
       // Find vertex locations of elements to be refined
-      const dfloat x0 = mesh.EX[id+0]; const dfloat x1 = mesh.EX[id+1]; const dfloat x2 = mesh.EX[id+2];    
-      const dfloat y0 = mesh.EY[id+0]; const dfloat y1 = mesh.EY[id+1]; const dfloat y2 = mesh.EY[id+2];
-      
+      const dfloat x0 = mesh.EX[id+0]; 
+      const dfloat x1 = mesh.EX[id+1]; 
+      const dfloat x2 = mesh.EX[id+2];
+
+      const dfloat y0 = mesh.EY[id+0]; 
+      const dfloat y1 = mesh.EY[id+1]; 
+      const dfloat y2 = mesh.EY[id+2];
+
       // Find Longest Edge
       const dfloat mag0 = sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)); 
       const dfloat mag1 = sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
       const dfloat mag2 = sqrt((x2-x0)*(x2-x0)+(y2-y0)*(y2-y0));
       
       dlong Face_id;
-      if (mag0 >= mag1 && mag0 >= mag2) {
-        Face_id = idf+0;
-      } else if (mag1 >= mag2) {
-        Face_id = idf+1;
-      } else {
-        Face_id = idf+2;
-      }
-      FaceFlag[Face_id] = 1;        
-
+      if (mag0 >= mag1 && mag0 >= mag2) {Face_id = idf+0;} 
+      else if (mag1 >= mag2) {Face_id = idf+1;} 
+      else {Face_id = idf+2;}
+      
+      FaceFlag[Face_id] = 1;          
       } 
       else if (RefFlag[e]==1 && EToRefLevel[e]<MAX_REFINEMENT_LEVEL)
       {      
-
-      const dlong idf = e*mesh.Nfaces; 
-              
+      const dlong idf = e*mesh.Nfaces;  
       FaceFlag[idf+0] = 1;        
-
       }          
   }           
 }

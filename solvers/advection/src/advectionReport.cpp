@@ -86,6 +86,12 @@ void advection_t::Report(dfloat time, int tstep){
     char fname[BUFSIZ];
     sprintf(fname, "%s_%04d_%04d.vtu", name.c_str(), mesh.rank, frame++);
 
+
+
+    char fname1[BUFSIZ];
+    char name1[] = "Adaptivity_metrics" ;    
+    sprintf(fname1, "%s_%04d_%04d.txt", name1, mesh.rank, mesh.Np);
+    PlotAdaptivity(std::string(fname1), time, norm2);
     //Refine(q,refFlag,Nrefine); 
     //memory<dfloat> Qold(2*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np);
     //Qold = q;

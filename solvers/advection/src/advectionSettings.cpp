@@ -62,6 +62,16 @@ advectionSettings_t::advectionSettings_t(comm_t _comm):
 
   newSetting("OUTPUT FILE NAME",
              "advection");
+
+  newSetting("ADAPTIVITY",
+             "FALSE",
+             "Enable adaptivity",
+             {"TRUE","FALSE"});
+
+  newSetting("ADAPTIVITY METHOD",
+             "LE1",
+             "Adaptation method",
+             {"LE1","LE2","NVB","RGB"});
 }
 
 void advectionSettings_t::report() {
