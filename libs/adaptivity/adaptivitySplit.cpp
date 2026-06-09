@@ -937,8 +937,9 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
                           dlong Nrefine,
                           hlong* NN,
                           hlong* new_vertex,
-                          dlong RefLevel){
-
+                          dlong RefLevel,
+                          dlong ConfLevel){
+  printf("bisect New Starts!\n");
   hlong nv = 0 ; // new vertex
   hlong nn = 0 ; // Counts each refinement
   dlong const level = RefLevel;
@@ -949,7 +950,7 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
       const int e = new_v_id[i*2+0];
 
 
-      if ( e!=-1 && RefFlag[e]==1 && EToRefLevel[e]<level)
+      if ( e!=-1 && EToRefLevel[e]<ConfLevel)
       {
       const dlong id = e*mesh.Nverts; 
       const dlong idf = e*mesh.Nfaces; 
@@ -988,7 +989,7 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
           //hlong newNode = mesh.Nnodes + ( (vA + vB) * (vA + vB + 1) / 2 + vB );
           //hlong newNode = v0+v1+mesh.Nnodes;
           //printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
-          printf("e=%lld,newNode=%lld\n",e,newNode);
+          printf("e=%lld,new_e=%lld,newNode=%lld,Level = %d\n",e,mesh.Nelements+nn,newNode,EToRefLevel[e]+1);
           // 1st child vertex ids
           EToV_new[id+0] = mesh.EToV[id+2];
           EToV_new[id+1] = mesh.EToV[id+0];
@@ -1092,9 +1093,12 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
             SplitFlag[e] = 0;
             SplitFlag[mesh.Nelements+nn]=0;
           //
-          ConfFlag[e]=mesh.EToE[idf+0]; 
+          if (ConfFlag[e] == -1)
+          {ConfFlag[e]=mesh.EToE[idf+0];}
+        
           ConfFlag[mesh.Nelements+nn]=mesh.EToE[idf+0]; 
-          //printf("confFlag[e]=%d\n",mesh.EToE[idf+0] );
+           printf("confFlag[%d]=%d\n",mesh.Nelements+nn,mesh.EToE[idf+0] );
+           printf("confFlag[%d]=%d\n",e,mesh.EToE[idf+0] );
           RefFlag[e]=0;
           nn++;
           nv++;
@@ -1119,7 +1123,7 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
 
            hlong newNode = new_v_id[i*2+1];
           // hlong newNode = mesh.Nnodes + ( (vA + vB) * (vA + vB + 1) / 2 + vB );
-           printf("e=%lld,newNode=%lld\n",e,newNode);
+                    printf("e=%lld,new_e=%lld,newNode=%lld,Level = %d\n",e,mesh.Nelements+nn,newNode,EToRefLevel[e]+1);
           //hlong newNode = v1+v2+mesh.Nnodes;
           // printf("Neigh_e=%lld,MeshLevel=%d,NeighLevel=%d\n",mesh.EToE[idf+1],EToRefLevel[e],EToRefLevel[mesh.EToE[idf+1]]);
           //printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
@@ -1209,9 +1213,11 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
             SplitFlag[e] = 0;
             SplitFlag[mesh.Nelements+nn]=0;
           //
-          ConfFlag[e]=mesh.EToE[idf+1]; 
+          if (ConfFlag[e] == -1)
+          {ConfFlag[e]=mesh.EToE[idf+1];}
           ConfFlag[mesh.Nelements+nn]=mesh.EToE[idf+1]; 
-          //printf("confFlag[e]=%d\n",mesh.EToE[idf+1] );
+          printf("confFlag[%d]=%d\n",mesh.Nelements+nn,mesh.EToE[idf+1] );
+          printf("confFlag[%d]=%d\n",e,mesh.EToE[idf+1] );
           RefFlag[e]=0;
           nn++;
           nv++;
@@ -1233,7 +1239,7 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
           //hlong newNode = mesh.Nnodes + (vmin * 31 + vmax);
            hlong newNode = new_v_id[i*2+1];
           //hlong newNode = mesh.Nnodes + ( (vA + vB) * (vA + vB + 1) / 2 + vB );
-           printf("e=%lld,newNode=%lld\n",e,newNode);
+          printf("e=%lld,new_e=%lld,newNode=%lld,Level = %d\n",e,mesh.Nelements+nn,newNode,EToRefLevel[e]+1);
           
           //hlong newNode = v0+v2+mesh.Nnodes;
            //printf("Neigh_e=%lld,MeshLevel=%d,NeighLevel=%d\n",mesh.EToE[idf+2],EToRefLevel[e],EToRefLevel[mesh.EToE[idf+2]]);
@@ -1323,9 +1329,11 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
             SplitFlag[e] = 0;
             SplitFlag[mesh.Nelements+nn]=0;
           //
-          ConfFlag[e]=mesh.EToE[idf+2]; 
+          if (ConfFlag[e] == -1)
+          {ConfFlag[e]=mesh.EToE[idf+2];}
           ConfFlag[mesh.Nelements+nn]=mesh.EToE[idf+2]; 
-          //printf("confFlag[e]=%d,LocalFace=%d\n",mesh.EToE[idf+2],mesh.EToF[idf+2] );
+           printf("confFlag[%d]=%d\n",mesh.Nelements+nn,mesh.EToE[idf+2] );
+           printf("confFlag[%d]=%d\n",e,mesh.EToE[idf+2] );
           RefFlag[e]=0;
           nn++;
           nv++;
@@ -1335,6 +1343,7 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
   }   
       //*new_vertex += nv;
       *NN += nn;      
+      printf("BisectNew is done!\n");
 }
 
 // Red refinement of triangle i.e. regular refinement
