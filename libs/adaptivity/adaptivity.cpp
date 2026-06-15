@@ -30,7 +30,7 @@ namespace libp {
 // Conduct Adaptive Mesh Refinement
 void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
 
-    dlong const level = 2;
+    dlong const level = 1;
 
     // Construct Refinement Flag
     deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(2*mesh.Nelements);
@@ -114,20 +114,25 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     memory<dfloat>qold_refine1(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
     memory<dfloat>qold_refine2(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
 
+    memory<hlong>EToNewV(4*mesh.Nelements*3,-1);
     //RGB
+    // Coarse Red refined element
     q.copyTo(qold_coarse);
     CoarseRed(o_q,q,qold_coarse,refFlag,RedFlag,confFlag,Ncoarse,level);
+    // Coarse bisected element
     q.copyTo(qold_coarse1);
     CoarseLocal1(o_q,q,qold_coarse1,refFlag,RedFlag,confFlag,Ncoarse,level);
+    // Refine a bisected element if it is bisected from its all edges
     q.copyTo(qold_coarse3);
-    CoarseLocal(o_q,q,qold_coarse3,refFlag,RedFlag,confFlag,Ncoarse,level);
-    
+    CoarseGreentoRed(o_q,q,qold_coarse3,refFlag,RedFlag,confFlag,EToNewV,Ncoarse,level);
     q.copyTo(qold_coarse4);
-    CoarseLocal(o_q,q,qold_coarse4,refFlag,RedFlag,confFlag,Ncoarse,level);
+    CoarseGreentoRed(o_q,q,qold_coarse4,refFlag,RedFlag,confFlag,EToNewV,Ncoarse,level);
+    // Red Red Refinement
     q.copyTo(qold_refine1);
-    RefineRGB(o_q,q,qold_refine1,refFlag,confFlag,FaceFlag,Nrefine,level);
+    RefineRGB(o_q,q,qold_refine1,refFlag,confFlag,FaceFlag,EToNewV,Nrefine,level);
+    // Conform by bisecting (Green, Blue refinements)
     q.copyTo(qold_refine2);
-    RefineRGB2(o_q,q,qold_refine2,refFlag,confFlag,FaceFlag,Nrefine,Nelements_old);
+    RefineRGB2(o_q,q,qold_refine2,refFlag,confFlag,FaceFlag,Nrefine,Nelements_old,level);
      #endif
 
     #if 0

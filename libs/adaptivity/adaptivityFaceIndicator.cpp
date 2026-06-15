@@ -157,6 +157,241 @@ for (int i = 0; i < counter; ++i)
 
 }
 
+void adaptivity_t::RGB_flag(memory<dlong>& FaceFlag, 
+                            memory<dlong>& RefFlag, 
+                            dlong level, dlong Nrefine,
+                            memory<hlong>& new_v_id,
+                            memory<dlong>& ConfRed,
+                            memory<hlong>& EtoNewV,
+                            hlong* new_vertex)
+{
+  // --------------------------------------------------------------------------
+  // Pass 0: clear temporary counters
+  // ConfRed[e] counts how many sides of element e are marked by red neighbors
+  // --------------------------------------------------------------------------
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    ConfRed[e] = 0;
+  }
+
+  // --------------------------------------------------------------------------
+  // Pass 1: from currently refined red elements, count neighbor-side requests
+  // If an element is touched from all 3 sides, promote it to red refinement
+  // --------------------------------------------------------------------------
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    if (RefFlag[e] == 1 && EToRefLevel[e] < level)
+    {
+      const dlong idf = e*mesh.Nfaces;
+
+      dlong n0 = mesh.EToE[idf+0];
+      dlong n1 = mesh.EToE[idf+1];
+      dlong n2 = mesh.EToE[idf+2];
+
+      if (n0 > -1) ConfRed[n0]++;
+      if (n1 > -1) ConfRed[n1]++;
+      if (n2 > -1) ConfRed[n2]++;
+    }
+  }
+
+  // promote fully surrounded elements to red refinement
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    if (ConfRed[e] >= 3 && RefFlag[e] != 1 && EToRefLevel[e] < level)
+    {
+      RefFlag[e] = 1;
+      printf("RGB promoted e=%d by 3-side conform marking\n", e);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Count final number of refined elements after promotion
+  // --------------------------------------------------------------------------
+  dlong finalRefineCount = 0;
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    if (RefFlag[e] == 1 && EToRefLevel[e] < level)
+    {
+      finalRefineCount++;
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Build final edge request list:
+  // one row per edge request = [elem, local_edge, vmin, vmax]
+  // --------------------------------------------------------------------------
+  dlong counter = 0;
+  memory<hlong> edgeList(3*finalRefineCount*4, -1);
+
+  for (int i = 0; i < mesh.Nelements*mesh.Nfaces; ++i)
+  {
+    FaceFlag[i] = 0;
+  }
+
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    if (RefFlag[e] == 1 && EToRefLevel[e] < level)
+    {
+      const dlong id  = e*mesh.Nverts;
+      const dlong idf = e*mesh.Nfaces;
+
+      hlong v0 = mesh.EToV[id+0];
+      hlong v1 = mesh.EToV[id+1];
+      hlong v2 = mesh.EToV[id+2];
+
+      hlong a, b;
+
+      // local edge 0 = (v0,v1)
+      a = (v0 < v1) ? v0 : v1;
+      b = (v0 > v1) ? v0 : v1;
+      edgeList[counter*4+0] = e;
+      edgeList[counter*4+1] = 0;
+      edgeList[counter*4+2] = a;
+      edgeList[counter*4+3] = b;
+      FaceFlag[idf+0] = 1;
+      counter++;
+
+      // local edge 1 = (v1,v2)
+      a = (v1 < v2) ? v1 : v2;
+      b = (v1 > v2) ? v1 : v2;
+      edgeList[counter*4+0] = e;
+      edgeList[counter*4+1] = 1;
+      edgeList[counter*4+2] = a;
+      edgeList[counter*4+3] = b;
+      FaceFlag[idf+1] = 1;
+      counter++;
+
+      // local edge 2 = (v2,v0)
+      a = (v2 < v0) ? v2 : v0;
+      b = (v2 > v0) ? v2 : v0;
+      edgeList[counter*4+0] = e;
+      edgeList[counter*4+1] = 2;
+      edgeList[counter*4+2] = a;
+      edgeList[counter*4+3] = b;
+      FaceFlag[idf+2] = 1;
+      counter++;
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Initialize per-element midpoint-id output:
+  // [elem, mid01, mid12, mid20]
+  // --------------------------------------------------------------------------
+  dlong elemCounter = 0;
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    if (RefFlag[e] == 1 && EToRefLevel[e] < level)
+    {
+      new_v_id[elemCounter*4+0] = e;
+      new_v_id[elemCounter*4+1] = -1;
+      new_v_id[elemCounter*4+2] = -1;
+      new_v_id[elemCounter*4+3] = -1;
+      elemCounter++;
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Sort by canonical edge (vmin, vmax)
+  // --------------------------------------------------------------------------
+  bool swp;
+  for (int i = 0; i < counter-1; ++i)
+  {
+    swp = false;
+    for (int j = 0; j < counter-i-1; ++j)
+    {
+      if (edgeList[j*4+2] > edgeList[(j+1)*4+2] ||
+         (edgeList[j*4+2] == edgeList[(j+1)*4+2] &&
+          edgeList[j*4+3] > edgeList[(j+1)*4+3]))
+      {
+        std::swap(edgeList[j*4+0], edgeList[(j+1)*4+0]);
+        std::swap(edgeList[j*4+1], edgeList[(j+1)*4+1]);
+        std::swap(edgeList[j*4+2], edgeList[(j+1)*4+2]);
+        std::swap(edgeList[j*4+3], edgeList[(j+1)*4+3]);
+        swp = true;
+      }
+    }
+    if (!swp) break;
+  }
+
+  // --------------------------------------------------------------------------
+  // Assign one midpoint id per unique edge group
+  // If any row in the group already has a stored midpoint in EtoNewV,
+  // use that id for the whole group.
+  // EtoNewV layout:
+  // [elem, mid01, mid12, mid20]
+  // --------------------------------------------------------------------------
+  dlong newCount = 0;
+
+  for (int i = 0; i < counter; )
+  {
+    dlong j = i + 1;
+
+    for (; j < counter; ++j)
+    {
+      bool sameEdge =
+        (edgeList[j*4+2] == edgeList[i*4+2]) &&
+        (edgeList[j*4+3] == edgeList[i*4+3]);
+
+      if (!sameEdge) break;
+    }
+
+    hlong group_mid = -1;
+
+    // First check whether any element in this edge group already has a midpoint id
+    for (int p = i; p < j; ++p)
+    {
+      hlong elem       = edgeList[p*4+0];
+      hlong local_edge = edgeList[p*4+1];
+
+      if (EtoNewV[4*elem + 1 + local_edge] != -1)
+      {
+        group_mid = EtoNewV[4*elem + 1 + local_edge];
+        printf("mid id is = %d \n",group_mid);
+        break;
+      }
+    }
+
+    // If not found, create a fresh midpoint id for the whole group
+    if (group_mid == -1)
+    {
+      group_mid = mesh.Nnodes + newCount;
+      newCount++;
+    }
+
+    // Assign the same midpoint id to every row in this edge group
+    for (int p = i; p < j; ++p)
+    {
+      hlong elem       = edgeList[p*4+0];
+      hlong local_edge = edgeList[p*4+1];
+
+      for (int r = 0; r < elemCounter; ++r)
+      {
+        if (new_v_id[r*4+0] == elem)
+        {
+          new_v_id[r*4 + 1 + local_edge] = group_mid;
+          break;
+        }
+      }
+    }
+
+    i = j;
+  }
+
+  *new_vertex = newCount;
+
+  printf("RGB finalRefineCount=%d new_vertex=%lld\n",
+         finalRefineCount, (long long)*new_vertex);
+
+  for (int i = 0; i < elemCounter; ++i)
+  {
+    printf("e=%lld, v01=%lld, v12=%lld, v20=%lld\n",
+           (long long)new_v_id[i*4+0],
+           (long long)new_v_id[i*4+1],
+           (long long)new_v_id[i*4+2],
+           (long long)new_v_id[i*4+3]);
+  }
+}
+
 void adaptivity_t::LongestEdgeConform(memory<dlong>& FaceFlag, 
                                       memory<dlong>& RefFlag,
                                       memory<dlong>& ConfFlag, 

@@ -101,6 +101,19 @@ void advection_t::PlotFields(memory<dfloat> Q, const std::string fileName){
     }
   }
   fprintf(fp, "       </DataArray>\n");
+
+    // write out element ID
+  fprintf(fp, "        <DataArray type=\"Int32\" Name=\"Element Id\" Format=\"ascii\">\n");
+  for(dlong e=0;e<mesh.Nelements;++e){
+    mesh.PlotInterp(e + e*mesh.Np, Ip, scratch);
+  
+    for(int n=0;n<mesh.plotNp;++n){
+      fprintf(fp, "       ");
+      fprintf(fp, "%d\n", e);
+    }
+  }
+  fprintf(fp, "       </DataArray>\n");
+
   fprintf(fp, "     </PointData>\n");
   
   fprintf(fp, "    <Cells>\n");
