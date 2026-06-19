@@ -224,6 +224,7 @@ dlong const MAX_REFINEMENT_LEVEL = 7;
 printf("Conforming with GB Start!, Nrefine=%d, Elements=%d\n",Nrefine,mesh.Nelements);
 hlong nn = 0;
 hlong new_vertex = 0;
+dlong stride = 8*RefLevel; 
     //#pragma omp parallel for
   for (int e = 0; e < mesh.Nelements; ++e)
   {
@@ -233,7 +234,8 @@ hlong new_vertex = 0;
       if (ConfFlag[e]>-1)
       {
       const dlong ef = ConfFlag[e];  
-      const dlong sib_e = PCS[ef*3+2]; 
+      const dlong sib_e = PToC[ef*(stride)+(EToRefLevel[ef]-1)*4+1]; 
+; 
       const dlong idf = ConfFlag[e]*mesh.Nfaces;
       const dlong sib_id = sib_e*mesh.Nfaces; 
 
@@ -310,20 +312,20 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
               printf("Rule 0: ef=%d,nn=%d\n",ef,nn );
               Green0(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,RefLevel);
               FaceFlag[idf+0]=0;
-              RedFlag[ef] = 2 ; 
+              //RedFlag[ef] = 2 ; 
                *NN =nn;
                *New_vertex=new_vertex;
                           //new_vertex--;
 
                if(FaceFlag[idf+1] == 1){
-               dlong ef_second = PCS[ef*3+2];
+               dlong ef_second = PToC[ef*(stride)+(EToRefLevel[ef]-1)*4+1]; 
                printf("Rule 01: ef=%d,nn=%d\n",ef_second,nn );
                new_v_id[ef_second*mesh.Nfaces+0] = new_v_id[idf+1];
                FaceFlag[ef_second*mesh.Nfaces+0] = FaceFlag[idf+1];
                FaceFlag[idf+1]=0;
                Green0(ef_second,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,RefLevel);              
                FaceFlag[ef_second*mesh.Nfaces+0] = 0;
-                RedFlag[ef] = 3 ; 
+               // RedFlag[ef] = 3 ; 
                *NN =nn;
                *New_vertex=new_vertex; 
                }
@@ -336,7 +338,7 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
                printf("Rule 02: ef=%d,nn=%d\n",ef,nn );
                Green0(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,RefLevel);
                FaceFlag[idf+0] = 0;
-               RedFlag[ef] = 3 ; 
+               //RedFlag[ef] = 3 ; 
                *NN =nn;
                *New_vertex=new_vertex; 
                }
@@ -351,10 +353,10 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
                *NN =nn;
                *New_vertex=new_vertex;
                           //new_vertex--;
-               RedFlag[ef] = 2 ; 
+              //RedFlag[ef] = 2 ; 
                if(FaceFlag[idf+2] == 1){
                
-               dlong ef_second = PCS[ef*3+2];
+               dlong ef_second = PToC[ef*(stride)+(EToRefLevel[ef]-1)*4+1]; 
                new_v_id[ef_second*mesh.Nfaces+0] = new_v_id[idf+2];
                FaceFlag[ef_second*mesh.Nfaces+0] = FaceFlag[idf+2];
                new_v_id[idf+2]=0;
@@ -362,7 +364,7 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
                printf("Rule 12: ef=%d,nn=%d\n",ef_second,nn );             
                Green0(ef_second,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,RefLevel);
                FaceFlag[ef_second*mesh.Nfaces+0] = 0;
-                RedFlag[ef] = 3 ; 
+               // RedFlag[ef] = 3 ; 
                *NN =nn;
                *New_vertex=new_vertex; 
                }
@@ -376,7 +378,7 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
              FaceFlag[idf+2]=0;
                *NN =nn;
                *New_vertex=new_vertex;
-               RedFlag[ef] = 2 ; 
+             //  RedFlag[ef] = 2 ; 
                           //new_vertex--;
                }
         //printf("new_vertex_count_conf=%lld\n",new_vertex);

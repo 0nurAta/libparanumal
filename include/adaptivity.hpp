@@ -302,13 +302,12 @@ void RedLocal(dlong e,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefF
   void CoarsebyID(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, dlong Ncoarse,dlong level);
   void Coarse(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, dlong Ncoarse,dlong level);
   void CoarseRed(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& RedFlag,  memory<dlong>& ConfFlag,dlong Ncoarse,dlong level);
-  void CoarseRedOld(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& RedFlag,  memory<dlong>& ConfFlag,dlong Ncoarse,dlong level);
   
   void CoarseGreentoRed(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& RedFlag,  memory<dlong>& ConfFlag, 
     memory<hlong>& EToNewV,dlong Ncoarse,dlong level);
   void CoarseBluetoRed(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& RedFlag,  memory<dlong>& ConfFlag, dlong Ncoarse,dlong level);
  
-  void CoarseLocal1(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& RedFlag,  memory<dlong>& ConfFlag, dlong Ncoarse,dlong level);
+  void CoarseGreen(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& RedFlag,  memory<dlong>& ConfFlag, memory<hlong>& EToNewV, dlong Ncoarse,dlong level);
 
   // Decision for split edge
   void LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag, dlong level);

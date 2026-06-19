@@ -30,7 +30,7 @@ namespace libp {
 // Conduct Adaptive Mesh Refinement
 void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
 
-    dlong const level = 1;
+    dlong const level = 2;
 
     // Construct Refinement Flag
     deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(2*mesh.Nelements);
@@ -118,21 +118,39 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     //RGB
     // Coarse Red refined element
     q.copyTo(qold_coarse);
-    CoarseRed(o_q,q,qold_coarse,refFlag,RedFlag,confFlag,Ncoarse,level);
+    dlong const L = EToRefLevel[86];
+    dlong e= 86;
+    dlong stride= level*4;
+        printf(" %d in the main loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
+    
+    //CoarseRed(o_q,q,qold_coarse,refFlag,RedFlag,confFlag,Ncoarse,level);
     // Coarse bisected element
+
+        printf("%d  after the red coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
     q.copyTo(qold_coarse1);
-    CoarseLocal1(o_q,q,qold_coarse1,refFlag,RedFlag,confFlag,Ncoarse,level);
+    //CoarseGreen(o_q,q,qold_coarse1,refFlag,RedFlag,confFlag,EToNewV,Ncoarse,level);
+   
+        printf("%d  after the green coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
     // Refine a bisected element if it is bisected from its all edges
+       q.copyTo(qold_coarse2);
+    CoarseGreentoRed(o_q,q,qold_coarse2,refFlag,RedFlag,confFlag,EToNewV,Ncoarse,level);
     q.copyTo(qold_coarse3);
     CoarseGreentoRed(o_q,q,qold_coarse3,refFlag,RedFlag,confFlag,EToNewV,Ncoarse,level);
+ 
+        printf("%d  after the green to red cyc 1 coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
     q.copyTo(qold_coarse4);
     CoarseGreentoRed(o_q,q,qold_coarse4,refFlag,RedFlag,confFlag,EToNewV,Ncoarse,level);
-    // Red Red Refinement
+
+        printf("%d  after the green to red cyc 2 coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
     q.copyTo(qold_refine1);
     RefineRGB(o_q,q,qold_refine1,refFlag,confFlag,FaceFlag,EToNewV,Nrefine,level);
+   
+        printf("%d after the refRGB coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
     // Conform by bisecting (Green, Blue refinements)
     q.copyTo(qold_refine2);
     RefineRGB2(o_q,q,qold_refine2,refFlag,confFlag,FaceFlag,Nrefine,Nelements_old,level);
+  
+        printf("%d  after the refRGB2 coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
      #endif
 
     #if 0

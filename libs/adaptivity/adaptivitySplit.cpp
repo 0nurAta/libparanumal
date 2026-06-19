@@ -1367,6 +1367,7 @@ void adaptivity_t::Red( deviceMemory<dfloat>& o_q,
 
   hlong nn = 0 ; // Counts each refinement
   dlong const level = RefLevel;
+  dlong const stride = 8*level;
   //dlong const MAX_REFINEMENT_LEVEL = 1;
 
       //int e = Ref[i];
@@ -1481,10 +1482,27 @@ void adaptivity_t::Red( deviceMemory<dfloat>& o_q,
           EToRefLevel[(mesh.Nelements+nn+2)] = EToRefLevel[e];
 
           // Parent to Child Connection
-          PToC[e*(level+3)+EToRefLevel[e]*4+0]   = e; 
-          PToC[e*(level+3)+EToRefLevel[e]*4+1] = mesh.Nelements+nn+0;
-          PToC[e*(level+3)+EToRefLevel[e]*4+2] = mesh.Nelements+nn+1;
-          PToC[e*(level+3)+EToRefLevel[e]*4+3] = mesh.Nelements+nn+2; 
+          PToC[e*stride+(EToRefLevel[e]-1)*4+0]   = e; 
+          PToC[e*stride+(EToRefLevel[e]-1)*4+1] = mesh.Nelements+nn+0;
+          PToC[e*stride+(EToRefLevel[e]-1)*4+2] = mesh.Nelements+nn+1;
+          PToC[e*stride+(EToRefLevel[e]-1)*4+3] = mesh.Nelements+nn+2; 
+
+          PToC[(mesh.Nelements+nn+0)*stride+(EToRefLevel[e]-1)*4+0]   = e; 
+          PToC[(mesh.Nelements+nn+0)*stride+(EToRefLevel[e]-1)*4+1] = -1;
+          PToC[(mesh.Nelements+nn+0)*stride+(EToRefLevel[e]-1)*4+2] = -1;
+          PToC[(mesh.Nelements+nn+0)*stride+(EToRefLevel[e]-1)*4+3] = -1; 
+
+          PToC[(mesh.Nelements+nn+1)*stride+(EToRefLevel[e]-1)*4+0]   = e; 
+          PToC[(mesh.Nelements+nn+1)*stride+(EToRefLevel[e]-1)*4+1] = -1;
+          PToC[(mesh.Nelements+nn+1)*stride+(EToRefLevel[e]-1)*4+2] = -1;
+          PToC[(mesh.Nelements+nn+1)*stride+(EToRefLevel[e]-1)*4+3] = -1; 
+
+          PToC[(mesh.Nelements+nn+2)*stride+(EToRefLevel[e]-1)*4+0]   = e; 
+          PToC[(mesh.Nelements+nn+2)*stride+(EToRefLevel[e]-1)*4+1] = -1;
+          PToC[(mesh.Nelements+nn+2)*stride+(EToRefLevel[e]-1)*4+2] = -1;
+          PToC[(mesh.Nelements+nn+2)*stride+(EToRefLevel[e]-1)*4+3] = -1; 
+
+          
           
           IntFlag[e*(level+3)+EToRefLevel[e]-1] = 1;
           IntFlag[(mesh.Nelements+nn+0)*(level+3)+EToRefLevel[e]-1] = 2;
@@ -2159,6 +2177,7 @@ void adaptivity_t::Green0(dlong e,
   hlong nv = *new_vertex ; // new vertex
   hlong nn = *NN ; // Counts each refinement
   dlong const level = RefLevel;
+  dlong const stride = 8*level;
   
       
       //int e = Ref[i];
@@ -2258,10 +2277,16 @@ void adaptivity_t::Green0(dlong e,
           PCS[(mesh.Nelements+nn)*3+1] = (mesh.Nelements+nn);
           PCS[(mesh.Nelements+nn)*3+2] = e;
 
-          PToC[e*(level+3)+0]   = e;
-          PToC[e*(level+3)+EToRefLevel[e]] = mesh.Nelements+nn;
-          PToC[(mesh.Nelements+nn)*(level+3)]   = e;
-          //PToC[(mesh.Nelements+nn)*2+1] = mesh.Nelements+nn;
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+0]   = e; 
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+1] = mesh.Nelements+nn;
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+2] = -1;
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+3] = -1; 
+
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+0]   = e; 
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+1] = -1;
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+2] = -1;
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+3] = -1; 
+
           
           IntFlag[e*(level+3)+EToRefLevel[e]-1] = 1;
           IntFlag[(mesh.Nelements+nn)*(level+3)+EToRefLevel[e]-1] = 2;
@@ -2337,6 +2362,7 @@ void adaptivity_t::Green1(dlong e,
   hlong nv = *new_vertex ; // new vertex
   hlong nn = *NN ; // Counts each refinement
   dlong const level = RefLevel;
+  dlong const stride = 8*level;
   
       //int e = Ref[i];
       const dlong id = e*mesh.Nverts; 
@@ -2419,10 +2445,16 @@ void adaptivity_t::Green1(dlong e,
           PCS[(mesh.Nelements+nn)*3+1] = (mesh.Nelements+nn);
           PCS[(mesh.Nelements+nn)*3+2] = e;
 
-          PToC[e*(level+3)]   = e;
-          PToC[e*(level+3)+EToRefLevel[e]] = mesh.Nelements+nn;
-          PToC[(mesh.Nelements+nn)*(level+3)]   = e;
-          //PToC[(mesh.Nelements+nn)*2+1] = mesh.Nelements+nn;
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+0]   = e; 
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+1] = mesh.Nelements+nn;
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+2] = -1;
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+3] = -1; 
+
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+0]   = e; 
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+1] = -1;
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+2] = -1;
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+3] = -1; 
+    
           IntFlag[e*(level+3)+EToRefLevel[e]-1] = 5;
           IntFlag[(mesh.Nelements+nn)*(level+3)+EToRefLevel[e]-1] = 6;
 
@@ -2496,6 +2528,7 @@ void adaptivity_t::Green2(dlong e,
   hlong nv = *new_vertex ; // new vertex
   hlong nn = *NN ; // Counts each refinement
   dlong const level = RefLevel;
+  dlong const stride = 8*level;
       //int e = Ref[i];
       const dlong id = e*mesh.Nverts; 
       const dlong idf = e*mesh.Nfaces; 
@@ -2571,9 +2604,15 @@ void adaptivity_t::Green2(dlong e,
           PCS[(mesh.Nelements+nn)*3+1] = (mesh.Nelements+nn);
           PCS[(mesh.Nelements+nn)*3+2] = e;
 
-          PToC[e*(level+3)]   = e;
-          PToC[e*(level+3)+EToRefLevel[e]] = mesh.Nelements+nn;
-          PToC[(mesh.Nelements+nn)*(level+3)]   = e;
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+0]   = e; 
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+1] = mesh.Nelements+nn;
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+2] = -1;
+          PToC[e*(stride)+(EToRefLevel[e]-1)*4+3] = -1; 
+
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+0]   = e; 
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+1] = -1;
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+2] = -1;
+          PToC[(mesh.Nelements+nn)*(stride)+(EToRefLevel[e]-1)*4+3] = -1; 
           //PToC[(mesh.Nelements+nn)*2+1] = mesh.Nelements+nn;
           IntFlag[e*(level+3)+EToRefLevel[e]-1] = 3;
           IntFlag[(mesh.Nelements+nn)*(level+3)+EToRefLevel[e]-1] = 4;
