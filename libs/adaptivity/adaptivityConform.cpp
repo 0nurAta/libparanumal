@@ -208,7 +208,7 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
 printf("Conforming Done!, Nrefine=%d\n",Nrefine);        
 }
 
-void adaptivity_t::ConformByBisectGB(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
+void adaptivity_t::ConformByBisectGB(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& RefFlag2,memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
                                                                                    memory<dlong>& new_v_id, 
                                                                                    dlong& Nrefine, 
                                                                                    memory<dfloat>& EX_new, 
@@ -224,21 +224,21 @@ dlong const MAX_REFINEMENT_LEVEL = 7;
 printf("Conforming with GB Start!, Nrefine=%d, Elements=%d\n",Nrefine,mesh.Nelements);
 hlong nn = 0;
 hlong new_vertex = 0;
-dlong stride = 8*RefLevel; 
+dlong stride = 16*RefLevel; 
     //#pragma omp parallel for
   for (int e = 0; e < mesh.Nelements; ++e)
   {
       const dlong id = e*mesh.Nfaces; 
-      
-
-      if (ConfFlag[e]>-1)
-      {
       const dlong ef = ConfFlag[e];  
+
+      if (ef>-1)
+      {
+      
       const dlong sib_e = PToC[ef*(stride)+(EToRefLevel[ef]-1)*4+1]; 
-; 
+
       const dlong idf = ConfFlag[e]*mesh.Nfaces;
       const dlong sib_id = sib_e*mesh.Nfaces; 
-
+      
 
         if (mesh.EToF[idf+0]==-1 && mesh.EToB[idf+0]==-1)
         {
@@ -302,6 +302,422 @@ dlong stride = 8*RefLevel;
         }  
 }
 }
+for (int ef = 0; ef < mesh.Nelements; ++ef)
+  {
+    const dlong idf = ef*mesh.Nfaces;
+  //  if((EToRefLevel[ef]>0 && RedFlag[ef*(RefLevel+3)+EToRefLevel[ef]-1]!=1)) 
+  //  { RefFlag2[ef]=1;
+    //  }else {
+            // RULE 0
+            if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL&&  FaceFlag[idf+0] == 1)
+             {
+              printf("Rule 0: ef=%d,nn=%d\n",ef,nn );
+              Green0(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,RefLevel);
+              FaceFlag[idf+0]=0;
+              //RedFlag[ef] = 2 ; 
+               *NN =nn;
+               *New_vertex=new_vertex;
+                          //new_vertex--;
+
+               if(FaceFlag[idf+1] == 1){
+               dlong ef_second = PToC[ef*(stride)+(EToRefLevel[ef]-1)*4+1]; 
+               printf("Rule 01: ef=%d,nn=%d\n",ef_second,nn );
+               new_v_id[ef_second*mesh.Nfaces+0] = new_v_id[idf+1];
+               FaceFlag[ef_second*mesh.Nfaces+0] = FaceFlag[idf+1];
+               FaceFlag[idf+1]=0;
+               Green0(ef_second,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,RefLevel);              
+               FaceFlag[ef_second*mesh.Nfaces+0] = 0;
+               // RedFlag[ef] = 3 ; 
+               *NN =nn;
+               *New_vertex=new_vertex; 
+               }
+
+               if(FaceFlag[idf+2] == 1){
+               RefFlag[ef]=1; 
+               FaceFlag[idf+0]=1;
+               new_v_id[idf+0] = new_v_id[idf+2];
+               FaceFlag[idf+2] = 0;
+               printf("Rule 02: ef=%d,nn=%d\n",ef,nn );
+               Green0(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,RefLevel);
+               FaceFlag[idf+0] = 0;
+               //RedFlag[ef] = 3 ; 
+               *NN =nn;
+               *New_vertex=new_vertex; 
+               }
+             }
+
+             // RULE 1
+             else if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL&&  FaceFlag[idf+1] == 1)
+             {
+              printf("Rule 1: ef=%d,nn=%d\n",ef,nn );
+             Green1(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,RefLevel);
+             FaceFlag[idf+1]=0;
+               *NN =nn;
+               *New_vertex=new_vertex;
+                          //new_vertex--;
+              //RedFlag[ef] = 2 ; 
+               if(FaceFlag[idf+2] == 1){
+               
+               dlong ef_second = PToC[ef*(stride)+(EToRefLevel[ef]-1)*4+1]; 
+               new_v_id[ef_second*mesh.Nfaces+0] = new_v_id[idf+2];
+               FaceFlag[ef_second*mesh.Nfaces+0] = FaceFlag[idf+2];
+               new_v_id[idf+2]=0;
+               FaceFlag[idf+2]=0;   
+               printf("Rule 12: ef=%d,nn=%d\n",ef_second,nn );             
+               Green0(ef_second,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,RefLevel);
+               FaceFlag[ef_second*mesh.Nfaces+0] = 0;
+               // RedFlag[ef] = 3 ; 
+               *NN =nn;
+               *New_vertex=new_vertex; 
+               }
+             }
+
+             // RULE 2
+              else if (EToRefLevel[ef]<MAX_REFINEMENT_LEVEL&&  FaceFlag[idf+2] == 1)
+             {
+              printf("Rule 2: ef=%d,nn=%d\n",ef,nn );
+             Green2(ef,Q,Qold,RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,RefLevel);
+             FaceFlag[idf+2]=0;
+               *NN =nn;
+               *New_vertex=new_vertex;
+             //  RedFlag[ef] = 2 ; 
+                          //new_vertex--;
+               }
+        //printf("new_vertex_count_conf=%lld\n",new_vertex);
+            //  }
+      } 
+
+printf("Conforming Done!, Nrefine=%d\n",Nrefine);        
+}
+
+void adaptivity_t::ConformByBisectRToR(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
+                                                                                   memory<dlong>& new_v_id, 
+                                                                                   dlong& Nrefine, 
+                                                                                   memory<dfloat>& EX_new, 
+                                                                                   memory<dfloat>& EY_new,
+                                                                                   memory<hlong>& EToV_new,
+                                                                                   memory<int>& EToB_new,
+                                                                                   memory<dlong>& SplitFlag,   
+                                                                                   memory<dlong>& RedFlag,                                                                        
+                                                                                   hlong* NN,
+                                                                                   hlong* New_vertex,
+                                                                                   dlong RefLevel){ 
+dlong const MAX_REFINEMENT_LEVEL = 7;
+printf("Conforming with GB Start!, Nrefine=%d, Elements=%d\n",Nrefine,mesh.Nelements);
+hlong nn = 0;
+hlong new_vertex = 0;
+dlong stride = 16*RefLevel; 
+const dlong level = RefLevel;
+    //#pragma omp parallel for
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+      const dlong id = e*mesh.Nfaces; 
+      for (int i = 0; i < 6; i++)
+      {
+        const dlong neigh = ConfFlag[e*6+i];
+        const dlong neigh_id = neigh*mesh.Nfaces;
+
+          if (neigh>-1 && RedFlag[e*(level+3)+(EToRefLevel[e])-1]==1 && RedFlag[neigh*(level+3)+(EToRefLevel[neigh])-1]==1)
+          {      
+          
+          const dlong sib_e1 = PToC[e*(stride)+(EToRefLevel[e]-1)*4+1];
+          const dlong sib_e2 = PToC[e*(stride)+(EToRefLevel[e]-1)*4+2];
+          const dlong sib_e3 = PToC[e*(stride)+(EToRefLevel[e]-1)*4+3]; 
+          
+          printf("neigh %d makes element %d is a candidate for RToR conforming w. sibs sib1=%d,sib2=%d,sib3=%d \n",neigh,e,sib_e1,sib_e2,sib_e3);
+
+          const dlong id = e*mesh.Nfaces;
+          const dlong sib_id1 = sib_e1*mesh.Nfaces; 
+          const dlong sib_id2 = sib_e2*mesh.Nfaces; 
+          const dlong sib_id3 = sib_e3*mesh.Nfaces;
+          
+          // Face 0 
+          // sib e1 checked for all possible local vertex index of neigh
+          if (sib_e1!=-1 && mesh.EToF[sib_id1+0]==-1 && mesh.EToB[sib_id1+0]==-1)
+          {
+              if(abs(mesh.EX[neigh_id+0]-0.5*(mesh.EX[sib_id1+0]+mesh.EX[sib_id1+1]))<1e-5
+              && abs(mesh.EY[neigh_id+0]-0.5*(mesh.EY[sib_id1+0]+mesh.EY[sib_id1+1]))<1e-5) {   
+              RefFlag[sib_e1]=1;  
+              FaceFlag[sib_id1+0] = 1;
+              new_v_id[sib_id1+0] = mesh.EToV[neigh_id+0];             
+              Nrefine++;
+              }
+          }
+          if (sib_e1!=-1 && mesh.EToF[sib_id1+0]==-1 && mesh.EToB[sib_id1+0]==-1)
+          {
+              if(abs(mesh.EX[neigh_id+1]-0.5*(mesh.EX[sib_id1+0]+mesh.EX[sib_id1+1]))<1e-5
+              && abs(mesh.EY[neigh_id+1]-0.5*(mesh.EY[sib_id1+0]+mesh.EY[sib_id1+1]))<1e-5) {   
+              RefFlag[sib_e1]=1;  
+              FaceFlag[sib_id1+0] = 1;
+              new_v_id[sib_id1+0] = mesh.EToV[neigh_id+1];             
+              Nrefine++;
+              }
+          }
+          if (sib_e1!=-1 && mesh.EToF[sib_id1+0]==-1 && mesh.EToB[sib_id1+0]==-1)
+          {
+              if(abs(mesh.EX[neigh_id+2]-0.5*(mesh.EX[sib_id1+0]+mesh.EX[sib_id1+1]))<1e-5
+              && abs(mesh.EY[neigh_id+2]-0.5*(mesh.EY[sib_id1+0]+mesh.EY[sib_id1+1]))<1e-5) {   
+              RefFlag[sib_e1]=1;  
+              FaceFlag[sib_id1+0] = 1;
+              new_v_id[sib_id1+0] = mesh.EToV[neigh_id+2];             
+              Nrefine++;
+              }
+          }
+          // sib e2 checked for all possible local vertex index of neigh
+          if (sib_e2!=-1 && mesh.EToF[sib_id2+0]==-1 && mesh.EToB[sib_id2+0]==-1)
+          {
+              if(abs(mesh.EX[neigh_id+0]-0.5*(mesh.EX[sib_id2+0]+mesh.EX[sib_id2+1]))<1e-5
+              && abs(mesh.EY[neigh_id+0]-0.5*(mesh.EY[sib_id2+0]+mesh.EY[sib_id2+1]))<1e-5) {   
+              RefFlag[sib_e2]=1;  
+              FaceFlag[sib_id2+0] = 1;
+              new_v_id[sib_id2+0] = mesh.EToV[neigh_id+0];             
+              Nrefine++;
+              }
+          }
+          if (sib_e2!=-1 && mesh.EToF[sib_id2+0]==-1 && mesh.EToB[sib_id2+0]==-1)
+          {
+              if(abs(mesh.EX[neigh_id+1]-0.5*(mesh.EX[sib_id2+0]+mesh.EX[sib_id2+1]))<1e-5
+              && abs(mesh.EY[neigh_id+1]-0.5*(mesh.EY[sib_id2+0]+mesh.EY[sib_id2+1]))<1e-5) {   
+              RefFlag[sib_e2]=1;  
+              FaceFlag[sib_id2+0] = 1;
+              new_v_id[sib_id2+0] = mesh.EToV[neigh_id+1];             
+              Nrefine++;
+              }
+          }
+          if (sib_e2!=-1 && mesh.EToF[sib_id2+0]==-1 && mesh.EToB[sib_id2+0]==-1)
+          {
+              if(abs(mesh.EX[neigh_id+2]-0.5*(mesh.EX[sib_id2+0]+mesh.EX[sib_id2+1]))<1e-5
+              && abs(mesh.EY[neigh_id+2]-0.5*(mesh.EY[sib_id2+0]+mesh.EY[sib_id2+1]))<1e-5) {   
+              RefFlag[sib_e2]=1;  
+              FaceFlag[sib_id2+0] = 1;
+              new_v_id[sib_id2+0] = mesh.EToV[neigh_id+2];             
+              Nrefine++;
+              }
+          }
+          // sib e3 checked for all possible local vertex index of neigh
+          if (sib_e3!=-1 && mesh.EToF[sib_id3+0]==-1 && mesh.EToB[sib_id3+0]==-1)
+          {
+              if(abs(mesh.EX[neigh_id+0]-0.5*(mesh.EX[sib_id3+0]+mesh.EX[sib_id3+1]))<1e-5
+              && abs(mesh.EY[neigh_id+0]-0.5*(mesh.EY[sib_id3+0]+mesh.EY[sib_id3+1]))<1e-5) {   
+              RefFlag[sib_e3]=1;  
+              FaceFlag[sib_id3+0] = 1;
+              new_v_id[sib_id3+0] = mesh.EToV[neigh_id+0];             
+              Nrefine++;
+              }
+          }
+          if (sib_e3!=-1 && mesh.EToF[sib_id3+0]==-1 && mesh.EToB[sib_id3+0]==-1)
+          {
+              if(abs(mesh.EX[neigh_id+1]-0.5*(mesh.EX[sib_id3+0]+mesh.EX[sib_id3+1]))<1e-5
+              && abs(mesh.EY[neigh_id+1]-0.5*(mesh.EY[sib_id3+0]+mesh.EY[sib_id3+1]))<1e-5) {   
+              RefFlag[sib_e3]=1;  
+              FaceFlag[sib_id3+0] = 1;
+              new_v_id[sib_id3+0] = mesh.EToV[neigh_id+1];             
+              Nrefine++;
+              }
+          }
+          if (sib_e3!=-1 && mesh.EToF[sib_id3+0]==-1 && mesh.EToB[sib_id3+0]==-1)
+          {
+              if(abs(mesh.EX[neigh_id+2]-0.5*(mesh.EX[sib_id3+0]+mesh.EX[sib_id3+1]))<1e-5
+              && abs(mesh.EY[neigh_id+2]-0.5*(mesh.EY[sib_id3+0]+mesh.EY[sib_id3+1]))<1e-5) {   
+              RefFlag[sib_e3]=1;  
+              FaceFlag[sib_id3+0] = 1;
+              new_v_id[sib_id3+0] = mesh.EToV[neigh_id+2];             
+              Nrefine++;
+              }
+          }
+          // Face 1 
+          // sib e1 checked for all possible local vertex index of neigh
+          if (sib_e1!=-1 && mesh.EToF[sib_id1+1]==-1 && mesh.EToB[sib_id1+1]==-1)
+          {
+               if(abs(mesh.EX[neigh_id+0]-0.5*(mesh.EX[sib_id1+1]+mesh.EX[sib_id1+2]))<1e-5
+               && abs(mesh.EY[neigh_id+0]-0.5*(mesh.EY[sib_id1+1]+mesh.EY[sib_id1+2]))<1e-5) {   
+               RefFlag[sib_e1]=1;  
+               FaceFlag[sib_id1+1] = 1;
+               new_v_id[sib_id1+1] = mesh.EToV[neigh_id+0];             
+               Nrefine++;
+               }
+          }
+          if (sib_e1!=-1 && mesh.EToF[sib_id1+1]==-1 && mesh.EToB[sib_id1+1]==-1)
+          {
+               if(abs(mesh.EX[neigh_id+1]-0.5*(mesh.EX[sib_id1+1]+mesh.EX[sib_id1+2]))<1e-5
+               && abs(mesh.EY[neigh_id+1]-0.5*(mesh.EY[sib_id1+1]+mesh.EY[sib_id1+2]))<1e-5) {   
+               RefFlag[sib_e1]=1;  
+               FaceFlag[sib_id1+1] = 1;
+               new_v_id[sib_id1+1] = mesh.EToV[neigh_id+2];             
+               Nrefine++;
+               }
+          } 
+          if (sib_e1!=-1 && mesh.EToF[sib_id1+1]==-1 && mesh.EToB[sib_id1+1]==-1)
+          {
+               if(abs(mesh.EX[neigh_id+2]-0.5*(mesh.EX[sib_id1+1]+mesh.EX[sib_id1+2]))<1e-5
+               && abs(mesh.EY[neigh_id+2]-0.5*(mesh.EY[sib_id1+1]+mesh.EY[sib_id1+2]))<1e-5) {   
+               RefFlag[sib_e1]=1;  
+               FaceFlag[sib_id1+1] = 1;
+               new_v_id[sib_id1+1] = mesh.EToV[neigh_id+2];             
+               Nrefine++;
+               }
+          }
+          // sib e2 checked for all possible local vertex index of neigh           
+          if (sib_e2!=-1 && mesh.EToF[sib_id2+1]==-1 && mesh.EToB[sib_id2+1]==-1)
+          {
+               if(abs(mesh.EX[neigh_id+0]-0.5*(mesh.EX[sib_id2+1]+mesh.EX[sib_id2+2]))<1e-5
+               && abs(mesh.EY[neigh_id+0]-0.5*(mesh.EY[sib_id2+1]+mesh.EY[sib_id2+2]))<1e-5) {   
+               RefFlag[sib_e2]=1;  
+               FaceFlag[sib_id2+1] = 1;
+               new_v_id[sib_id2+1] = mesh.EToV[neigh_id+0];             
+               Nrefine++;
+               }
+          }
+          if (sib_e2!=-1 && mesh.EToF[sib_id2+1]==-1 && mesh.EToB[sib_id2+1]==-1)
+          {
+               if(abs(mesh.EX[neigh_id+1]-0.5*(mesh.EX[sib_id2+1]+mesh.EX[sib_id2+2]))<1e-5
+               && abs(mesh.EY[neigh_id+1]-0.5*(mesh.EY[sib_id2+1]+mesh.EY[sib_id2+2]))<1e-5) {   
+               RefFlag[sib_e2]=1;  
+               FaceFlag[sib_id2+1] = 1;
+               new_v_id[sib_id2+1] = mesh.EToV[neigh_id+1];             
+               Nrefine++;
+               }
+          }
+          if (sib_e2!=-1 && mesh.EToF[sib_id2+1]==-1 && mesh.EToB[sib_id2+1]==-1)
+          {
+               if(abs(mesh.EX[neigh_id+2]-0.5*(mesh.EX[sib_id2+1]+mesh.EX[sib_id2+2]))<1e-5
+               && abs(mesh.EY[neigh_id+2]-0.5*(mesh.EY[sib_id2+1]+mesh.EY[sib_id2+2]))<1e-5) {   
+               RefFlag[sib_e2]=1;  
+               FaceFlag[sib_id2+1] = 1;
+               new_v_id[sib_id2+1] = mesh.EToV[neigh_id+2];             
+               Nrefine++;
+               }
+          }
+          // sib e3 checked for all possible local vertex index of neigh 
+          if (sib_e3!=-1 && mesh.EToF[sib_id3+1]==-1 && mesh.EToB[sib_id3+1]==-1)
+          {
+               if(abs(mesh.EX[neigh_id+0]-0.5*(mesh.EX[sib_id3+1]+mesh.EX[sib_id3+2]))<1e-5
+               && abs(mesh.EY[neigh_id+0]-0.5*(mesh.EY[sib_id3+1]+mesh.EY[sib_id3+2]))<1e-5) {   
+               RefFlag[sib_e3]=1;  
+               FaceFlag[sib_id3+1] = 1;
+               new_v_id[sib_id3+1] = mesh.EToV[neigh_id+0];             
+               Nrefine++;
+               }
+          }
+          if (sib_e3!=-1 && mesh.EToF[sib_id3+1]==-1 && mesh.EToB[sib_id3+1]==-1)
+          {
+               if(abs(mesh.EX[neigh_id+1]-0.5*(mesh.EX[sib_id3+1]+mesh.EX[sib_id3+2]))<1e-5
+               && abs(mesh.EY[neigh_id+1]-0.5*(mesh.EY[sib_id3+1]+mesh.EY[sib_id3+2]))<1e-5) {   
+               RefFlag[sib_e3]=1;  
+               FaceFlag[sib_id3+1] = 1;
+               new_v_id[sib_id3+1] = mesh.EToV[neigh_id+1];             
+               Nrefine++;
+               }
+          }
+          if (sib_e3!=-1 && mesh.EToF[sib_id3+1]==-1 && mesh.EToB[sib_id3+1]==-1)
+          {
+               if(abs(mesh.EX[neigh_id+2]-0.5*(mesh.EX[sib_id3+1]+mesh.EX[sib_id3+2]))<1e-5
+               && abs(mesh.EY[neigh_id+2]-0.5*(mesh.EY[sib_id3+1]+mesh.EY[sib_id3+2]))<1e-5) {   
+               RefFlag[sib_e3]=1;  
+               FaceFlag[sib_id3+1] = 1;
+               new_v_id[sib_id3+1] = mesh.EToV[neigh_id+2];             
+               Nrefine++;
+               }
+          } 
+          // Face 2 
+          // sib e1 checked for all possible local vertex index of neigh  
+          if (sib_e1!=-1 && mesh.EToF[sib_id1+2]==-1 && mesh.EToB[sib_id1+2]==-1)
+          {  
+              if(abs(mesh.EX[neigh_id+0]-0.5*(mesh.EX[sib_id1+2]+mesh.EX[sib_id1+0]))<1e-5
+              && abs(mesh.EY[neigh_id+0]-0.5*(mesh.EY[sib_id1+2]+mesh.EY[sib_id1+0]))<1e-5) {                  
+               RefFlag[sib_e1]=1;  
+               FaceFlag[sib_id1+2] = 1;
+               new_v_id[sib_id1+2] = mesh.EToV[neigh_id+0];          
+               Nrefine++;
+               }                    
+          }
+          if (sib_e1!=-1 && mesh.EToF[sib_id1+2]==-1 && mesh.EToB[sib_id1+2]==-1)
+          {  
+              if(abs(mesh.EX[neigh_id+1]-0.5*(mesh.EX[sib_id1+2]+mesh.EX[sib_id1+0]))<1e-5
+              && abs(mesh.EY[neigh_id+1]-0.5*(mesh.EY[sib_id1+2]+mesh.EY[sib_id1+0]))<1e-5) {                  
+               RefFlag[sib_e1]=1;  
+               FaceFlag[sib_id1+2] = 1;
+               new_v_id[sib_id1+2] = mesh.EToV[neigh_id+1];          
+               Nrefine++;
+               }                    
+          }
+          if (sib_e1!=-1 && mesh.EToF[sib_id1+2]==-1 && mesh.EToB[sib_id1+2]==-1)
+          {  
+              if(abs(mesh.EX[neigh_id+2]-0.5*(mesh.EX[sib_id1+2]+mesh.EX[sib_id1+0]))<1e-5
+              && abs(mesh.EY[neigh_id+2]-0.5*(mesh.EY[sib_id1+2]+mesh.EY[sib_id1+0]))<1e-5) {                  
+               RefFlag[sib_e1]=1;  
+               FaceFlag[sib_id1+2] = 1;
+               new_v_id[sib_id1+2] = mesh.EToV[neigh_id+2];          
+               Nrefine++;
+               }                    
+          }
+          // sib e2 checked for all possible local vertex index of neigh  
+          if (sib_e2!=-1 && mesh.EToF[sib_id2+2]==-1 && mesh.EToB[sib_id2+2]==-1)
+          {  
+              if(abs(mesh.EX[neigh_id+0]-0.5*(mesh.EX[sib_id2+2]+mesh.EX[sib_id2+0]))<1e-5
+              && abs(mesh.EY[neigh_id+0]-0.5*(mesh.EY[sib_id2+2]+mesh.EY[sib_id2+0]))<1e-5) {                  
+               RefFlag[sib_e2]=1;  
+               FaceFlag[sib_id2+2] = 1;
+               new_v_id[sib_id2+2] = mesh.EToV[neigh_id+0];          
+               Nrefine++;
+               }   
+          }
+          if (sib_e2!=-1 && mesh.EToF[sib_id2+2]==-1 && mesh.EToB[sib_id2+2]==-1)
+          {  
+              if(abs(mesh.EX[neigh_id+1]-0.5*(mesh.EX[sib_id2+2]+mesh.EX[sib_id2+0]))<1e-5
+              && abs(mesh.EY[neigh_id+1]-0.5*(mesh.EY[sib_id2+2]+mesh.EY[sib_id2+0]))<1e-5) {                  
+               RefFlag[sib_e2]=1;  
+               FaceFlag[sib_id2+2] = 1;
+               new_v_id[sib_id2+2] = mesh.EToV[neigh_id+1];          
+               Nrefine++;
+               }   
+          }
+          if (sib_e2!=-1 && mesh.EToF[sib_id2+2]==-1 && mesh.EToB[sib_id2+2]==-1)
+          {  
+              if(abs(mesh.EX[neigh_id+2]-0.5*(mesh.EX[sib_id2+2]+mesh.EX[sib_id2+0]))<1e-5
+              && abs(mesh.EY[neigh_id+2]-0.5*(mesh.EY[sib_id2+2]+mesh.EY[sib_id2+0]))<1e-5) {                  
+               RefFlag[sib_e2]=1;  
+               FaceFlag[sib_id2+2] = 1;
+               new_v_id[sib_id2+2] = mesh.EToV[neigh_id+2];          
+               Nrefine++;
+               }   
+          }
+          // sib e3 checked for all possible local vertex index of neigh 
+          if (sib_e3!=-1 && mesh.EToF[sib_id3+2]==-1 && mesh.EToB[sib_id3+2]==-1)
+          {  
+              if(abs(mesh.EX[neigh_id+0]-0.5*(mesh.EX[sib_id3+2]+mesh.EX[sib_id3+0]))<1e-5
+              && abs(mesh.EY[neigh_id+0]-0.5*(mesh.EY[sib_id3+2]+mesh.EY[sib_id3+0]))<1e-5) {                  
+               RefFlag[sib_e3]=1;  
+               FaceFlag[sib_id3+2] = 1;
+               new_v_id[sib_id3+2] = mesh.EToV[neigh_id+0];          
+               Nrefine++;
+               }                
+          } 
+          if (sib_e3!=-1 && mesh.EToF[sib_id3+2]==-1 && mesh.EToB[sib_id3+2]==-1)
+          {  
+              if(abs(mesh.EX[neigh_id+1]-0.5*(mesh.EX[sib_id3+2]+mesh.EX[sib_id3+0]))<1e-5
+              && abs(mesh.EY[neigh_id+1]-0.5*(mesh.EY[sib_id3+2]+mesh.EY[sib_id3+0]))<1e-5) {                  
+               RefFlag[sib_e3]=1;  
+               FaceFlag[sib_id3+2] = 1;
+               new_v_id[sib_id3+2] = mesh.EToV[neigh_id+1];          
+               Nrefine++;
+               }                
+          } 
+          if (sib_e3!=-1 && mesh.EToF[sib_id3+2]==-1 && mesh.EToB[sib_id3+2]==-1)
+          {  
+              if(abs(mesh.EX[neigh_id+2]-0.5*(mesh.EX[sib_id3+2]+mesh.EX[sib_id3+0]))<1e-5
+              && abs(mesh.EY[neigh_id+2]-0.5*(mesh.EY[sib_id3+2]+mesh.EY[sib_id3+0]))<1e-5) {                  
+               RefFlag[sib_e3]=1;  
+               FaceFlag[sib_id3+2] = 1;
+               new_v_id[sib_id3+2] = mesh.EToV[neigh_id+2];          
+               Nrefine++;
+               }                
+          } 
+          
+
+          }
+      }
+  }
 for (int ef = 0; ef < mesh.Nelements; ++ef)
   {
     const dlong idf = ef*mesh.Nfaces;
@@ -386,6 +802,7 @@ for (int ef = 0; ef < mesh.Nelements; ++ef)
 
 printf("Conforming Done!, Nrefine=%d\n",Nrefine);        
 }
+
 
 
 void adaptivity_t::ConformByCoarse(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,

@@ -162,6 +162,7 @@ void adaptivity_t::RGB_flag(memory<dlong>& FaceFlag,
                             dlong level, dlong Nrefine,
                             memory<hlong>& new_v_id,
                             memory<dlong>& ConfRed,
+                            memory<dlong>& ConfGreen,
                             memory<hlong>& EtoNewV,
                             hlong* new_vertex)
 {
@@ -191,6 +192,8 @@ void adaptivity_t::RGB_flag(memory<dlong>& FaceFlag,
       if (n0 > -1) ConfRed[n0]++;
       if (n1 > -1) ConfRed[n1]++;
       if (n2 > -1) ConfRed[n2]++;
+      //if (EToRefLevel[e]>=1 && (RedFlag[n0]!=1 || RedFlag[n1]!=1 || RedFlag[n2]!=1))
+      //{RefFlag[e]=0;}
     }
   }
 
@@ -203,6 +206,8 @@ void adaptivity_t::RGB_flag(memory<dlong>& FaceFlag,
       printf("RGB promoted e=%d by 3-side conform marking\n", e);
     }
   }
+
+  
 
   // --------------------------------------------------------------------------
   // Count final number of refined elements after promotion

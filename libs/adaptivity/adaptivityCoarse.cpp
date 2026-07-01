@@ -624,27 +624,27 @@ void adaptivity_t::CoarsebyID(deviceMemory<dfloat>& o_q,
   printf("Ncoarse inside coarsening loop=%d\n",Ncoarse);
   // Element to vertex & Element to boundary connectivity 
 
-  memory<hlong>EToV_new(2*mesh.Nelements*mesh.Nverts);
-  memory<int>EToB_new(2*mesh.Nelements*mesh.Nverts);
+  memory<hlong>EToV_new(16*mesh.Nelements*mesh.Nverts);
+  memory<int>EToB_new(16*mesh.Nelements*mesh.Nverts);
 
   // Vertex physical coordinates
-  memory<dfloat>EX_new(2*mesh.Nelements*mesh.Nverts);
-  memory<dfloat>EY_new(2*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EX_new(16*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EY_new(16*mesh.Nelements*mesh.Nverts);
 
-  memory<dlong>RefFlag_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>PToC_new(2*mesh.Nelements*(level+3),-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>EToRefLevel_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>IntFlag_new(2*mesh.Nelements*(level+3),0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>RefFlag_new(16*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>PToC_new(16*mesh.Nelements*(level+3),-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>EToRefLevel_new(16*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>IntFlag_new(16*mesh.Nelements*(level+3),0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
   memory<dfloat>Q_new(mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
   
   // Permutation map
-  dlong perm[2*mesh.Nelements]={};
+  dlong perm[16*mesh.Nelements]={};
 
   // A flag to ommit informations of deleted element
-  hlong Delete_Flag[2*mesh.Nelements]={};
+  hlong Delete_Flag[16*mesh.Nelements]={};
 
   // A flag to be used in combine kernel, initialized with zero values. 
-  memory<dlong> CombineFlag(2*mesh.Nelements,0);
+  memory<dlong> CombineFlag(16*mesh.Nelements,0);
 
   // Copy old Element to Vertex Connectivity to the New One
   //#pragma omp parallel for
@@ -668,7 +668,7 @@ void adaptivity_t::CoarsebyID(deviceMemory<dfloat>& o_q,
 
   // Determine elements to be coarsened by using Coarse Flag
   
-  memory<dlong> Coar(Ncoarse*2,0); // Array holds element ids for refining. Holds some extra mem. for 
+  memory<dlong> Coar(Ncoarse*64,0); // Array holds element ids for refining. Holds some extra mem. for 
                                   // conforming
     dlong ii = 0;
   for (int e = 0; e < mesh.Nelements; ++e)
@@ -1358,6 +1358,7 @@ void adaptivity_t::CoarseGreentoRed(deviceMemory<dfloat>& o_q,
                          memory<dlong>& RefFlag,
                          memory<dlong>& RedFlag,
                          memory<dlong>& ConfFlag,
+                         memory<dlong>& ConfGreen,
                          memory<hlong>& EToNewV,
                          dlong Ncoarse,dlong level){
 
@@ -1367,31 +1368,32 @@ void adaptivity_t::CoarseGreentoRed(deviceMemory<dfloat>& o_q,
   printf("Ncoarse inside coarsening loop=%d\n",Ncoarse);
   // Element to vertex & Element to boundary connectivity 
 
-  memory<hlong>EToV_new(2*mesh.Nelements*mesh.Nverts);
-  memory<int>EToB_new(2*mesh.Nelements*mesh.Nverts);
+  memory<hlong>EToV_new(8*mesh.Nelements*mesh.Nverts);
+  memory<int>EToB_new(8*mesh.Nelements*mesh.Nverts);
 
   // Vertex physical coordinates
-  memory<dfloat>EX_new(2*mesh.Nelements*mesh.Nverts);
-  memory<dfloat>EY_new(2*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EX_new(8*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EY_new(8*mesh.Nelements*mesh.Nverts);
 
-  const dlong stride = 8*level;
+  const dlong stride = 16*level;
 
-  memory<dlong>RefFlag_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>RedFlag_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>ConfFlag_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>PToC_new(2*mesh.Nelements*stride,-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>EToRefLevel_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>IntFlag_new(2*mesh.Nelements*(level+3),0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>RefFlag_new(8*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>RedFlag_new(8*mesh.Nelements*(level+3),-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>ConfFlag_new(8*mesh.Nelements,-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>ConfGreen_new(6*mesh.Nelements*8,-1); //                       
+  memory<dlong>PToC_new(8*mesh.Nelements*stride,-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>EToRefLevel_new(8*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>IntFlag_new(8*mesh.Nelements*(level+3),0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
   memory<dfloat>Q_new(mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<hlong>EToNewV_new(4*mesh.Nelements*3,-1);
+  memory<hlong>EToNewV_new(8*mesh.Nelements*3,-1);
   // Permutation map
-  dlong perm[2*mesh.Nelements]={};
+  dlong perm[8*mesh.Nelements]={};
 
   // A flag to ommit informations of deleted element
-  hlong Delete_Flag[2*mesh.Nelements]={};
+  hlong Delete_Flag[8*mesh.Nelements]={};
 
   // A flag to be used in combine kernel, initialized with zero values. 
-  memory<dlong> CombineFlag(2*mesh.Nelements,0);
+  memory<dlong> CombineFlag(8*mesh.Nelements,0);
 
   // Copy old Element to Vertex Connectivity to the New One
   //#pragma omp parallel for
@@ -1424,10 +1426,10 @@ void adaptivity_t::CoarseGreentoRed(deviceMemory<dfloat>& o_q,
      dlong id = e*mesh.Nverts; 
      dlong marker = 0;
 
-    if (RefFlag[e]==1 && (L<level+1 && RedFlag[e]!=1) )
+    if (RefFlag[e]==1 && (L<level+1 && RedFlag[e*(level+3)+(EToRefLevel[e])-1]!=1)  )
     {
       
-      printf("redflag=%d",RedFlag[e]);  
+      printf("redflag=%d",RedFlag[e*(level+3)+(EToRefLevel[e])-1]);  
     if (EToRefLevel[e]>0)
     {
      dlong rep = PToC[e*(stride)+(L-1)*4+0];
@@ -1451,7 +1453,7 @@ void adaptivity_t::CoarseGreentoRed(deviceMemory<dfloat>& o_q,
   // Checking older parents for double blue refinement
     for (int e = 0; e < mesh.Nelements; ++e)
   {
-    if (RefFlag[e]==1 && (EToRefLevel[e]<level+3 && RedFlag[e]!=1) )
+    if (RefFlag[e]==1 && (EToRefLevel[e]<level+3 && RedFlag[e*(level+3)+(EToRefLevel[e])-1]!=1) )
     { 
           if (EToRefLevel[e]>1 && e== PToC[e*(stride)+(EToRefLevel[e]-1)*4+0])
     { 
@@ -1474,12 +1476,39 @@ void adaptivity_t::CoarseGreentoRed(deviceMemory<dfloat>& o_q,
 
   }
 
-}}
+    }
+  }
+
+// Checking double green blue refine elements 
+//NEED THIS LATER IT LL PROVIDE ONLY LAST LEVEL IS GREEN/BLUE
+//for (int e = 0; e < mesh.Nelements; ++e)
+//  {
+//    if (EToRefLevel[e]>1 && RedFlag[e*(level+3)+(EToRefLevel[e])-1]!=1
+//    && RedFlag[e*(level+3)+(EToRefLevel[e])-2]!=1)
+//    { 
+//          if (e== PToC[e*(stride)+(EToRefLevel[e]-1)*4+0])
+//    { dlong sibling = PToC[e*(stride)+(EToRefLevel[e]-2)*4+1];
+//      dlong old_parent = PToC[e*(stride)+(EToRefLevel[e]-2)*4+0];
+//      dlong old_sibling = PToC[old_parent*(stride)+(EToRefLevel[e]-2)*4+1];
+//      if(old_sibling!=-1 && EToRefLevel[old_sibling]==EToRefLevel[e] && sibling!=old_sibling) 
+//      {RefFlag[old_sibling]=1;RefFlag[e]=1;}
+//    if(old_parent!=-1 && EToRefLevel[old_parent]==EToRefLevel[e]) {RefFlag[old_parent]=1;
+//     RefFlag[e]=1;} 
+//  } 
+//    }
+//  }
+    for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    if (RefFlag[e]==1 && (EToRefLevel[e]==level+1 && RedFlag[e*(level+3)+(EToRefLevel[e])-2]==1) )
+    {
+          RefFlag[e]=0;
+    }
+  }
   
     dlong ii = 0;
   for (int e = 0; e < mesh.Nelements; ++e)
   {
-    if (RefFlag[e]==1 && (EToRefLevel[e]<level+3 && RedFlag[e]!=1) )
+    if (RefFlag[e]==1 && (EToRefLevel[e]<level+3 && RedFlag[e*(level+3)+(EToRefLevel[e])-1]!=1) )
     {
           Coar[ii] = e;
       ii = ii + 1;
@@ -1514,7 +1543,7 @@ void adaptivity_t::CoarseGreentoRed(deviceMemory<dfloat>& o_q,
     dlong rep = PToC[e*(stride)+(L-1)*4+0];
     dlong sib = PToC[e*(stride)+(L-1)*4+1];
     
-    printf("element %d in the loop for GToR with rep=%d and sib=%d",e,rep,sib);
+    printf("element %d in the loop for GToR with rep=%d and sib=%d \n",e,rep,sib);
     if (rep!=-1 && sib!=-1 && L>0)
     {
       
@@ -1583,8 +1612,37 @@ void adaptivity_t::CoarseGreentoRed(deviceMemory<dfloat>& o_q,
           if (EToNewV[e*4+1]==-1 ) 
           {EToNewV[e*4+1] = mesh.EToV[id+2] ; printf("Rule 0 First Coarsening applied to e=%d \n",e);}  
           
+           
+         
+          
+          if (ConfGreen[sib_e*6+0]!=-1)  
+          {ConfGreen[e*6+2]=ConfGreen[sib_e*6+0];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[sib_e*6+0]);}
+          if (ConfGreen[sib_e*6+1]!=-1)  
+          {ConfGreen[e*6+3]=ConfGreen[sib_e*6+1];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[sib_e*6+1]);}    
 
+          if (ConfGreen[e*6+0]!=-1)  
+          {ConfGreen[e*6+4]=ConfGreen[e*6+0];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[e*6+0]);}
+          if (ConfGreen[e*6+1]!=-1)  
+          {ConfGreen[e*6+5]=ConfGreen[e*6+1];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[e*6+1]);}    
 
+          if (mesh.EToE[id+1]!=-1)
+          { hlong n0 = mesh.EToE[id+1];
+            // if the neigh is green/blue refined parent should be stored
+            if (RedFlag[n0*(level+3)+EToRefLevel[n0]-1]!=1) n0 = PToC[n0*(stride)+(EToRefLevel[n0]-1)*4+0]; 
+            ConfGreen[e*6+0] = n0;   
+          printf("Rule 0 first conform call applied to e=%d by  %d\n",e,mesh.EToE[id+1]); 
+          }
+          if (mesh.EToE[sib_id+2]!=-1)
+          { hlong n1 = mesh.EToE[sib_id+2];
+             if (RedFlag[n1*(level+3)+EToRefLevel[n1]-1]!=1) n1 = PToC[n1*(stride)+(EToRefLevel[n1]-1)*4+0];
+            ConfGreen[e*6+1] = n1;   
+          printf("Rule 0 first conform call applied to e=%d by  %d\n",e,mesh.EToE[sib_id+2]); 
+          }
+          
 
           EToV_new[id+0] = v1;
           EToV_new[id+1] = v0_sib;  
@@ -1656,14 +1714,49 @@ void adaptivity_t::CoarseGreentoRed(deviceMemory<dfloat>& o_q,
           // Rule 1, IntFlag[e]==5
           else if (IntFlag[e*(level+3)+EToRefLevel[e]-1]==5)
           {    
-
+          
+          dlong marker = 0;  
           EToNewV[e*4+0] = e ; 
           if (EToNewV[e*4+1]!=-1) 
-          {EToNewV[e*4+1]= EToNewV[e*4+1]; EToNewV[e*4+2]=mesh.EToV[id+2]; printf("Rule 1 Double Coarsening applied to e=%d \n",e);} 
+          {EToNewV[e*4+1]= EToNewV[e*4+1]; printf("Rule 1 Double Coarsening applied to e=%d \n",e);
+          marker = 1;} 
           if (EToNewV[sib_e*4+1]!=-1) 
-          {EToNewV[e*4+3]= EToNewV[sib_e*4+1]; EToNewV[e*4+2]=mesh.EToV[id+2]; printf("Rule 1 Double Coarsening applied from sib to e=%d \n",e);}
-          if (EToNewV[e*4+1]==-1) 
-          {EToNewV[e*4+2] = mesh.EToV[id+2] ;printf("Rule 1 First Coarsening applied to e=%d \n",e);}  
+          {EToNewV[e*4+3]= EToNewV[sib_e*4+1];  printf("Rule 1 Double Coarsening applied from sib to e=%d \n",e);
+          marker = 1;}
+          if (EToNewV[e*4+2]==-1)
+          { 
+            EToNewV[e*4+2] = mesh.EToV[id+2] ;printf("Rule 1 First Coarsening applied to e=%d \n",e);
+          if((EToRefLevel[e]>1 && RedFlag[e*(level+3)+EToRefLevel[e]-2]!=1)&& marker!=1) {EToNewV[e*4+2] = -1;}
+          }  
+          
+
+          if (ConfGreen[sib_e*6+0]!=-1)  
+          {ConfGreen[e*6+2]=ConfGreen[sib_e*6+0];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[sib_e*6+0]);}
+          if (ConfGreen[sib_e*6+1]!=-1)  
+          {ConfGreen[e*6+3]=ConfGreen[sib_e*6+1];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[sib_e*6+1]);}    
+
+          if (ConfGreen[e*6+0]!=-1)  
+          {ConfGreen[e*6+4]=ConfGreen[e*6+0];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[e*6+0]);}
+          if (ConfGreen[e*6+1]!=-1)  
+          {ConfGreen[e*6+5]=ConfGreen[e*6+1];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[e*6+1]);}    
+
+          if (mesh.EToE[id+1]!=-1)
+          { hlong n0 = mesh.EToE[id+1];
+            // if the neigh is green/blue refined parent should be stored
+            if (RedFlag[n0*(level+3)+EToRefLevel[n0]-1]!=1) n0 = PToC[n0*(stride)+(EToRefLevel[n0]-1)*4+0]; 
+          ConfGreen[e*6+0] = n0;   
+          printf("Rule 0 first conform call applied to e=%d by  %d\n",e,mesh.EToE[id+1]); 
+          }
+          if (mesh.EToE[sib_id+2]!=-1)
+          {hlong n1 = mesh.EToE[sib_id+2];
+             if (RedFlag[n1*(level+3)+EToRefLevel[n1]-1]!=1) n1 = PToC[n1*(stride)+(EToRefLevel[n1]-1)*4+0];
+            ConfGreen[e*6+1] = n1;     
+          printf("Rule 0 first conform call applied to e=%d by  %d\n",e,mesh.EToE[sib_id+2]); 
+          }
 
           EToV_new[id+2] = v0_sib;
 
@@ -1725,14 +1818,47 @@ void adaptivity_t::CoarseGreentoRed(deviceMemory<dfloat>& o_q,
           // Rule 2, IntFlag[e]==3
           else if (IntFlag[e*(level+3)+EToRefLevel[e]-1]==3)
           {    
-
+          
+          dlong marker = 0;   
           EToNewV[e*4+0] = e ; 
           if (EToNewV[e*4+1]!=-1) 
-          {EToNewV[e*4+1]= EToNewV[e*4+1]; EToNewV[e*4+3]=mesh.EToV[id+2]; printf("Rule 2 Double Coarsening applied to e=%d \n",e);} 
+          {EToNewV[e*4+1]= EToNewV[e*4+1]; printf("Rule 2 Double Coarsening applied to e=%d \n",e);
+          marker=1;} 
           if (EToNewV[sib_e*4+1]!=-1) 
-          {EToNewV[e*4+2]= EToNewV[sib_e*4+1]; EToNewV[e*4+3]=mesh.EToV[id+2]; printf("Rule 2 Double Coarsening applied from sib to e=%d \n",e);}
-          if (EToNewV[e*4+1]==-1)
-          {EToNewV[e*4+3] = mesh.EToV[id+2] ;printf("Rule 2 First Coarsening applied to e=%d \n",e);}
+          {EToNewV[e*4+2]= EToNewV[sib_e*4+1];  printf("Rule 2 Double Coarsening applied from sib to e=%d \n",e);
+          marker=1;}
+          if (EToNewV[e*4+3]==-1)
+          {EToNewV[e*4+3] = mesh.EToV[id+2] ;printf("Rule 2 First Coarsening applied to e=%d \n",e);
+            if((EToRefLevel[e]>1 && RedFlag[e*(level+3)+EToRefLevel[e]-2]!=1) && marker!=1) {EToNewV[e*4+3] = -1;}}
+
+          if (ConfGreen[sib_e*6+0]!=-1)  
+          {ConfGreen[e*6+2]=ConfGreen[sib_e*6+0];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[sib_e*6+0]);}
+          if (ConfGreen[sib_e*6+1]!=-1)  
+          {ConfGreen[e*6+3]=ConfGreen[sib_e*6+1];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[sib_e*6+1]);}    
+
+          if (ConfGreen[e*6+0]!=-1)  
+          {ConfGreen[e*6+4]=ConfGreen[e*6+0];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[e*6+0]);}
+          if (ConfGreen[e*6+1]!=-1)  
+          {ConfGreen[e*6+5]=ConfGreen[e*6+1];
+          printf("Rule 0 second conform call applied to e=%d by  %d\n",e,ConfGreen[e*6+1]);}    
+
+          if (mesh.EToE[id+2]!=-1)
+          { hlong n0 = mesh.EToE[id+2];
+            // if the neigh is green/blue refined parent should be stored
+            if (RedFlag[n0*(level+3)+EToRefLevel[n0]-1]!=1) n0 = PToC[n0*(stride)+(EToRefLevel[n0]-1)*4+0]; 
+            ConfGreen[e*6+0] = n0;   
+          printf("Rule 0 first conform call applied to e=%d by  %d\n",e,mesh.EToE[id+1]); 
+          }
+          if (mesh.EToE[sib_id+1]!=-1)
+          {hlong n1 = mesh.EToE[sib_id+1];
+            // if the neigh is green/blue refined parent should be stored
+            if (RedFlag[n1*(level+3)+EToRefLevel[n1]-1]!=1) n1 = PToC[n1*(stride)+(EToRefLevel[n1]-1)*4+0]; 
+            ConfGreen[e*6+1] = n1;   
+          printf("Rule 0 first conform call applied to e=%d by  %d\n",e,mesh.EToE[sib_id+2]); 
+          }
           
           EToV_new[id+2] = v1_sib;
 
@@ -1856,12 +1982,20 @@ if (Ncoarse!=0 && nn!=0)
         for (int i = 0; i < (level+3); ++i)
         {
           IntFlag_new[perm[e]*(level+3)+i] = IntFlag[e*(level+3)+i];
+          RedFlag_new[perm[e]*(level+3)+i] = RedFlag[e*(level+3)+i];
         }
 
         EToRefLevel_new[perm[e]] = EToRefLevel[e];
         RefFlag_new[perm[e]]     = RefFlag[e];
-        ConfFlag_new[perm[e]]    = ConfFlag[e];
-        RedFlag_new[perm[e]]     = RedFlag[e];
+        
+        dlong oldConf = ConfFlag[e];
+        dlong newConf = -1;
+
+        if (oldConf >= 0 && oldConf < mesh.Nelements && perm[oldConf] >= 0)
+          newConf = perm[oldConf];
+
+        ConfFlag_new[perm[e]] = newConf;       
+        
 
         // ------------------------------------------
         // Added: carry EToNewV through permutation
@@ -1872,6 +2006,18 @@ if (Ncoarse!=0 && nn!=0)
         EToNewV_new[perm[e]*4+2] = EToNewV[e*4+2];
         EToNewV_new[perm[e]*4+3] = EToNewV[e*4+3];
 
+        // ------------------------------------------
+        // Added: carry ConfGreen through permutation
+        // Layout: [n0, n1, n2, n3, n4, n5]
+        // ------------------------------------------
+for (int k=0; k<6; ++k) {
+  dlong oldVal = ConfGreen[e*6+k];
+  dlong newVal = -1;
+  if (oldVal >= 0 && oldVal < mesh.Nelements && perm[oldVal] >= 0)
+    newVal = perm[oldVal];
+  ConfGreen_new[perm[e]*6+k] = newVal;
+}
+
         e_new++;  
       }
     }
@@ -1881,8 +2027,8 @@ if (Ncoarse!=0 && nn!=0)
   {
     EToRefLevel_new[e] = 0; 
     RefFlag_new[e] = 0;
-    ConfFlag_new[e] = 0;
-    RedFlag_new[e] = 0;
+    ConfFlag_new[e] = -1;
+    
 
     // ------------------------------------------
     // Added: clear compacted tail of EToNewV_new
@@ -1891,6 +2037,13 @@ if (Ncoarse!=0 && nn!=0)
     EToNewV_new[e*4+1] = -1;
     EToNewV_new[e*4+2] = -1;
     EToNewV_new[e*4+3] = -1;
+
+    ConfGreen_new[e*6+0] = -1;
+    ConfGreen_new[e*6+1] = -1;
+    ConfGreen_new[e*6+2] = -1;
+    ConfGreen_new[e*6+3] = -1;
+    ConfGreen_new[e*6+4] = -1;
+    ConfGreen_new[e*6+5] = -1;
 
     for (int n = 0; n < mesh.Np; ++n)
     {
@@ -1902,6 +2055,7 @@ if (Ncoarse!=0 && nn!=0)
     {
       dlong id = e*(level+3)+n;
       IntFlag_new[id] = 0;
+      RedFlag_new[id] = -1;
     }   
     
         for (int n = 0; n < stride; ++n)
@@ -1918,6 +2072,7 @@ if (Ncoarse!=0 && nn!=0)
   EToRefLevel= EToRefLevel_new;
   IntFlag    = IntFlag_new;
   EToNewV    = EToNewV_new;   // Added
+  ConfGreen  = ConfGreen_new;
 
   Q_new.copyTo(Q); 
   o_PToC = platform.malloc<dlong>(PToC);
@@ -2460,32 +2615,32 @@ void adaptivity_t::CoarseGreen(deviceMemory<dfloat>& o_q,
 
   printf("CoarseGreen inside coarsening loop=%d\n",Ncoarse);
   // Element to vertex & Element to boundary connectivity 
-  const dlong stride =level*8;
-  memory<hlong>EToV_new(2*mesh.Nelements*mesh.Nverts);
-  memory<int>EToB_new(2*mesh.Nelements*mesh.Nverts);
+  const dlong stride =level*16;
+  memory<hlong>EToV_new(8*mesh.Nelements*mesh.Nverts);
+  memory<int>EToB_new(8*mesh.Nelements*mesh.Nverts);
 
   // Vertex physical coordinates
-  memory<dfloat>EX_new(2*mesh.Nelements*mesh.Nverts);
-  memory<dfloat>EY_new(2*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EX_new(8*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EY_new(8*mesh.Nelements*mesh.Nverts);
 
-  memory<dlong>RefFlag_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>GreenFlag(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>RedFlag_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>ConfFlag_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>PToC_new(2*mesh.Nelements*stride,-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>EToRefLevel_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>IntFlag_new(2*mesh.Nelements*(level+3),0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>RefFlag_new(8*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>GreenFlag(8*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>RedFlag_new(8*mesh.Nelements*(level+3),-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>ConfFlag_new(8*mesh.Nelements,-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>PToC_new(8*mesh.Nelements*stride,-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>EToRefLevel_new(8*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>IntFlag_new(8*mesh.Nelements*(level+3),0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
   memory<dfloat>Q_new(mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<hlong>EToNewV_new(4*mesh.Nelements*3,-1);
+  memory<hlong>EToNewV_new(8*mesh.Nelements*3,-1);
   
   // Permutation map
-  dlong perm[2*mesh.Nelements]={};
+  dlong perm[8*mesh.Nelements]={};
 
   // A flag to ommit informations of deleted element
-  hlong Delete_Flag[2*mesh.Nelements]={};
+  hlong Delete_Flag[8*mesh.Nelements]={};
 
   // A flag to be used in combine kernel, initialized with zero values. 
-  memory<dlong> CombineFlag(2*mesh.Nelements,0);
+  memory<dlong> CombineFlag(8*mesh.Nelements,0);
 
   // Copy old Element to Vertex Connectivity to the New One
   //#pragma omp parallel for
@@ -2533,7 +2688,7 @@ void adaptivity_t::CoarseGreen(deviceMemory<dfloat>& o_q,
         printf("475 in the loop with n0=%d, n1=%d, n2=%d \n",n0,n1,n2);
         printf("475 in the loop with rep=%d, sib=%d \n",rep,sib);
       }
-    if (RefFlag[e]==-1 && (L<level+3 && RedFlag[e]!=1) )
+    if (RefFlag[e]==-1 && (L<level+3 && RedFlag[e*(level+3)+(EToRefLevel[e])-1]!=1) )
     {
 
       
@@ -2565,7 +2720,7 @@ void adaptivity_t::CoarseGreen(deviceMemory<dfloat>& o_q,
     dlong ii = 0;
   for (int e = 0; e < mesh.Nelements; ++e)
   {
-    if (GreenFlag[e]==-1 && (EToRefLevel[e]<level+3 && RedFlag[e]!=1 && EToRefLevel[e]>0) )
+    if (GreenFlag[e]==-1 && (EToRefLevel[e]<level+3 && RedFlag[e*(level+3)+(EToRefLevel[e])-1]!=1 && EToRefLevel[e]>0) )
     {
       Coar[ii] = e;
       ii = ii + 1;
@@ -2733,13 +2888,20 @@ void adaptivity_t::CoarseGreen(deviceMemory<dfloat>& o_q,
           // Rule 1, IntFlag[e]==5
           else if (IntFlag[e*(level+3)+EToRefLevel[e]-1]==5)
           {    
-                              EToNewV[e*4+0] = e ; 
+
+           dlong marker=0; 
+           EToNewV[e*4+0] = e ; 
           if (EToNewV[e*4+1]!=-1) 
-          {EToNewV[e*4+1]= EToNewV[e*4+1]; EToNewV[e*4+2]=mesh.EToV[id+2]; printf("Rule 1 Double Coarsening applied to e=%d \n",e);} 
+          {EToNewV[e*4+1]= EToNewV[e*4+1]; printf("Rule 1 Double Coarsening applied to e=%d \n",e);
+          marker = 1;} 
           if (EToNewV[sib_e*4+1]!=-1) 
-          {EToNewV[e*4+3]= EToNewV[sib_e*4+1]; EToNewV[e*4+2]=mesh.EToV[id+2]; printf("Rule 1 Double Coarsening applied from sib to e=%d \n",e);}
-          if (EToNewV[e*4+1]==-1) 
-          {EToNewV[e*4+2] = mesh.EToV[id+2] ;printf("Rule 1 First Coarsening applied to e=%d \n",e);}  
+          {EToNewV[e*4+3]= EToNewV[sib_e*4+1];  printf("Rule 1 Double Coarsening applied from sib to e=%d \n",e);
+          marker = 1;}
+          if (EToNewV[e*4+2]==-1)
+          { 
+            EToNewV[e*4+2] = mesh.EToV[id+2] ;printf("Rule 1 First Coarsening applied to e=%d \n",e);
+          if((EToRefLevel[e]>1 && RedFlag[e*(level+3)+EToRefLevel[e]-2]!=1)&& marker!=1) {EToNewV[e*4+2] = -1;}
+          }  
 
           EToV_new[id+2] = v0_sib;
 
@@ -2800,13 +2962,18 @@ void adaptivity_t::CoarseGreen(deviceMemory<dfloat>& o_q,
           // Rule 2, IntFlag[e]==3
           else if (IntFlag[e*(level+3)+EToRefLevel[e]-1]==3)
           {    
-                     EToNewV[e*4+0] = e ; 
+            dlong marker=0; 
+  EToNewV[e*4+0] = e ; 
           if (EToNewV[e*4+1]!=-1) 
-          {EToNewV[e*4+1]= EToNewV[e*4+1]; EToNewV[e*4+2]=mesh.EToV[id+2]; printf("Rule 1 Double Coarsening applied to e=%d \n",e);} 
+          {EToNewV[e*4+1]= EToNewV[e*4+1]; printf("Rule 2 Double Coarsening applied to e=%d \n",e);
+          marker=1;} 
           if (EToNewV[sib_e*4+1]!=-1) 
-          {EToNewV[e*4+3]= EToNewV[sib_e*4+1]; EToNewV[e*4+2]=mesh.EToV[id+2]; printf("Rule 1 Double Coarsening applied from sib to e=%d \n",e);}
-          if (EToNewV[e*4+1]==-1) 
-          {EToNewV[e*4+2] = mesh.EToV[id+2] ;printf("Rule 1 First Coarsening applied to e=%d \n",e);}  
+          {EToNewV[e*4+2]= EToNewV[sib_e*4+1];  printf("Rule 2 Double Coarsening applied from sib to e=%d \n",e);
+          marker=1;}
+          if (EToNewV[e*4+3]==-1)
+          {EToNewV[e*4+3] = mesh.EToV[id+2] ;printf("Rule 2 First Coarsening applied to e=%d \n",e);
+            if((EToRefLevel[e]>1 && RedFlag[e*(level+3)+EToRefLevel[e]-2]!=1) && marker!=1) {EToNewV[e*4+3] = -1;}}
+
 
           EToV_new[id+2] = v1_sib;
 
@@ -2931,12 +3098,19 @@ void adaptivity_t::CoarseGreen(deviceMemory<dfloat>& o_q,
                     for (int i = 0; i < (level+3); ++i)
                     {
                       IntFlag_new[perm[e]*(level+3)+i] = IntFlag[e*(level+3)+i];
+                      RedFlag_new[perm[e]*(level+3)+i]  = RedFlag[e*(level+3)+i];
                     }
 
                      EToRefLevel_new[perm[e]] = EToRefLevel[e];
                      RefFlag_new[perm[e]] = RefFlag[e];
-                     ConfFlag_new[perm[e]] = ConfFlag[e];
-                     RedFlag_new[perm[e]]  = RedFlag[e];
+                    dlong oldConf = ConfFlag[e];
+                    dlong newConf = -1;
+                              
+                    if (oldConf >= 0 && oldConf < mesh.Nelements && perm[oldConf] >= 0)
+                      newConf = perm[oldConf];
+                              
+                    ConfFlag_new[perm[e]] = newConf;   
+                     
                      EToNewV_new[perm[e]*4+0] = perm[e];
                      EToNewV_new[perm[e]*4+1] = EToNewV[e*4+1];
                      EToNewV_new[perm[e]*4+2] = EToNewV[e*4+2];
@@ -2964,7 +3138,7 @@ void adaptivity_t::CoarseGreen(deviceMemory<dfloat>& o_q,
           EToRefLevel_new[e] = 0; 
           RefFlag_new[e] = 0;
           ConfFlag_new[e] = -1;
-          RedFlag_new[e] = 0;
+          
           EToNewV_new[e*4+0] = -1;
           EToNewV_new[e*4+1] = -1;
           EToNewV_new[e*4+2] = -1;
@@ -2980,6 +3154,7 @@ void adaptivity_t::CoarseGreen(deviceMemory<dfloat>& o_q,
           {
           dlong id = e*(level+3)+n;
           IntFlag_new[id] = 0;
+          RedFlag_new[id] = 0;
           }  
           
           for (int n = 0; n < stride; ++n)
@@ -3027,34 +3202,34 @@ void adaptivity_t::CoarseRed(deviceMemory<dfloat>& o_q,
   //
   printf("Inside Red Coarsening\n");                          
   // Store old info & Allocate new arrays
-  dlong const stride = 8*level;
+  dlong const stride = 16*level;
 
   printf("Ncoarse inside coarsening loop=%d\n",Ncoarse);
   // Element to vertex & Element to boundary connectivity 
 
-  memory<hlong>EToV_new(2*mesh.Nelements*mesh.Nverts);
-  memory<int>EToB_new(2*mesh.Nelements*mesh.Nverts);
+  memory<hlong>EToV_new(8*mesh.Nelements*mesh.Nverts);
+  memory<int>EToB_new(8*mesh.Nelements*mesh.Nverts);
 
   // Vertex physical coordinates
-  memory<dfloat>EX_new(2*mesh.Nelements*mesh.Nverts);
-  memory<dfloat>EY_new(2*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EX_new(8*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EY_new(8*mesh.Nelements*mesh.Nverts);
 
-  memory<dlong>RefFlag_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>RedFlag_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>ConfFlag_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>PToC_new(2*mesh.Nelements*stride,-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>EToRefLevel_new(2*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  memory<dlong>IntFlag_new(2*mesh.Nelements*(level+3),0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>RefFlag_new(8*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>RedFlag_new(8*mesh.Nelements*(level+3),-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>ConfFlag_new(8*mesh.Nelements,-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>PToC_new(8*mesh.Nelements*stride,-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>EToRefLevel_new(8*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>IntFlag_new(8*mesh.Nelements*(level+3),0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
   memory<dfloat>Q_new(mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
   
   // Permutation map
-  dlong perm[2*mesh.Nelements]={};
+  dlong perm[8*mesh.Nelements]={};
 
   // A flag to ommit informations of deleted element
-  hlong Delete_Flag[2*mesh.Nelements]={};
+  hlong Delete_Flag[8*mesh.Nelements]={};
 
   // A flag to be used in combine kernel, initialized with zero values. 
-  memory<dlong> CombineFlag(2*mesh.Nelements,0);
+  memory<dlong> CombineFlag(8*mesh.Nelements,0);
 
   // Copy old Element to Vertex Connectivity to the New One
   //#pragma omp parallel for
@@ -3110,7 +3285,7 @@ void adaptivity_t::CoarseRed(deviceMemory<dfloat>& o_q,
       dlong rep = PToC[e*(stride)+(L-1)*4+0];
       dlong sib = PToC[e*(stride)+(L-1)*4+1];
       // For Red ONLY!!!
-      if (rep!=-1 && sib!=-1 && RefFlag[e]==-1 && RedFlag[e]== 1)
+      if (rep!=-1 && sib!=-1 && RefFlag[e]==-1 && RedFlag[e*(level+3)+(EToRefLevel[e])-1]== 1)
       {
 
         if (e==rep) // Means that child stored at parents location
@@ -3192,7 +3367,7 @@ bool side20_ok = false;
 if (Neigh00 == -1) {
   side00_ok = true;   // boundary side
 }
-else if (RedFlag[Neigh00] == 1) {
+else if (RedFlag[Neigh00*(level+3)+(EToRefLevel[Neigh00])-1] == 1) {
   side00_ok = true;   // keep your current red-neighbor rule
 }
 else if (pair00) {
@@ -3203,7 +3378,7 @@ else if (pair00) {
 if (Neigh10 == -1) {
   side10_ok = true;
 }
-else if (RedFlag[Neigh10] == 1) {
+else if (RedFlag[Neigh10*(level+3)+(EToRefLevel[Neigh10])-1] == 1) {
   side10_ok = true;
 }
 else if (pair10) {
@@ -3214,7 +3389,7 @@ else if (pair10) {
 if (Neigh20 == -1) {
   side20_ok = true;
 }
-else if (RedFlag[Neigh20] == 1) {
+else if (RedFlag[Neigh20*(level+3)+(EToRefLevel[Neigh20])-1] == 1) {
   side20_ok = true;
 }
 else if (pair20) {
@@ -3231,7 +3406,9 @@ if (side00_ok && side10_ok && side20_ok) {
          if (Neigh00 == -1 || Neigh10 == -1 ||Neigh20 == -1 ){
          //RefFlag[e]=0;
          } 
-         else if (RedFlag[Neigh00] == 1 && RedFlag[Neigh10] == 1  && RedFlag[Neigh20] == 1){RefFlag[e]=0;}
+         else if (RedFlag[Neigh00*(level+3)+(EToRefLevel[Neigh00])-1] == 1 
+         && RedFlag[Neigh10*(level+3)+(EToRefLevel[Neigh10]-1)] == 1  
+         && RedFlag[Neigh20*(level+3)+(EToRefLevel[Neigh20]-1)] == 1){RefFlag[e]=0;}
           
          if ((Neigh00!=-1 && Neigh01!=-1) && EToRefLevel[Neigh00]!=EToRefLevel[Neigh01] )
          {
@@ -3280,7 +3457,7 @@ if (side00_ok && side10_ok && side20_ok) {
     if (L<=0) continue;
     dlong rep = PToC[e*(stride)+(L-1)*4+0];
     dlong sib = PToC[e*(stride)+(L-1)*4+1];
-    if (rep!=-1 && sib!=-1 && RefFlag[e]==-1  && RedFlag[e]== 1  && L>0)
+    if (rep!=-1 && sib!=-1 && RefFlag[e]==-1  && RedFlag[e*(level+3)+(EToRefLevel[e])-1]== 1  && L>0)
     {
       
       hlong sib_e2=0 ;
@@ -3402,10 +3579,10 @@ if (side00_ok && side10_ok && side20_ok) {
           Q[id_p+n] = qn1+qn2+qn3+qn4;
           }                  
               CombineFlag[e]=0;
-              RedFlag[e] = 0;
-              RedFlag[sib_e2] = 0;
-              RedFlag[sib_e3] = 0;
-              RedFlag[sib_e4] = 0;
+              RedFlag[e*(level+3)+(EToRefLevel[e])] = -1;
+              RedFlag[sib_e2*(level+3)+(EToRefLevel[sib_e2])] = -1;
+              RedFlag[sib_e3*(level+3)+(EToRefLevel[sib_e3])] = -1;
+              RedFlag[sib_e4*(level+3)+(EToRefLevel[sib_e4])] = -1;
               CombineFlag[sib_e2]=0;
               CombineFlag[sib_e3]=0;
               CombineFlag[sib_e4]=0;
@@ -3414,7 +3591,7 @@ if (side00_ok && side10_ok && side20_ok) {
               {
              
                
-             if (RedFlag[mesh.EToE[sib_id2]+0]==1)
+             if (RedFlag[(mesh.EToE[sib_id2]+0)*(level+3)+(EToRefLevel[mesh.EToE[sib_id2]])-1]==1)
              {
                ConfFlag[mesh.EToE[sib_id2]+0] = e;
              } else {RefFlag[mesh.EToE[sib_id2]+0]=-1; RefFlag[mesh.EToE[sib_id2]+2]=-1; 
@@ -3424,7 +3601,7 @@ if (side00_ok && side10_ok && side20_ok) {
 
              if (mesh.EToE[sib_id3]!=-1)
              {   
-             if (RedFlag[mesh.EToE[sib_id3]+0]==1)
+             if (RedFlag[(mesh.EToE[sib_id3]+0)*(level+3)+(EToRefLevel[mesh.EToE[sib_id3]])-1]==1)
              {
                ConfFlag[mesh.EToE[sib_id3]+0] = e;
              } else {RefFlag[mesh.EToE[sib_id3]+0]=-1; RefFlag[mesh.EToE[sib_id3]+2]=-1;
@@ -3433,7 +3610,7 @@ if (side00_ok && side10_ok && side20_ok) {
 
              if (mesh.EToE[sib_id4]!=-1)
              {
-             if (RedFlag[mesh.EToE[sib_id4]+0]==1)
+             if (RedFlag[(mesh.EToE[sib_id4]+0)*(level+3)+(EToRefLevel[mesh.EToE[sib_id4]])-1]==1)
              {
                ConfFlag[mesh.EToE[sib_id4]+0] = e;
              } else {RefFlag[mesh.EToE[sib_id4]+0]=-1; RefFlag[mesh.EToE[sib_id4]+2]=-1;
@@ -3514,12 +3691,19 @@ if (side00_ok && side10_ok && side20_ok) {
                     for (int i = 0; i < (level+3); ++i)
                     {
                       IntFlag_new[perm[e]*(level+3)+i] = IntFlag[e*(level+3)+i];
+                      RedFlag_new[perm[e]*(level+3)+i] = RedFlag[e*(level+3)+i];
                     }
 
                      EToRefLevel_new[perm[e]] = EToRefLevel[e];
                      RefFlag_new[perm[e]] = RefFlag[e];
-                     ConfFlag_new[perm[e]] = ConfFlag[e];
-                     RedFlag_new[perm[e]]  = RedFlag[e];
+                     dlong oldConf = ConfFlag[e];
+                     dlong newConf = -1;
+
+                     if (oldConf >= 0 && oldConf < mesh.Nelements && perm[oldConf] >= 0)
+                       newConf = perm[oldConf];
+
+                     ConfFlag_new[perm[e]] = newConf;   
+                     
                     e_new++;  
 
                     }
@@ -3544,7 +3728,7 @@ if (side00_ok && side10_ok && side20_ok) {
           EToRefLevel_new[e] = 0; 
           RefFlag_new[e] = 0;
           ConfFlag_new[e] = -1;
-          RedFlag_new[e] = 0;
+          
 
 
           for (int n = 0; n < mesh.Np; ++n)
@@ -3557,6 +3741,7 @@ if (side00_ok && side10_ok && side20_ok) {
           {
           dlong id = e*(level+3)+n;
           IntFlag_new[id] = 0;
+          RedFlag_new[id] = -1;
           }   
           
           for (int n = 0; n < stride; ++n)

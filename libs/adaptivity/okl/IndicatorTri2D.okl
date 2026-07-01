@@ -60,7 +60,7 @@ SOFTWARE.
         }
       }
     const dlong N = rf/p_Np;
-    if (N<0.00001)
+    if (N<-0.00001)
     {
     RefFlag[e] = -1;
     } else if (N>0.8) {RefFlag[e] = 1;}

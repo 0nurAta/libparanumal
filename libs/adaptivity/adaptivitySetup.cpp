@@ -50,16 +50,16 @@ void adaptivity_t::Setup(platform_t& _platform,
   InterpolateToChildTri2DRed();
   InterpolateToParentTri2DRed();
 
-  dlong const MAX_LEVEL = 4;
+  dlong const MAX_LEVEL = 12;
   
   // Set Lists related to AMR
-  EToRefLevel.calloc(4*mesh.Nelements); //
-  PToC.calloc(4*mesh.Nelements*(MAX_LEVEL+3)); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  PCS.calloc(4*mesh.Nelements*3); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
-  IntFlag.calloc(4*mesh.Nelements*(MAX_LEVEL+3)); //
-  RedFlag.calloc(4*mesh.Nelements);
+  EToRefLevel.calloc(128*mesh.Nelements); //
+  PToC.calloc(128*mesh.Nelements*(MAX_LEVEL+3)); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  PCS.calloc(128*mesh.Nelements*3); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  IntFlag.calloc(128*mesh.Nelements*(MAX_LEVEL+3)); //
+  RedFlag.malloc(128*mesh.Nelements*(MAX_LEVEL+3),-1);
   
-  for (int i = 0; i < 4*mesh.Nelements; ++i)
+  for (int i = 0; i < 128*mesh.Nelements; ++i)
   {
     for (int n = 0; n < (MAX_LEVEL+3); ++n)
     {

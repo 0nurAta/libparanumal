@@ -91,7 +91,7 @@ void ConformByBisectMultiLvl(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong
                                                                     hlong* nn,
                                                                     hlong* new_vertex,
                                                                     dlong RefLevel);
-  void ConformByBisectGB(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
+  void ConformByBisectGB(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& RefFlag2, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
                                                                 memory<dlong>& new_v_id, 
                                                                 dlong& Nrefine,
                                                                 memory<dfloat>& EX_new, 
@@ -103,6 +103,19 @@ void ConformByBisectMultiLvl(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong
                                                                 hlong* nn,
                                                                 hlong* new_vertex,
                                                                 dlong RefLevel);
+                                           
+  void ConformByBisectRToR(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
+                                                                memory<dlong>& new_v_id, 
+                                                                dlong& Nrefine,
+                                                                memory<dfloat>& EX_new, 
+                                                                memory<dfloat>& EY_new,
+                                                                memory<hlong>& EToV_new,
+                                                                memory<int>& EToB_new,
+                                                                memory<dlong>& SplitFlag,
+                                                                memory<dlong>& RedFlag,                                                                             
+                                                                hlong* nn,
+                                                                hlong* new_vertex,
+                                                                dlong RefLevel);                                                              
 void ConformByLEMultiLvl(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& ConfFlag, memory<dlong>& FaceFlag,
                                                                         memory<dlong>& new_v_id, 
                                                                         dlong& Nrefine,
@@ -152,6 +165,7 @@ void ConformByNVBMultiLvl(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& 
   void RefineRGB(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,
                                                              memory<dlong>& RefFlag, 
                                                              memory<dlong>& ConfFlag,
+                                                             memory<dlong>& confGreen,
                                                              memory<dlong>& FaceFlag, 
                                                              memory<hlong>& EToNewV,
                                                              dlong Nrefine,
@@ -164,12 +178,20 @@ void ConformByNVBMultiLvl(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& 
                                                              dlong Nrefine,
                                                              dlong level);
   void RefineRGB2(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,
-                                                              memory<dlong>& RefFlag, 
+                                                              memory<dlong>& RefFlag,
+                                                              memory<dlong>& RefFlag2, 
                                                               memory<dlong>& ConfFlag,
                                                               memory<dlong>& FaceFlag, 
                                                               dlong Nrefine, 
                                                               dlong Nelements_old,
                                                               dlong level);
+  void RefineRGB3(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,
+                                                            memory<dlong>& RefFlag, 
+                                                            memory<dlong>& ConfFlag,
+                                                            memory<dlong>& FaceFlag, 
+                                                            dlong Nrefine, 
+                                                            dlong Nelements_old,
+                                                            dlong level);  
   void RefinebyID2(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,
                                                                memory<dlong>& RefFlag, 
                                                                memory<dlong>& ConfFlag,
@@ -303,7 +325,7 @@ void RedLocal(dlong e,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefF
   void Coarse(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, dlong Ncoarse,dlong level);
   void CoarseRed(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& RedFlag,  memory<dlong>& ConfFlag,dlong Ncoarse,dlong level);
   
-  void CoarseGreentoRed(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& RedFlag,  memory<dlong>& ConfFlag, 
+  void CoarseGreentoRed(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& RedFlag,  memory<dlong>& ConfFlag, memory<dlong>& ConfGreen,
     memory<hlong>& EToNewV,dlong Ncoarse,dlong level);
   void CoarseBluetoRed(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag,memory<dlong>& RedFlag,  memory<dlong>& ConfFlag, dlong Ncoarse,dlong level);
  
@@ -313,7 +335,7 @@ void RedLocal(dlong e,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefF
   void LongestEdge(memory<dlong>& FaceFlag, memory<dlong>& RefFlag, dlong level);
   void LongestEdge2(memory<dlong>& FaceFlag, memory<dlong>& RefFlag, dlong level, dlong Nrefine,memory<hlong>& new_v_id,hlong* new_vertex);
   void NewestVertex2(memory<dlong>& FaceFlag, memory<dlong>& RefFlag, dlong level, dlong Nrefine,memory<hlong>& new_v_id,hlong* new_vertex);
-  void RGB_flag(memory<dlong>& FaceFlag, memory<dlong>& RefFlag, dlong level, dlong Nrefine,memory<hlong>& new_v_id,memory<dlong>& ConfRed,memory<hlong>& EtoNewV,hlong* new_vertex); 
+  void RGB_flag(memory<dlong>& FaceFlag, memory<dlong>& RefFlag, dlong level, dlong Nrefine,memory<hlong>& new_v_id,memory<dlong>& ConfRed,memory<dlong>& ConfGreen,memory<hlong>& EtoNewV,hlong* new_vertex); 
   void LongestEdgeConform(memory<dlong>& FaceFlag, memory<dlong>& RefFlag, memory<dlong>& ConfFlag, dlong level, dlong Nrefine,memory<hlong>& new_v_id,hlong* new_vertex);
   void NewestVertexConform(memory<dlong>& FaceFlag, memory<dlong>& RefFlag, memory<dlong>& ConfFlag, dlong level, dlong Nrefine,memory<hlong>& new_v_id,hlong* new_vertex);
   

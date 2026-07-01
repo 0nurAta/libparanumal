@@ -1,8 +1,8 @@
-#define ADVECTION_SPEED_X 0.01
+#define ADVECTION_SPEED_X 0.05
 #define ADVECTION_SPEED_Y 0.0
 #define x0 1.0
 #define y0 1.0
-#define R0 0.30
+#define R0 0.40
 // Flux function
 #define advectionFlux2D(t, x, y, q, cx, cy) \
 {                                       \
@@ -31,6 +31,6 @@
 // Initial conditions
 #define advectionInitialConditions2D(t, x, y, q) \
 {                                       \
-  *(q) = 8*exp(-100.0*(sqrt((x-x0)*(x-x0) + (y-y0)*(y-y0)) - R0) \
+  *(q) = 2*exp(-80*(sqrt((x-x0)*(x-x0) + (y-y0)*(y-y0)) - R0) \
               *(sqrt((x-x0)*(x-x0) + (y-y0)*(y-y0)) - R0)); \
 }

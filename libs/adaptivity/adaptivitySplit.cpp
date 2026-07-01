@@ -1367,7 +1367,7 @@ void adaptivity_t::Red( deviceMemory<dfloat>& o_q,
 
   hlong nn = 0 ; // Counts each refinement
   dlong const level = RefLevel;
-  dlong const stride = 8*level;
+  dlong const stride = 16*level;
   //dlong const MAX_REFINEMENT_LEVEL = 1;
 
       //int e = Ref[i];
@@ -1567,10 +1567,10 @@ void adaptivity_t::Red( deviceMemory<dfloat>& o_q,
           ConfFlag[(mesh.Nelements+nn+1)] = mesh.EToE[id+0];
           ConfFlag[(mesh.Nelements+nn+2)] = mesh.EToE[id+1];   
 
-          RedFlag[e] = 1;
-          RedFlag[(mesh.Nelements+nn+0)] = 1;
-          RedFlag[(mesh.Nelements+nn+1)] = 1;
-          RedFlag[(mesh.Nelements+nn+2)] = 1;     
+          RedFlag[e*(level+3)+(EToRefLevel[e])-1] = 1;
+          RedFlag[(mesh.Nelements+nn+0)*(level+3)+(EToRefLevel[e])-1] = 1;
+          RedFlag[(mesh.Nelements+nn+1)*(level+3)+(EToRefLevel[e])-1] = 1;
+          RedFlag[(mesh.Nelements+nn+2)*(level+3)+(EToRefLevel[e])-1] = 1;     
 
           
 
@@ -2177,7 +2177,7 @@ void adaptivity_t::Green0(dlong e,
   hlong nv = *new_vertex ; // new vertex
   hlong nn = *NN ; // Counts each refinement
   dlong const level = RefLevel;
-  dlong const stride = 8*level;
+  dlong const stride = 16*level;
   
       
       //int e = Ref[i];
@@ -2362,7 +2362,7 @@ void adaptivity_t::Green1(dlong e,
   hlong nv = *new_vertex ; // new vertex
   hlong nn = *NN ; // Counts each refinement
   dlong const level = RefLevel;
-  dlong const stride = 8*level;
+  dlong const stride = 16*level;
   
       //int e = Ref[i];
       const dlong id = e*mesh.Nverts; 
@@ -2528,7 +2528,7 @@ void adaptivity_t::Green2(dlong e,
   hlong nv = *new_vertex ; // new vertex
   hlong nn = *NN ; // Counts each refinement
   dlong const level = RefLevel;
-  dlong const stride = 8*level;
+  dlong const stride = 16*level;
       //int e = Ref[i];
       const dlong id = e*mesh.Nverts; 
       const dlong idf = e*mesh.Nfaces; 

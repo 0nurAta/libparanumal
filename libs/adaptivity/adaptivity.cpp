@@ -30,7 +30,7 @@ namespace libp {
 // Conduct Adaptive Mesh Refinement
 void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
 
-    dlong const level = 2;
+    dlong const level = 5;
 
     // Construct Refinement Flag
     deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(2*mesh.Nelements);
@@ -47,20 +47,20 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     //memory<dlong> Ref(mesh.Nelements,0); 
                                     
     // A flag to address that which face will be used for bisection
-    memory<dlong> FaceFlag(4*mesh.Nfaces*mesh.Nelements,0);
-    memory<dlong> refFlag(4*mesh.Nelements,0);
-    memory<dlong> refFlag2(4*mesh.Nelements,0);
-    memory<dlong> confFlag(4*mesh.Nelements,-1);
-    memory<dlong> confFlag2(4*mesh.Nelements,-1);
-    memory<dlong> coarsefFlag(4*mesh.Nelements,0);
+    memory<dlong> FaceFlag(16*mesh.Nfaces*mesh.Nelements,0);
+    memory<dlong> refFlag(16*mesh.Nelements,0);
+    memory<dlong> refFlag2(16*mesh.Nelements,0);
+    memory<dlong> confFlag(16*mesh.Nelements,-1);
+    memory<dlong> confGreen(6*mesh.Nelements*16,-1); // For RGB algo. to track Red refinements with lvl dif (level>1) stores 6 possib. neigh.
+    memory<dlong> coarsefFlag(16*mesh.Nelements,0);
     o_refFlag.copyTo(refFlag); // copy data back to host
-    refFlag.copyTo(refFlag2);
+   // refFlag.copyTo(refFlag2);
     //refFlag.copyTo(confFlag);
     dlong Nrefine = 0;   
     dlong Ncoarse = 0; 
     dlong Nelements_old = mesh.Nelements ;
 
-    memory<dfloat> q(mesh.Np*4*mesh.Nelements,0);
+    memory<dfloat> q(mesh.Np*128*mesh.Nelements,0);
     // copy data back to host
     o_q.copyTo(q);
     //refFlag[18] = 1;
@@ -104,62 +104,83 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     //
     // Conform
     //Conform(refFlag,FaceFlag,Nrefine);
-    #if 1
+    #if 0
     // RGB Refinement
-    memory<dfloat>qold_coarse(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-    memory<dfloat>qold_coarse1(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-    memory<dfloat>qold_coarse2(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-    memory<dfloat>qold_coarse3(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-    memory<dfloat>qold_coarse4(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-    memory<dfloat>qold_refine1(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-    memory<dfloat>qold_refine2(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-
-    memory<hlong>EToNewV(4*mesh.Nelements*3,-1);
+    memory<dfloat>qold_coarse(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_coarse1(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_coarse2(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_coarse3(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_coarse4(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_coarse5(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_coarse6(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_coarse7(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_refine1(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_refine2(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_refine3(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_refine4(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<hlong>EToNewV(8*mesh.Nelements*3,-1);
     //RGB
     // Coarse Red refined element
     q.copyTo(qold_coarse);
-    dlong const L = EToRefLevel[86];
-    dlong e= 86;
-    dlong stride= level*4;
-        printf(" %d in the main loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
+    //dlong const L = EToRefLevel[86];
+    //dlong e= 86;
+    //dlong stride= level*4;
+    //    printf(" %d in the main loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
     
-    //CoarseRed(o_q,q,qold_coarse,refFlag,RedFlag,confFlag,Ncoarse,level);
+    CoarseRed(o_q,q,qold_coarse,refFlag,RedFlag,confFlag,Ncoarse,level);
     // Coarse bisected element
 
-        printf("%d  after the red coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
+        //printf("%d  after the red coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
     q.copyTo(qold_coarse1);
-    //CoarseGreen(o_q,q,qold_coarse1,refFlag,RedFlag,confFlag,EToNewV,Ncoarse,level);
+    CoarseGreen(o_q,q,qold_coarse1,refFlag,RedFlag,confFlag,EToNewV,Ncoarse,level);
    
-        printf("%d  after the green coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
+        //printf("%d  after the green coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
     // Refine a bisected element if it is bisected from its all edges
        q.copyTo(qold_coarse2);
-    CoarseGreentoRed(o_q,q,qold_coarse2,refFlag,RedFlag,confFlag,EToNewV,Ncoarse,level);
+    CoarseGreentoRed(o_q,q,qold_coarse2,refFlag,RedFlag,confFlag,confGreen,EToNewV,Ncoarse,level);
     q.copyTo(qold_coarse3);
-    CoarseGreentoRed(o_q,q,qold_coarse3,refFlag,RedFlag,confFlag,EToNewV,Ncoarse,level);
+    CoarseGreentoRed(o_q,q,qold_coarse3,refFlag,RedFlag,confFlag,confGreen,EToNewV,Ncoarse,level);
  
-        printf("%d  after the green to red cyc 1 coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
-    q.copyTo(qold_coarse4);
-    CoarseGreentoRed(o_q,q,qold_coarse4,refFlag,RedFlag,confFlag,EToNewV,Ncoarse,level);
+        //printf("%d  after the green to red cyc 1 coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
+   // q.copyTo(qold_coarse4);
+   // CoarseGreentoRed(o_q,q,qold_coarse4,refFlag,RedFlag,confFlag,confGreen,EToNewV,Ncoarse,level);
 
-        printf("%d  after the green to red cyc 2 coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
+        //printf("%d  after the green to red cyc 2 coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
+    // Refine Cycle 1
     q.copyTo(qold_refine1);
-    RefineRGB(o_q,q,qold_refine1,refFlag,confFlag,FaceFlag,EToNewV,Nrefine,level);
-   
-        printf("%d after the refRGB coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
-    // Conform by bisecting (Green, Blue refinements)
+    RefineRGB(o_q,q,qold_refine1,refFlag,confFlag,confGreen,FaceFlag,EToNewV,Nrefine,level);
     q.copyTo(qold_refine2);
-    RefineRGB2(o_q,q,qold_refine2,refFlag,confFlag,FaceFlag,Nrefine,Nelements_old,level);
+    RefineRGB2(o_q,q,qold_refine2,refFlag,refFlag2,confFlag,FaceFlag,Nrefine,Nelements_old,level);
+    q.copyTo(qold_refine3);
+    RefineRGB3(o_q,q,qold_refine3,refFlag,confGreen,FaceFlag,Nrefine,Nelements_old,level);
+   //memory<hlong>EToNewV2(4*mesh.Nelements*3,-1);
+   //memory<dlong> confGreen2(6*mesh.Nelements*4,-1);
+   //  // Refine Cycle 2
+    //   q.copyTo(qold_coarse5);
+    //CoarseGreentoRed(o_q,q,qold_coarse5,refFlag2,RedFlag,confFlag,confGreen,EToNewV,Ncoarse,level);
+    //q.copyTo(qold_coarse6);
+    //CoarseGreentoRed(o_q,q,qold_coarse6,refFlag2,RedFlag,confFlag,confGreen,EToNewV,Ncoarse,level);
+    // q.copyTo(qold_coarse7);
+    //CoarseGreentoRed(o_q,q,qold_coarse7,refFlag2,RedFlag,confFlag,confGreen,EToNewV,Ncoarse,level);
+    //q.copyTo(qold_refine1);
+    //RefineRGB(o_q,q,qold_refine1,refFlag,confFlag,confGreen,FaceFlag,EToNewV,Nrefine,level);
+    //q.copyTo(qold_refine2);
+    //RefineRGB2(o_q,q,qold_refine2,refFlag2,refFlag,confFlag,FaceFlag,Nrefine,Nelements_old,level);
+    //q.copyTo(qold_refine3);
+    //RefineRGB3(o_q,q,qold_refine3,refFlag2,confGreen,FaceFlag,Nrefine,Nelements_old,level);
+    
   
-        printf("%d  after the refRGB2 coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
+    //    printf("%d  after the refRGB2 coarsening loop with rep=%d and sib=%d",e,PToC[e*(stride)+(L-1)*4+0],PToC[e*(stride)+(L-1)*4+1]);
      #endif
 
-    #if 0
+    #if 1
+    std::ofstream nochange_file("RefinebyNVB_nochange.txt", std::ios::app);
     // Newest Vertex Bisection
-    memory<dfloat>qold_coarse(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-    memory<dfloat>qold_refine1(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-    memory<dfloat>qold_refine2(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-    memory<dfloat>qold_refine3(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-      Nrefine =1000;
+    memory<dfloat>qold_coarse(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_refine1(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_refine2(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_refine3(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+      Nrefine =3000;
     q.copyTo(qold_coarse);
     // Rivara 2nd Algorithm (Global)
     CoarsebyID(o_q,q,qold_coarse,refFlag,Ncoarse,level);
@@ -169,36 +190,62 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     //printf("SECOND STAGE STARTS\n");
     q.copyTo(qold_refine2);
     int i = 0;
-    while (i<5){
+      dlong counter = 0;
+    while (i<40){
+      dlong elem_before = mesh.Nelements;
     RefinebyNV(o_q,q,qold_refine2,refFlag,confFlag,FaceFlag,Nrefine,Nelements_old,level);
     i++;
+    dlong elem_after = mesh.Nelements;
+    if (elem_after == elem_before && counter==0) {
+    counter =1;  
+    nochange_file << i << "\n";
+    // optional debug print
+    printf("%d\n", i);
+    }
     }
     #endif
     #if 0
+    std::ofstream nochange_file("RefinebyLE_nochange.txt", std::ios::app);
+    for (int ii = 0; ii < 2; ii++)
+    {
+      
+    
+    
     // Algorithm 1 (Rivara,1994)
-    memory<dfloat>qold_coarse(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-    memory<dfloat>qold_refine1(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-    memory<dfloat>qold_refine2(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-   Nrefine =1000;
+    memory<dfloat>qold_coarse(128*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_refine1(128*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+    memory<dfloat>qold_refine2(128*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+   Nrefine =15000;
     q.copyTo(qold_coarse);
     // Rivara 2nd Algorithm (Global)
-    CoarsebyID(o_q,q,qold_coarse,refFlag,Ncoarse,level);
+    //CoarsebyID(o_q,q,qold_coarse,refFlag,Ncoarse,level);
     q.copyTo(qold_refine1);
     printf("FIRST STAGE STARTS\n");
     RefinebyBisect(o_q,q,qold_refine1,refFlag,confFlag,FaceFlag,Nrefine,level);
     printf("SECOND STAGE STARTS\n");
     q.copyTo(qold_refine2);
     int i = 0;
-    while (i<20){
+    dlong counter = 0;
+    while (i<50){
+      dlong elem_before = mesh.Nelements;
     RefinebyLE(o_q,q,qold_refine2,refFlag,confFlag,FaceFlag,Nrefine,Nelements_old,level);
     i++;
+    dlong elem_after = mesh.Nelements;
+    if (elem_after == elem_before && counter==0) {
+    counter =1;  
+    nochange_file << i << "\n";
+    // optional debug print
+    printf("%d\n", i);
+    }
+    }
     }
     #endif
+
       #if 0
     // Algorithm 2 (Rivara,1994)
-   memory<dfloat>qold_coarse(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-   memory<dfloat>qold_refine1(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
-   memory<dfloat>qold_refine2(4*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+   memory<dfloat>qold_coarse(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+   memory<dfloat>qold_refine1(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+   memory<dfloat>qold_refine2(8*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
    q.copyTo(qold_coarse);
    // Rivara 2nd Algorithm (Global)
    CoarsebyID(o_q,q,qold_coarse,refFlag,Ncoarse,level);
