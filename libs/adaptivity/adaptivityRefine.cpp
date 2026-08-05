@@ -86,7 +86,7 @@ void adaptivity_t::RefinebyBisect(deviceMemory<dfloat>& o_q,
   //Bisect(Q,Qold,RefFlag,FaceFlag, ConfFlag, EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,level);
    
   BisectNew(Q,Qold,RefFlag,FaceFlag, ConfFlag, EX_new,EY_new,EToV_new,EToB_new,SplitFlag,new_v_id,Nrefine,&nn,&new_vertex,level,conflevel);
-   printf("Bisect Done! Nrefine=%d, nn=%d, new_vertex=%d\n", Nrefine,nn,new_vertex);
+   printf("Bisect Done! Nrefine=%d, nn=%lld, new_vertex=%lld\n", Nrefine,nn,new_vertex);
 
      for (int e = 0; e < mesh.Nelements; ++e)
   {
@@ -114,6 +114,167 @@ void adaptivity_t::RefinebyBisect(deviceMemory<dfloat>& o_q,
         o_PToC = platform.malloc<dlong>(PToC);  
         o_IntFlag = platform.malloc<dlong>(IntFlag);   
         o_EToRefLevel = platform.malloc<dlong>(EToRefLevel); 
+
+        //deviceMemory<dfloat> o_Q = platform.malloc<dfloat>(Q);
+        //deviceMemory<dlong> o_splitFlag = platform.malloc<dlong>(SplitFlag);
+        printf("Nodes=%d\n",mesh.Nnodes );
+        // Interpolate Solution
+        //splitKernel(mesh.Nelements,o_Q ,o_q, o_splitFlag,o_IntFlag,o_EToRefLevel,o_PToC,o_IM,level);
+        o_q.copyFrom(Q);
+
+        printf("Refinement Done!, Nrefine=%d\n",Nrefine);
+        printf("new_vertex_count=%lld\n",new_vertex);
+        printf("New Element Number=%d\n",mesh.Nelements);
+      }
+  
+    
+}
+
+
+void adaptivity_t::RefinebyBisectGPU(deviceMemory<dfloat>& o_q,
+                          memory<dfloat>& Q,
+                          memory<dfloat>& Qold,
+                          deviceMemory<dlong>& o_RefFlag,
+                          deviceMemory<dlong>& o_ConfFlag,
+                          deviceMemory<dlong>& o_FaceFlag,
+                          dlong Nrefine,
+                          dlong level)
+{
+
+  // Store old info & Allocate new arrays
+  // Element to vertex & Element to boundary connectivity 
+  
+  memory<long long int>EToV_new(8*mesh.Nelements*mesh.Nverts);
+  memory<int>EToB_new(8*mesh.Nelements*mesh.Nverts);
+
+  // Vertex physical coordinates
+  memory<dfloat>EX_new(8*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EY_new(8*mesh.Nelements*mesh.Nverts);
+  
+  // A flag to be used in split kernel, initialized with zero values.
+  memory<dlong> SplitFlag(8*mesh.Nelements,0);
+
+  // Copy old Element to Vertex Connectivity to the New One
+  #pragma omp parallel for
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    //printf("ConfFlag=%d,  RefFlag=%d\n",ConfFlag[e],RefFlag[e] );
+    for (int n = 0; n < 3; ++n)
+    {
+    const dlong id = e*mesh.Nverts+n;
+    EToB_new[id] = mesh.EToB[id];
+    EToV_new[id] = mesh.EToV[id];
+    EX_new[id] = mesh.EX[id]; 
+    EY_new[id] = mesh.EY[id]; 
+    }
+  }
+  
+  hlong new_vertex = 0; // Counts each new_vertex that will be created
+
+  hlong nn = 2 ; // Counts each refinement
+  
+  // 
+  deviceMemory<dfloat> o_qold = platform.malloc<dfloat>(Q);
+  deviceMemory<long long int> o_new_v_id = platform.reserve<long long int>(16*Nrefine);
+  deviceMemory<long long int> o_elemList = platform.reserve<long long int>(16*Nrefine);
+  deviceMemory<long long int> o_elemListCompact = platform.reserve<long long int>(16*Nrefine);
+  deviceMemory<dlong> o_NrefineOut = platform.reserve<dlong>(1);
+  deviceMemory<dlong> o_new_vertex = platform.reserve<dlong>(1);
+  deviceMemory<dlong> o_activeFlag = platform.reserve<dlong>(mesh.Nelements);
+  deviceMemory<dlong> o_PCS = platform.reserve<dlong>(128*mesh.Nelements*3);
+  deviceMemory<long long int> o_EToV_new = platform.reserve<long long int>(16*mesh.Nelements*mesh.Nverts);
+  deviceMemory<dlong> o_EToB_new = platform.reserve<int>(16*mesh.Nelements*mesh.Nverts);
+  deviceMemory<dlong> o_SplitFlag = platform.reserve<dlong>(16*mesh.Nelements);
+  o_EToE = platform.malloc<long long int>(mesh.EToE);
+  o_EToV_new = platform.malloc<long long int>(EToV_new);
+  o_EToV = platform.malloc<long long int>(EToV_new);
+   //o_EToV.copyTo(mesh.EToV); 
+   //printf("EToV_new=%d\n",mesh.EToV[4*3+1]);
+  o_EToB_new = platform.malloc<int>(EToB_new);
+  o_EToRefLevel = platform.malloc<dlong>(EToRefLevel);
+  o_EX = platform.malloc<dfloat>(mesh.EX);
+  o_EY = platform.malloc<dfloat>(mesh.EY);
+  deviceMemory<dfloat> o_EX_new = platform.malloc<dfloat>(16*mesh.Nelements*mesh.Nverts);
+  deviceMemory<dfloat> o_EY_new = platform.malloc<dfloat>(16*mesh.Nelements*mesh.Nverts);
+  o_EX_new = platform.malloc<dfloat>(EX_new);
+  o_EY_new = platform.malloc<dfloat>(EY_new);
+  dlong Nnodes = mesh.Nnodes;
+  const dlong conflevel = level;
+  candidateKernel(mesh.Nelements,level,o_FaceFlag,o_RefFlag,
+                  o_EToRefLevel,o_EX,o_EY,o_EToV,o_elemList,
+                  o_activeFlag);
+                  printf("candidateKernel is completed\n");
+  assignKernel(mesh.Nelements,Nnodes,o_elemList,o_activeFlag,
+               o_elemListCompact,o_new_v_id,o_NrefineOut,o_new_vertex);
+                  printf("assignKernel is completed\n");
+  memory<dlong>NrefineActual(1,0);
+memory<dlong>newVertexActual(1,0);
+  
+  o_NrefineOut.copyTo(NrefineActual);
+  o_new_vertex.copyTo(newVertexActual);              
+
+  const dlong actualNrefine = NrefineActual[0];
+  const dlong newVertexCount = newVertexActual[0];  
+
+  bisectKernel(actualNrefine,mesh.Nelements,level,conflevel,
+               o_q,o_qold,o_RefFlag,o_FaceFlag,o_ConfFlag,
+               o_EX,o_EY,o_EToV,mesh.o_EToB, o_EToE,
+               o_EX_new,o_EY_new,o_EToV_new,o_EToB_new,
+               o_SplitFlag,o_new_v_id, 
+               o_EToRefLevel,o_PCS,o_PToC,o_IntFlag);
+                  printf("bisectKernel is completed\n");
+  printf("Number_of_Elements_refined= %d\n",NrefineActual[0]);
+  printf("Number_of_Vertices_created= %d\n",newVertexActual[0]);
+
+
+
+
+  
+  // Refinement Loop
+  // Determine ids of new vertices and EToV
+  
+  printf("Refinement Start!\n");
+  printf("Old Element Number=%d\n",mesh.Nelements);
+ 
+  /*BisectNew(Q,Qold,RefFlag,FaceFlag, ConfFlag, 
+              EX_new,EY_new,EToV_new,EToB_new,
+              SplitFlag,new_v_id,Nrefine,&nn,
+              &new_vertex,level,conflevel);*/
+  
+  printf("Bisect Done! Nrefine=%d, nn=%d, new_vertex=%d\n", Nrefine,nn,new_vertex);
+
+ /*    for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    RefFlag[e] = 0 ;
+
+  }*/
+
+      if (actualNrefine!=0)
+      {
+        // Update mesh connectivity and physical coordinates
+        o_EToV_new.copyTo(EToV_new); 
+        o_EToB_new.copyTo(EToB_new); 
+        o_EX_new.copyTo(EX_new);
+        o_EY_new.copyTo(EY_new);
+        o_EToRefLevel.copyTo(EToRefLevel);
+        mesh.EToV = EToV_new;
+        
+        mesh.EToB = EToB_new;
+        mesh.EX = EX_new;
+        mesh.EY = EY_new;
+        printf("mesh.EToV=%d,EToV_new=%d\n",mesh.EToV[4*3+1],EToV_new[4*3+1]);
+        // Update total number of elements and nodes
+        mesh.Nelements = mesh.Nelements + actualNrefine;
+        mesh.Nnodes = mesh.Nnodes + newVertexCount;
+        
+        // Update mesh
+        mesh = mesh.SetupUpdate(Nrefine);
+
+        // mesh.PmlSetup();
+        mesh.o_EToB = platform.malloc<int>(mesh.EToB);  // NEW!!
+        o_PToC = platform.malloc<dlong>(PToC);  
+        o_IntFlag = platform.malloc<dlong>(IntFlag);   
+        //o_EToRefLevel = platform.malloc<dlong>(EToRefLevel); 
 
         //deviceMemory<dfloat> o_Q = platform.malloc<dfloat>(Q);
         //deviceMemory<dlong> o_splitFlag = platform.malloc<dlong>(SplitFlag);
@@ -480,6 +641,205 @@ for (dlong e = 0; e < mesh.Nelements; ++e){
         printf("New Element Number=%d\n",mesh.Nelements);
       }
  }
+
+ void adaptivity_t::RefinebyNVGPU(deviceMemory<dfloat>& o_q,
+                          memory<dfloat>& Q,
+                          memory<dfloat>& Qold,
+                          deviceMemory<dlong>& o_RefFlag,
+                          deviceMemory<dlong>& o_ConfFlag,
+                          deviceMemory<dlong>& o_FaceFlag,
+                          dlong Nrefine,
+                          dlong level)
+{
+
+  
+  
+
+  // Store old info & Allocate new arrays
+  // Element to vertex & Element to boundary connectivity 
+  printf("RefinebyID2_Starts, number of total elements=%d\n",mesh.Nelements);
+//for (dlong e = 0; e < mesh.Nelements; ++e){
+//  dlong id =  e*mesh.Nfaces;
+//  FaceFlag[id+0] = 0;
+//  FaceFlag[id+1]=0;
+//  FaceFlag[id+2]=0;}
+  memory<long long int>EToV_new(8*mesh.Nelements*mesh.Nverts);
+  memory<int>EToB_new(8*mesh.Nelements*mesh.Nverts);
+
+  // Vertex physical coordinates
+  memory<dfloat>EX_new(8*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EY_new(8*mesh.Nelements*mesh.Nverts);
+  
+  // A flag to be used in split kernel, initialized with zero values.
+  memory<dlong> SplitFlag(8*mesh.Nelements,0);
+  //memory<dlong> new_v_id(2*mesh.Nelements*mesh.Nverts,0);
+  // For local interpolation
+  //memory<dfloat>Qold(2*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
+  //Q.copyTo(Qold);
+  memory<hlong> new_v_id(8*Nrefine,-1);
+   printf("RefinebyID3_Starts, number of total elements=%d\n",mesh.Nelements);
+  // A flag for conforming
+  //memory<dlong> ConfFlag(2*mesh.Nelements,0);
+  //RefFlag.copyTo(ConfFlag);
+  // Copy old Element to Vertex Connectivity to the New One
+  #pragma omp parallel for
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    //printf("ConfFlag=%d,  RefFlag=%d\n",ConfFlag[e],RefFlag[e] );
+    for (int n = 0; n < 3; ++n)
+    {
+    const dlong id = e*mesh.Nverts+n;
+    EToB_new[id] = mesh.EToB[id];
+    EToV_new[id] = mesh.EToV[id];
+    EX_new[id] = mesh.EX[id]; 
+    EY_new[id] = mesh.EY[id];
+    }
+  }
+  
+  hlong new_vertex = 0; // Counts each new_vertex that will be created
+  
+  // Determine elements to be refined by using Refine Flag
+  /*for (dlong i = 0; i < mesh.Nelements*mesh.Nfaces; ++i){
+  FaceFlag[i] = 0;}*/
+
+   hlong nn = 0 ; // Counts each refinement
+  //LongestEdge(FaceFlag,RefFlag);
+  //dlong* _Nrefine = &Nrefine;
+  //ConformByVertex(RefFlag,FaceFlag,Nrefine);
+  //LongestEdge(FaceFlag,RefFlag);
+  //Nrefine* = _Nrefine;
+    dlong const reflevel= level;
+  dlong const conflevel= level+3;
+  // Refinement Loop
+  // Determine ids of new vertices and EToV
+  // printf("Q_inrefinebefore=%f\n",Q[1621] );
+  //hlong nn = 0 ; // Counts each refinement
+  //NewestVertexConform(FaceFlag,RefFlag,ConfFlag,level,Nrefine,new_v_id,&new_vertex);
+  //BisectNew(Q,Qold,RefFlag,FaceFlag, ConfFlag, EX_new,EY_new,EToV_new,EToB_new,SplitFlag,new_v_id,Nrefine,&nn,&new_vertex,reflevel,conflevel);
+  
+  // Declare and define kernel inputs
+   const dlong Nelements = mesh.Nelements;
+   const dlong Nfaces = mesh.Nfaces;
+   dlong Nnodes = mesh.Nnodes;
+  deviceMemory<dfloat> o_qold = platform.malloc<dfloat>(Q);
+  deviceMemory<long long int> o_new_v_id = platform.reserve<long long int>(2*Nelements);
+  deviceMemory<long long int> o_elemList = platform.reserve<long long int>(3*Nelements);
+  deviceMemory<long long int> o_elemListCompact = platform.reserve<long long int>(3*Nelements);
+  deviceMemory<dlong> o_confFace = platform.reserve<dlong>(Nelements);
+  deviceMemory<dlong> o_splitFace = platform.reserve<dlong>(Nelements);
+  deviceMemory<long long int> o_hangVertex = platform.reserve<long long int>(Nelements);
+  deviceMemory<dlong> o_activeFlag = platform.reserve<dlong>(Nelements);
+  deviceMemory<dlong> o_SplitFlag = platform.reserve<dlong>(16*mesh.Nelements);
+
+  // NewestVertexConform expects fresh face flags.
+  memory<dlong> FaceFlagZero(Nfaces*Nelements, 0);
+  o_FaceFlag.copyFrom(FaceFlagZero, Nfaces*Nelements);
+
+  deviceMemory<dlong> o_PCS = platform.malloc<dlong>(PCS);
+  deviceMemory<int> o_EToB_new = platform.reserve<int>(16*mesh.Nelements*mesh.Nverts);
+  o_PToC = platform.malloc<dlong>(PToC);
+
+  o_EToRefLevel = platform.malloc<dlong>(EToRefLevel);
+
+
+  // Use the current mesh data.
+  o_EX = platform.malloc<dfloat>(mesh.EX);
+  o_EY = platform.malloc<dfloat>(mesh.EY);
+  deviceMemory<dfloat> o_EX_new = platform.malloc<dfloat>(16*mesh.Nelements*mesh.Nverts);
+  deviceMemory<dfloat> o_EY_new = platform.malloc<dfloat>(16*mesh.Nelements*mesh.Nverts);
+  deviceMemory<long long int> o_EToV_new = platform.reserve<long long int>(16*mesh.Nelements*mesh.Nverts);
+  o_EX_new = platform.malloc<dfloat>(EX_new);
+  o_EY_new = platform.malloc<dfloat>(EY_new);
+  o_EToE = platform.malloc<long long int>(mesh.EToE);
+  o_EToV_new = platform.malloc<long long int>(EToV_new);
+  o_EToV = platform.malloc<long long int>(EToV_new);
+  o_EToB_new = platform.malloc<int>(EToB_new);
+  o_EToRefLevel = platform.malloc<dlong>(EToRefLevel);
+  deviceMemory<int> o_EToF = platform.malloc<int>(mesh.EToF);
+
+  // Compact workspaces
+  deviceMemory<dlong> o_confFaceCompact = platform.reserve<dlong>(mesh.Nelements);
+  deviceMemory<dlong> o_splitFaceCompact = platform.reserve<dlong>(mesh.Nelements);
+  deviceMemory<long long> o_hangVertexCompact = platform.reserve<long long>(mesh.Nelements);
+  deviceMemory<dlong> o_NrefineOut = platform.reserve<dlong>(1);
+  deviceMemory<dlong> o_new_vertex = platform.reserve<dlong>(1);
+  
+
+  conformKernel(Nelements,level,o_RefFlag,o_ConfFlag,
+                o_FaceFlag,o_EToRefLevel,o_PCS,o_PToC,
+                o_EToF,mesh.o_EToB,o_EX,o_EY,o_EToV,
+                o_elemList,o_confFace,o_splitFace,o_hangVertex,
+                o_activeFlag);
+
+
+
+  assignconformKernel(mesh.Nelements,Nnodes,o_elemList,o_activeFlag,
+                      o_confFace,o_splitFace,o_hangVertex,o_elemListCompact,
+                      o_confFaceCompact,o_splitFaceCompact,o_hangVertexCompact,o_new_v_id,
+                      o_NrefineOut,o_new_vertex);
+
+  memory<dlong>NrefineActual(1,0);
+  memory<dlong>newVertexActual(1,0);
+  
+  o_NrefineOut.copyTo(NrefineActual);
+  o_new_vertex.copyTo(newVertexActual);              
+
+  const dlong actualNrefine = NrefineActual[0];
+  const dlong newVertexCount = newVertexActual[0];  
+                    
+  
+  bisectKernel(actualNrefine,mesh.Nelements,level,conflevel,
+               o_q,o_qold,o_RefFlag,o_FaceFlag,o_ConfFlag,
+               o_EX,o_EY,o_EToV,mesh.o_EToB, o_EToE,
+               o_EX_new,o_EY_new,o_EToV_new,o_EToB_new,
+               o_SplitFlag,o_new_v_id, 
+               o_EToRefLevel,o_PCS,o_PToC,o_IntFlag);
+  //ConformByID(RefFlag,ConfFlag,FaceFlag,new_v_id,Nrefine);
+  //printf("Bisect Start! Nrefine=%d, nn=%d\n", Nrefine,nn);
+  //BisectbyID2(RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
+  printf("2nd Bisect Done! Nrefine=%d, nn=%lld\n", Nrefine,nn);
+  //dlong const count = mesh.Nelements+nn-Nelements_old;
+
+      if (Nrefine!=0 && actualNrefine > 0)
+      {
+        // Update mesh connectivity and physical coordinates
+        o_EToV_new.copyTo(EToV_new); 
+        o_EToB_new.copyTo(EToB_new); 
+        o_EX_new.copyTo(EX_new);
+        o_EY_new.copyTo(EY_new);
+        o_EToRefLevel.copyTo(EToRefLevel);
+        mesh.EToV = EToV_new;
+        
+        mesh.EToB = EToB_new;
+        mesh.EX = EX_new;
+        mesh.EY = EY_new;
+        printf("mesh.EToV=%d,EToV_new=%d\n",mesh.EToV[4*3+1],EToV_new[4*3+1]);
+        // Update total number of elements and nodes
+        mesh.Nelements = mesh.Nelements + actualNrefine;
+        mesh.Nnodes = mesh.Nnodes + newVertexCount;
+        
+        // Update mesh
+        mesh = mesh.SetupUpdate(Nrefine);
+        // mesh.PmlSetup();
+        mesh.o_EToB = platform.malloc<int>(mesh.EToB);  // NEW!!
+        o_PToC = platform.malloc<dlong>(PToC);  
+        o_IntFlag = platform.malloc<dlong>(IntFlag);   
+        //o_EToRefLevel = platform.malloc<dlong>(EToRefLevel); 
+
+        o_q.copyFrom(Q);
+        deviceMemory<dfloat> o_Q = platform.malloc<dfloat>(Q);
+        deviceMemory<dlong> o_splitFlag = platform.malloc<dlong>(SplitFlag);
+       
+        // Interpolate Solution
+        splitKernel(mesh.Nelements,o_Q ,o_q, o_splitFlag,o_IntFlag,o_EToRefLevel,o_PToC,o_IM,level);
+
+        o_q.copyTo(Q);
+        printf("Refinement Done!, Nrefine=%d\n",Nrefine);
+        printf("new_vertex_count=%lld\n",new_vertex);
+        printf("New Element Number=%d\n",mesh.Nelements);
+      }
+ }
+
 
 void adaptivity_t::RefineRGB(deviceMemory<dfloat>& o_q,
                           memory<dfloat>& Q,

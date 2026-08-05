@@ -110,6 +110,36 @@ void adaptivity_t::Setup(platform_t& _platform,
   kernelName = "Split" + suffix;
   splitKernel = platform.buildKernel(fileName, kernelName,
                                      kernelInfo);
+  
+  // candidate kernel
+  fileName   = oklFilePrefix + "Candidate" + suffix + oklFileSuffix;
+  kernelName = "Candidate" + suffix;
+  candidateKernel = platform.buildKernel(fileName, kernelName,
+                                         kernelInfo);
+
+  // assign kernel
+  fileName   = oklFilePrefix + "Assign" + suffix + oklFileSuffix;
+  kernelName = "AssignSimple" + suffix;
+  assignKernel = platform.buildKernel(fileName, kernelName,
+                                         kernelInfo);
+
+  // assign conform kernel
+  fileName   = oklFilePrefix + "AssignConform" + suffix + oklFileSuffix;
+  kernelName = "AssignConformSimple" + suffix;
+  assignconformKernel = platform.buildKernel(fileName, kernelName,
+                                         kernelInfo);
+                                         
+  // conform kernel
+  fileName   = oklFilePrefix + "Conform" + suffix + oklFileSuffix;
+  kernelName = "ConformCandidate" + suffix;
+  conformKernel = platform.buildKernel(fileName, kernelName,
+                                         kernelInfo);
+
+  // bisect kernel
+  fileName   = oklFilePrefix + "Bisect" + suffix + oklFileSuffix;
+  kernelName = "Bisect" + suffix;
+  bisectKernel = platform.buildKernel(fileName, kernelName,
+                                         kernelInfo);                                       
 
 
 

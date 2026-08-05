@@ -962,10 +962,6 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
         // Number the new Vertex at the Longest Edge
         const hlong id_new = (mesh.Nelements+nn)*mesh.Nverts;
         
-        //hlong newNode = mesh.Nnodes;
-        //mesh.Nnodes++;
-        
-        
         // Modify EToV with new vertex ids for bisection (3 different configurations)
         // & Calculate Physical Coordinates of new vertices
         // & Store boundary conditions of new faces
@@ -973,22 +969,8 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
         { 
 
           // To have unique global vertex number
-      
-          //hlong  Local_id = 0*(level+3)+(mesh.Nfaces+3*(level+3))*e+mesh.Nnodes+EToRefLevel[e];      
-          //hlong Neigh_id = mesh.EToF[idf+0]*(level+3)+(mesh.Nfaces+3*(level+3))*mesh.EToE[idf+0]+mesh.Nnodes+EToRefLevel[mesh.EToE[idf+0]];
-          //hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
-          
-          // Second version
-          //hlong vA = mesh.EToV[id + 0]; 
-          //hlong vB = mesh.EToV[id + 1];
-
-          //hlong vmin = (vA < vB) ? vA : vB;
-          //hlong vmax = (vA > vB) ? vA : vB;
-
+  
           hlong newNode = new_v_id[i*2+1];
-          //hlong newNode = mesh.Nnodes + ( (vA + vB) * (vA + vB + 1) / 2 + vB );
-          //hlong newNode = v0+v1+mesh.Nnodes;
-          //printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
           printf("e=%lld,new_e=%lld,newNode=%lld,Level = %d\n",e,mesh.Nelements+nn,newNode,EToRefLevel[e]+1);
           // 1st child vertex ids
           EToV_new[id+0] = mesh.EToV[id+2];
@@ -1048,8 +1030,7 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
           PToC[e*(level+3)+0]   = e;
           PToC[e*(level+3)+EToRefLevel[e]] = mesh.Nelements+nn;
           PToC[(mesh.Nelements+nn)*(level+3)]   = e;
-          //PToC[(mesh.Nelements+nn)*2+1] = mesh.Nelements+nn;
-          
+
           IntFlag[e*(level+3)+EToRefLevel[e]-1] = 1;
           IntFlag[(mesh.Nelements+nn)*(level+3)+EToRefLevel[e]-1] = 2;
 
@@ -1060,14 +1041,13 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
           memory<dfloat> IM(6*Np*Np,0);
           o_IM.copyTo(IM);
           
-                    // Update solution Local
+              // Update solution Local
               const dlong id1 = e*Np;
               const dlong id2 = (mesh.Nelements+nn)*Np;
               
               const dlong id1_int = 0;
               const dlong id2_int = 1;
-          
-              //const dlong n=0;        
+           
             for(int n=0;n<Np;++n){
               dfloat qn1=0.; dfloat qn2=0.; 
               for(int i=0;i<Np;++i){
@@ -1079,8 +1059,6 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
               }                  
               Q[id1+n] = qn1;
               Q[id2+n] = qn2;
-                //printf("Q[%d]=%f,qn1[%d]=%f\n",id2+n,Q[id2+n],id2+n,qn2);
-             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
             }
 
              for(int n=0;n<Np;++n){
@@ -1088,7 +1066,6 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
               Qold[id1+n] = Q[id1+n];
               Qold[id2+n] = Q[id2+n];
                 
-             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
             }
             SplitFlag[e] = 0;
             SplitFlag[mesh.Nelements+nn]=0;
@@ -1108,25 +1085,7 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
         {
           
           // To have unique global vertex number
-          //hlong  Local_id = 1*(level+3)+(mesh.Nfaces+3*(level+3))*e+mesh.Nnodes+EToRefLevel[e];              
-          //hlong Neigh_id = mesh.EToF[idf+1]*(level+3)+(mesh.Nfaces+3*(level+3))*mesh.EToE[idf+1]+mesh.Nnodes+EToRefLevel[mesh.EToE[idf+1]];
-          //hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
-         
-                    // Second version
-          //hlong vA = mesh.EToV[id + 1]; 
-          //hlong vB = mesh.EToV[id + 2];
-
-          //hlong vmin = (vA < vB) ? vA : vB;
-          //hlong vmax = (vA > vB) ? vA : vB;
-
-          //hlong newNode = mesh.Nnodes + (vmin * 31 + vmax);
-
-           hlong newNode = new_v_id[i*2+1];
-          // hlong newNode = mesh.Nnodes + ( (vA + vB) * (vA + vB + 1) / 2 + vB );
-                    printf("e=%lld,new_e=%lld,newNode=%lld,Level = %d\n",e,mesh.Nelements+nn,newNode,EToRefLevel[e]+1);
-          //hlong newNode = v1+v2+mesh.Nnodes;
-          // printf("Neigh_e=%lld,MeshLevel=%d,NeighLevel=%d\n",mesh.EToE[idf+1],EToRefLevel[e],EToRefLevel[mesh.EToE[idf+1]]);
-          //printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
+          hlong newNode = new_v_id[i*2+1];
           EToV_new[id+2] = newNode;
 
           EToV_new[id_new+0] = v2;
@@ -1170,7 +1129,7 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
           PToC[e*(level+3)]   = e;
           PToC[e*(level+3)+EToRefLevel[e]] = mesh.Nelements+nn;
           PToC[(mesh.Nelements+nn)*(level+3)]   = e;
-          //PToC[(mesh.Nelements+nn)*2+1] = mesh.Nelements+nn;
+      
           IntFlag[e*(level+3)+EToRefLevel[e]-1] = 5;
           IntFlag[(mesh.Nelements+nn)*(level+3)+EToRefLevel[e]-1] = 6;
 
@@ -1180,14 +1139,14 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
           memory<dfloat> IM(6*Np*Np,0);
           o_IM.copyTo(IM);
           
-                    // Update solution Local
+              // Update solution Local
               const dlong id1 = e*Np;
               const dlong id2 = (mesh.Nelements+nn)*Np;
               
               const dlong id1_int = 4;
               const dlong id2_int = 5;
           
-              //const dlong n=0;        
+            //const dlong n=0;        
             for(int n=0;n<Np;++n){
               dfloat qn1=0.; dfloat qn2=0.; 
               for(int i=0;i<Np;++i){
@@ -1199,16 +1158,13 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
               }                  
               Q[id1+n] = qn1;
               Q[id2+n] = qn2;
-                //printf("Q[%d]=%f,qn1[%d]=%f\n",id2+n,Q[id2+n],id2+n,qn2);
-             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
             }
 
              for(int n=0;n<Np;++n){
                         
               Qold[id1+n] = Q[id1+n];
               Qold[id2+n] = Q[id2+n];
-                
-             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
+
             }
             SplitFlag[e] = 0;
             SplitFlag[mesh.Nelements+nn]=0;
@@ -1226,24 +1182,8 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
         else if (FaceFlag[idf+2]==1)
         {
           // To have unique global vertex number
-          //hlong  Local_id = 2*(level+3)+(mesh.Nfaces+3*(level+3))*e+mesh.Nnodes+EToRefLevel[e];          
-          //hlong Neigh_id = mesh.EToF[idf+2]*(level+3)+(mesh.Nfaces+3*(level+3))*mesh.EToE[idf+2]+mesh.Nnodes+EToRefLevel[mesh.EToE[idf+2]];
-          //hlong newNode = (Local_id>=Neigh_id)? Local_id:Neigh_id ;
-          // Second version
-          //hlong vA = mesh.EToV[id + 0]; 
-          //hlong vB = mesh.EToV[id + 2];
-
-          //hlong vmin = (vA < vB) ? vA : vB;
-          //hlong vmax = (vA > vB) ? vA : vB;
-
-          //hlong newNode = mesh.Nnodes + (vmin * 31 + vmax);
-           hlong newNode = new_v_id[i*2+1];
-          //hlong newNode = mesh.Nnodes + ( (vA + vB) * (vA + vB + 1) / 2 + vB );
-          printf("e=%lld,new_e=%lld,newNode=%lld,Level = %d\n",e,mesh.Nelements+nn,newNode,EToRefLevel[e]+1);
+          hlong newNode = new_v_id[i*2+1];
           
-          //hlong newNode = v0+v2+mesh.Nnodes;
-           //printf("Neigh_e=%lld,MeshLevel=%d,NeighLevel=%d\n",mesh.EToE[idf+2],EToRefLevel[e],EToRefLevel[mesh.EToE[idf+2]]);
-          //printf("Local_id=%lld,Neigh_id=%lld,newNode=%lld\n",Local_id,Neigh_id,newNode );
           EToV_new[id+2] = newNode;
 
           EToV_new[id_new+0] = v1;
@@ -1315,16 +1255,12 @@ void adaptivity_t::BisectNew(  memory<dfloat>& Q,
               }                  
               Q[id1+n] = qn1;
               Q[id2+n] = qn2;
-                //printf("Q[%d]=%f,qn1[%d]=%f\n",id2+n,Q[id2+n],id2+n,qn2);
-             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
             }
 
              for(int n=0;n<Np;++n){
                         
               Qold[id1+n] = Q[id1+n];
               Qold[id2+n] = Q[id2+n];
-                
-             // printf("Q[%d]=%f\n",id1+n,Q[id1+n]);
             }
             SplitFlag[e] = 0;
             SplitFlag[mesh.Nelements+nn]=0;

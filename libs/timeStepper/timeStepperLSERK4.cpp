@@ -108,11 +108,9 @@ void lserk4::Run(solver_t& solver,
   while (time < end) {
     if (time<outputTime && time+dt>=outputTime) {
 if (amrCallback) {
-    for (int ii = 0; ii < 5; ii++)
-    {
       
     amrCallback(solver, o_q, o_pmlq, N, Npml);
-    printf("_N_after_ts=%d\n",N ); }
+    printf("_N_after_ts=%d\n",N ); 
   } else {
     // (optional fallback)
     printf("I am in old implementation!\n");

@@ -1,0 +1,108 @@
+/*
+
+The MIT License (MIT)
+
+Copyright (c) 2017-2022 Tim Warburton, Noel Chalmers, Jesse Chan, Ali Karakus
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+@kernel void CandidateTri2D(const dlong Nelements,
+                            const dlong level,
+                            @restrict dlong * FaceFlag,
+                            @restrict const dlong * RefFlag,
+                            @restrict const dlong * EToRefLevel,
+                            @restrict const dfloat * EX,
+                            @restrict const dfloat * EY,
+                            @restrict const long long int * EToV,
+                            @restrict long long int * elemList,
+                            @restrict dlong * activeFlag) {
+
+  for(dlong e=0;e<Nelements;++e;@outer(0)) {
+    for(int t=0; t<1; ++t; @inner(0)) {
+    dlong elem = -1;
+    long long int vid0 = -1;
+    long long int vid1 = -1;
+
+    activeFlag[e] = 0;
+
+    if(RefFlag[e] == 1 && EToRefLevel[e] < level) {
+
+      const dlong id  = e*3;
+      const dlong idf = e*3;
+
+      dlong Face_id = idf;
+
+      if(EToRefLevel[e] < 1) {
+
+        const dfloat x0 = EX[id+0];
+        const dfloat x1 = EX[id+1];
+        const dfloat x2 = EX[id+2];
+
+        const dfloat y0 = EY[id+0];
+        const dfloat y1 = EY[id+1];
+        const dfloat y2 = EY[id+2];
+
+        const dfloat mag0 = sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0));
+        const dfloat mag1 = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+        const dfloat mag2 = sqrt((x2-x0)*(x2-x0) + (y2-y0)*(y2-y0));
+
+        if(mag0 >= mag1 && mag0 >= mag2) {
+          Face_id = idf + 0;
+          vid0 = EToV[id+0];
+          vid1 = EToV[id+1];
+        } else if(mag1 >= mag2) {
+          Face_id = idf + 1;
+          vid0 = EToV[id+1];
+          vid1 = EToV[id+2];
+        } else {
+          Face_id = idf + 2;
+          vid0 = EToV[id+2];
+          vid1 = EToV[id+0];
+        }
+
+      } else {
+
+        Face_id = idf + 0;
+        vid0 = EToV[id+0];
+        vid1 = EToV[id+1];
+      }
+
+      if(vid0 > vid1) {
+        const long long int tmp = vid0;
+        vid0 = vid1;
+        vid1 = tmp;
+      }
+
+         
+      FaceFlag[Face_id] = 1;
+
+      elem = e;
+      activeFlag[e] = 1;
+    }
+
+    elemList[e*3+0] = elem;
+    elemList[e*3+1] = vid0;
+    elemList[e*3+2] = vid1;
+      
+
+    }
+  }
+} 

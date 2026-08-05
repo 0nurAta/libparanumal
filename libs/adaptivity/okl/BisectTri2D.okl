@@ -1,0 +1,251 @@
+/*
+
+The MIT License (MIT)
+
+Copyright (c) 2017-2022 Tim Warburton, Noel Chalmers, Jesse Chan, Ali Karakus
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+@kernel void BisectTri2D(const dlong Nrefine,
+                            const dlong NelementsOld,
+                            const dlong RefLevel,
+                            const dlong ConfLevel,
+
+                            @restrict dfloat * Q,
+                            @restrict dfloat * Qold,
+                            @restrict dlong * RefFlag,
+                            @restrict const dlong * FaceFlag,
+                            @restrict dlong * ConfFlag,
+
+                            @restrict const dfloat * EX,
+                            @restrict const dfloat * EY,
+                            @restrict const long long int * EToV,
+                            @restrict const int * EToB,
+                            @restrict const long long int * EToE,
+  
+                            @restrict dfloat * EX_new,
+                            @restrict dfloat * EY_new,
+                            @restrict long long int * EToV_new,
+                            @restrict int * EToB_new,
+
+                            @restrict dlong * SplitFlag,
+                            @restrict const long long int * new_v_id,
+
+                            @restrict dlong * EToRefLevel,
+                            @restrict dlong * PCS,
+                            @restrict dlong * PToC,
+                            @restrict dlong * IntFlag,
+
+                            @restrict const dfloat * IM) {
+
+  for(dlong i=0;i<Nrefine;++i;@outer(0)) {
+    for(int n=0;n<p_Np;++n;@inner(0)) {
+
+      const dlong e = (dlong)new_v_id[2*i + 0];
+
+      if(e != -1 && EToRefLevel[e] < ConfLevel) {
+
+        const dlong id  = e*3;
+        const dlong idf = e*3;
+
+        const long long int v0 = EToV[id+0];
+        const long long int v1 = EToV[id+1];
+        const long long int v2 = EToV[id+2];
+        
+        const dlong new_e  = NelementsOld + i;
+        const dlong id_new = new_e*3;
+
+        const long long int newNode = new_v_id[2*i + 1];
+
+        dlong id1_int = -1;
+        dlong id2_int = -1;
+        dlong neigh   = -1;
+
+        if(FaceFlag[idf+0] == 1) {
+
+          id1_int = 0;
+          id2_int = 1;
+          neigh   = EToE[idf+0];
+
+          if(n == 0) {
+            EToV_new[id+0] = v2;
+            EToV_new[id+1] = v0;
+            EToV_new[id+2] = newNode;
+
+            EToV_new[id_new+0] = v1;
+            EToV_new[id_new+1] = v2;
+            EToV_new[id_new+2] = newNode;
+
+            EX_new[id+0] = EX[id+2];
+            EX_new[id+1] = EX[id+0];
+            EX_new[id+2] = 0.5f*(EX[id+0] + EX[id+1]);
+
+            EX_new[id_new+0] = EX[id+1];
+            EX_new[id_new+1] = EX[id+2];
+            EX_new[id_new+2] = EX_new[id+2];
+
+            EY_new[id+0] = EY[id+2];
+            EY_new[id+1] = EY[id+0];
+            EY_new[id+2] = 0.5f*(EY[id+0] + EY[id+1]);
+
+            EY_new[id_new+0] = EY[id+1];
+            EY_new[id_new+1] = EY[id+2];
+            EY_new[id_new+2] = EY_new[id+2];
+
+            EToB_new[id+0] = EToB[id+2];
+            EToB_new[id+1] = EToB[id+0];
+            EToB_new[id+2] = -1;
+
+            EToB_new[id_new+0] = EToB[id+1];
+            EToB_new[id_new+1] = -1;
+            EToB_new[id_new+2] = EToB[id+0];
+          }
+        }
+
+        else if(FaceFlag[idf+1] == 1) {
+
+          id1_int = 4;
+          id2_int = 5;
+          neigh   = EToE[idf+1];
+
+          if(n == 0) {
+            EToV_new[id+2] = newNode;
+
+            EToV_new[id_new+0] = v2;
+            EToV_new[id_new+1] = v0;
+            EToV_new[id_new+2] = newNode;
+
+            EX_new[id+2] = 0.5f*(EX[id+1] + EX[id+2]);
+
+            EX_new[id_new+0] = EX[id+2];
+            EX_new[id_new+1] = EX[id+0];
+            EX_new[id_new+2] = EX_new[id+2];
+
+            EY_new[id+2] = 0.5f*(EY[id+1] + EY[id+2]);
+
+            EY_new[id_new+0] = EY[id+2];
+            EY_new[id_new+1] = EY[id+0];
+            EY_new[id_new+2] = EY_new[id+2];
+
+            EToB_new[id+0] = EToB[id+0];
+            EToB_new[id+1] = EToB[id+1];
+            EToB_new[id+2] = -1;
+
+            EToB_new[id_new+0] = EToB[id+2];
+            EToB_new[id_new+1] = -1;
+            EToB_new[id_new+2] = EToB[id+1];
+          }
+        }
+
+        else if(FaceFlag[idf+2] == 1) {
+
+          id1_int = 2;
+          id2_int = 3;
+          neigh   = EToE[idf+2];
+
+          if(n == 0) {
+            EToV_new[id+2] = newNode;
+
+            EToV_new[id_new+0] = v1;
+            EToV_new[id_new+1] = v2;
+            EToV_new[id_new+2] = newNode;
+
+            EX_new[id+2] = 0.5f*(EX[id+2] + EX[id+0]);
+
+            EX_new[id_new+0] = EX[id+1];
+            EX_new[id_new+1] = EX[id+2];
+            EX_new[id_new+2] = EX_new[id+2];
+
+            EY_new[id+2] = 0.5f*(EY[id+2] + EY[id+0]);
+
+            EY_new[id_new+0] = EY[id+1];
+            EY_new[id_new+1] = EY[id+2];
+            EY_new[id_new+2] = EY_new[id+2];
+
+            EToB_new[id+0] = EToB[id+0];
+            EToB_new[id+1] = -1;
+            EToB_new[id+2] = EToB[id+2];
+
+            EToB_new[id_new+0] = EToB[id+1];
+            EToB_new[id_new+1] = EToB[id+2];
+            EToB_new[id_new+2] = -1;
+          }
+        }
+
+        if(id1_int != -1) {
+
+          const dlong id1 = e*p_Np;
+          const dlong id2 = new_e*p_Np;
+
+          dfloat qn1 = 0;
+          dfloat qn2 = 0;
+
+          for(int m=0;m<p_Np;++m) {
+            const dfloat I1 = IM[n + m*p_Np + id1_int*p_Np*p_Np];
+            const dfloat I2 = IM[n + m*p_Np + id2_int*p_Np*p_Np];
+
+            qn1 += I1*Qold[id1+m];
+            qn2 += I2*Qold[id1+m];
+          }
+
+          Q[id1+n] = qn1;
+          Q[id2+n] = qn2;
+
+          Qold[id1+n] = qn1;
+          Qold[id2+n] = qn2;
+
+          if(n == 0) {
+            const dlong newLevel = EToRefLevel[e] + 1;
+
+            EToRefLevel[e]     = newLevel;
+            EToRefLevel[new_e] = newLevel;
+
+            PCS[e*3+0] = e;
+            PCS[e*3+1] = e;
+            PCS[e*3+2] = new_e;
+
+            PCS[new_e*3+0] = e;
+            PCS[new_e*3+1] = new_e;
+            PCS[new_e*3+2] = e;
+
+            PToC[e*(RefLevel+3)+0] = e;
+            PToC[e*(RefLevel+3)+newLevel] = new_e;
+            PToC[new_e*(RefLevel+3)+0] = e;
+
+            IntFlag[e*(RefLevel+3)+newLevel-1] = id1_int + 1;
+            IntFlag[new_e*(RefLevel+3)+newLevel-1] = id2_int + 1;
+
+            SplitFlag[e] = 0;
+            SplitFlag[new_e] = 0;
+
+            if(ConfFlag[e] == -1) {
+              ConfFlag[e] = neigh;
+            }
+
+            ConfFlag[new_e] = neigh;
+            RefFlag[e] = 0;
+          }
+        }
+      }
+    }
+  }
+}
+

@@ -74,6 +74,11 @@ class adaptivity_t {
   deviceMemory<dfloat> o_IMRed;
   deviceMemory<dfloat> o_RM;
   deviceMemory<dfloat> o_RMRed;
+  deviceMemory<dfloat> o_EX;
+  deviceMemory<dfloat> o_EY;
+  deviceMemory<long long int> o_EToV;
+  deviceMemory<long long int> o_EToE;
+
 
   void adaptivity(deviceMemory<dfloat>& o_q,dlong* _N);
   void Setup(platform_t& _platform, 
@@ -162,6 +167,12 @@ void ConformByNVBMultiLvl(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& 
                                                                         dlong RefLevel);
   
   void RefinebyBisect(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& ConfFlag,memory<dlong>& FaceFlag, dlong Nrefine,dlong level);
+  void RefinebyBisectGPU(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,
+                                                                     deviceMemory<dlong>& o_RefFlag,
+                                                                     deviceMemory<dlong>& o_ConfFlag,
+                                                                     deviceMemory<dlong>& o_FaceFlag,
+                                                                     dlong Nrefine,
+                                                                     dlong level);
   void RefineRGB(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,
                                                              memory<dlong>& RefFlag, 
                                                              memory<dlong>& ConfFlag,
@@ -206,6 +217,14 @@ void ConformByNVBMultiLvl(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& 
                                                                                    dlong Nelements_old,
                                                                                    dlong level);
   void RefinebyNV(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& ConfFlag,memory<dlong>& FaceFlag, dlong Nrefine, dlong Nelements_old, dlong level);
+  void RefinebyNVGPU(deviceMemory<dfloat>& o_q,
+                          memory<dfloat>& Q,
+                          memory<dfloat>& Qold,
+                          deviceMemory<dlong>& o_RefFlag,
+                          deviceMemory<dlong>& o_ConfFlag,
+                          deviceMemory<dlong>& o_FaceFlag,
+                          dlong Nrefine,
+                          dlong level);
   void Bisect(memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& FaceFlag, memory<dlong>& ConfFlag, 
                                                                               memory<dfloat>& EX_new, 
                                                                               memory<dfloat>& EY_new,
@@ -354,6 +373,11 @@ void RedLocal(dlong e,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefF
   kernel_t indicatorKernel;
   kernel_t combineKernel;
   kernel_t splitKernel;
+  kernel_t candidateKernel;
+  kernel_t assignKernel;
+  kernel_t assignconformKernel;
+  kernel_t conformKernel;
+  kernel_t bisectKernel;
 
 
 };
