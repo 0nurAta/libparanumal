@@ -188,8 +188,7 @@ void adaptivity_t::RefinebyBisectGPU(deviceMemory<dfloat>& o_q,
   o_EToE = platform.malloc<long long int>(mesh.EToE);
   o_EToV_new = platform.malloc<long long int>(EToV_new);
   o_EToV = platform.malloc<long long int>(EToV_new);
-   //o_EToV.copyTo(mesh.EToV); 
-   //printf("EToV_new=%d\n",mesh.EToV[4*3+1]);
+
   o_EToB_new = platform.malloc<int>(EToB_new);
   o_EToRefLevel = platform.malloc<dlong>(EToRefLevel);
   o_EX = platform.malloc<dfloat>(mesh.EX);
@@ -216,13 +215,33 @@ memory<dlong>newVertexActual(1,0);
   const dlong actualNrefine = NrefineActual[0];
   const dlong newVertexCount = newVertexActual[0];  
 
+
+  
+
   bisectKernel(actualNrefine,mesh.Nelements,level,conflevel,
                o_q,o_qold,o_RefFlag,o_FaceFlag,o_ConfFlag,
                o_EX,o_EY,o_EToV,mesh.o_EToB, o_EToE,
                o_EX_new,o_EY_new,o_EToV_new,o_EToB_new,
                o_SplitFlag,o_new_v_id, 
-               o_EToRefLevel,o_PCS,o_PToC,o_IntFlag);
+               o_EToRefLevel,o_PCS,o_PToC,o_IntFlag,o_IM);
                   printf("bisectKernel is completed\n");
+
+                  memory<dlong> checkLevel(EToRefLevel.length(), 0);
+memory<dlong> checkInt(IntFlag.length(), 0);
+
+o_EToRefLevel.copyTo(checkLevel);
+o_IntFlag.copyTo(checkInt);
+
+for(dlong e=0; e<mesh.Nelements+actualNrefine; ++e) {
+  const dlong L = checkLevel[e];
+
+  if(L > 0) {
+    printf("e=%d level=%d rule=%d\n",
+           e,
+           L,
+           checkInt[e*(level+3)+L-1]);
+  }
+}
   printf("Number_of_Elements_refined= %d\n",NrefineActual[0]);
   printf("Number_of_Vertices_created= %d\n",newVertexActual[0]);
 
@@ -241,12 +260,12 @@ memory<dlong>newVertexActual(1,0);
               SplitFlag,new_v_id,Nrefine,&nn,
               &new_vertex,level,conflevel);*/
   
-  printf("Bisect Done! Nrefine=%d, nn=%d, new_vertex=%d\n", Nrefine,nn,new_vertex);
+  printf("Bisect Done! Nrefine=%d, nn=%d, new_vertex=%d\n", actualNrefine,newVertexCount,new_vertex);
 
  /*    for (int e = 0; e < mesh.Nelements; ++e)
   {
     RefFlag[e] = 0 ;
-
+ 
   }*/
 
       if (actualNrefine!=0)
@@ -262,7 +281,7 @@ memory<dlong>newVertexActual(1,0);
         mesh.EToB = EToB_new;
         mesh.EX = EX_new;
         mesh.EY = EY_new;
-        printf("mesh.EToV=%d,EToV_new=%d\n",mesh.EToV[4*3+1],EToV_new[4*3+1]);
+        
         // Update total number of elements and nodes
         mesh.Nelements = mesh.Nelements + actualNrefine;
         mesh.Nnodes = mesh.Nnodes + newVertexCount;
@@ -272,8 +291,8 @@ memory<dlong>newVertexActual(1,0);
 
         // mesh.PmlSetup();
         mesh.o_EToB = platform.malloc<int>(mesh.EToB);  // NEW!!
-        o_PToC = platform.malloc<dlong>(PToC);  
-        o_IntFlag = platform.malloc<dlong>(IntFlag);   
+        //o_PToC = platform.malloc<dlong>(PToC);  
+      //  o_IntFlag = platform.malloc<dlong>(IntFlag);   
         //o_EToRefLevel = platform.malloc<dlong>(EToRefLevel); 
 
         //deviceMemory<dfloat> o_Q = platform.malloc<dfloat>(Q);
@@ -281,7 +300,7 @@ memory<dlong>newVertexActual(1,0);
         printf("Nodes=%d\n",mesh.Nnodes );
         // Interpolate Solution
         //splitKernel(mesh.Nelements,o_Q ,o_q, o_splitFlag,o_IntFlag,o_EToRefLevel,o_PToC,o_IM,level);
-        o_q.copyFrom(Q);
+        //o_q.copyFrom(Q);
 
         printf("Refinement Done!, Nrefine=%d\n",Nrefine);
         printf("new_vertex_count=%lld\n",new_vertex);
@@ -737,7 +756,7 @@ for (dlong e = 0; e < mesh.Nelements; ++e){
 
   deviceMemory<dlong> o_PCS = platform.malloc<dlong>(PCS);
   deviceMemory<int> o_EToB_new = platform.reserve<int>(16*mesh.Nelements*mesh.Nverts);
-  o_PToC = platform.malloc<dlong>(PToC);
+ // o_PToC = platform.malloc<dlong>(PToC);
 
   o_EToRefLevel = platform.malloc<dlong>(EToRefLevel);
 
@@ -793,7 +812,25 @@ for (dlong e = 0; e < mesh.Nelements; ++e){
                o_EX,o_EY,o_EToV,mesh.o_EToB, o_EToE,
                o_EX_new,o_EY_new,o_EToV_new,o_EToB_new,
                o_SplitFlag,o_new_v_id, 
-               o_EToRefLevel,o_PCS,o_PToC,o_IntFlag);
+               o_EToRefLevel,o_PCS,o_PToC,o_IntFlag,o_IM);
+
+           
+memory<dlong> checkLevel(EToRefLevel.length(), 0);
+memory<dlong> checkInt(IntFlag.length(), 0);
+
+o_EToRefLevel.copyTo(checkLevel);
+o_IntFlag.copyTo(checkInt);
+
+for(dlong e=0; e<mesh.Nelements+actualNrefine; ++e) {
+  const dlong L = checkLevel[e];
+
+  if(L > 0) {
+    printf("e=%d level=%d rule=%d\n",
+           e,
+           L,
+           checkInt[e*(level+3)+L-1]);
+  }
+}
   //ConformByID(RefFlag,ConfFlag,FaceFlag,new_v_id,Nrefine);
   //printf("Bisect Start! Nrefine=%d, nn=%d\n", Nrefine,nn);
   //BisectbyID2(RefFlag,FaceFlag,ConfFlag,new_v_id,EX_new,EY_new,EToV_new,EToB_new,SplitFlag,&nn,&new_vertex,1);
@@ -822,16 +859,16 @@ for (dlong e = 0; e < mesh.Nelements; ++e){
         mesh = mesh.SetupUpdate(Nrefine);
         // mesh.PmlSetup();
         mesh.o_EToB = platform.malloc<int>(mesh.EToB);  // NEW!!
-        o_PToC = platform.malloc<dlong>(PToC);  
-        o_IntFlag = platform.malloc<dlong>(IntFlag);   
+      //  o_PToC = platform.malloc<dlong>(PToC);  
+//        o_IntFlag = platform.malloc<dlong>(IntFlag);   
         //o_EToRefLevel = platform.malloc<dlong>(EToRefLevel); 
 
-        o_q.copyFrom(Q);
+        //o_q.copyFrom(Q);
         deviceMemory<dfloat> o_Q = platform.malloc<dfloat>(Q);
         deviceMemory<dlong> o_splitFlag = platform.malloc<dlong>(SplitFlag);
        
         // Interpolate Solution
-        splitKernel(mesh.Nelements,o_Q ,o_q, o_splitFlag,o_IntFlag,o_EToRefLevel,o_PToC,o_IM,level);
+        //splitKernel(mesh.Nelements,o_Q ,o_q, o_splitFlag,o_IntFlag,o_EToRefLevel,o_PToC,o_IM,level);
 
         o_q.copyTo(Q);
         printf("Refinement Done!, Nrefine=%d\n",Nrefine);

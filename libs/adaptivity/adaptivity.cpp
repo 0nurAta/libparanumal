@@ -30,7 +30,7 @@ namespace libp {
 // Conduct Adaptive Mesh Refinement
 void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
 
-    dlong const level = 1;
+    dlong const level = 2;
 
     // Construct Refinement Flag
     deviceMemory<dlong> o_refFlag = platform.reserve<dlong>(mesh.Nelements);
@@ -87,18 +87,17 @@ void adaptivity_t::adaptivity(deviceMemory<dfloat>& o_q,dlong* _N){
     memory<dfloat>qold_refine3(128*mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0);
       Nrefine =3000;
     q.copyTo(qold_coarse);
-  
-    //CoarsebyID(o_q,q,qold_coarse,refFlag,Ncoarse,level);
+    //CoarseGPU(o_q,q,qold_coarse,o_refFlag,Ncoarse,level);
     q.copyTo(qold_refine1);
     //printf("FIRST STAGE STARTS\n");
     RefinebyBisectGPU(o_q,q,qold_refine1,o_refFlag,o_confFlag,o_FaceFlag,Nrefine,level);
-    //RefinebyBisect(o_q,q,qold_refine1,refFlag,confFlag,FaceFlag,Nrefine,level);
+  
 
     //printf("SECOND STAGE STARTS\n");
     q.copyTo(qold_refine2);
     int i = 0;
       dlong counter = 0;
-    while (i<1){
+    while (i<5){
       dlong elem_before = mesh.Nelements;
     RefinebyNVGPU(o_q,q,qold_refine2,o_refFlag,o_confFlag,o_FaceFlag,Nrefine,level);
     i++;

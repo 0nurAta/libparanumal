@@ -50,7 +50,7 @@ void adaptivity_t::Setup(platform_t& _platform,
   InterpolateToChildTri2DRed();
   InterpolateToParentTri2DRed();
 
-  dlong const MAX_LEVEL = 12;
+  dlong const MAX_LEVEL = 5;
   
   // Set Lists related to AMR
   EToRefLevel.calloc(128*mesh.Nelements); //
@@ -58,7 +58,8 @@ void adaptivity_t::Setup(platform_t& _platform,
   PCS.calloc(128*mesh.Nelements*3); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
   IntFlag.calloc(128*mesh.Nelements*(MAX_LEVEL+3)); //
   RedFlag.malloc(128*mesh.Nelements*(MAX_LEVEL+3),-1);
-  
+
+
   for (int i = 0; i < 128*mesh.Nelements; ++i)
   {
     for (int n = 0; n < (MAX_LEVEL+3); ++n)
@@ -68,6 +69,12 @@ void adaptivity_t::Setup(platform_t& _platform,
     }
     
   }
+
+
+    
+  // Set GPU lists
+  o_PToC = platform.malloc<dlong>(PToC);
+  o_IntFlag = platform.malloc<dlong>(IntFlag);
 
 // OCCA build stuff
 
@@ -116,6 +123,12 @@ void adaptivity_t::Setup(platform_t& _platform,
   kernelName = "Candidate" + suffix;
   candidateKernel = platform.buildKernel(fileName, kernelName,
                                          kernelInfo);
+  
+  // coarse kernel
+  fileName   = oklFilePrefix + "CoarseCandidate" + suffix + oklFileSuffix;
+  kernelName = "CoarseCandidate" + suffix;
+  coarseCandidateKernel = platform.buildKernel(fileName, kernelName,
+                                         kernelInfo);                                         
 
   // assign kernel
   fileName   = oklFilePrefix + "Assign" + suffix + oklFileSuffix;
@@ -139,8 +152,24 @@ void adaptivity_t::Setup(platform_t& _platform,
   fileName   = oklFilePrefix + "Bisect" + suffix + oklFileSuffix;
   kernelName = "Bisect" + suffix;
   bisectKernel = platform.buildKernel(fileName, kernelName,
-                                         kernelInfo);                                       
+                                         kernelInfo);       
+  
+  // coarse kernel
+  fileName   = oklFilePrefix + "Coarse" + suffix + oklFileSuffix;
+  kernelName = "Coarse" + suffix;
+  coarseKernel = platform.buildKernel(fileName, kernelName,
+                                         kernelInfo);    
 
+  // permutation kernel
+  fileName   = oklFilePrefix + "CoarsePermutation" + suffix + oklFileSuffix;
+  kernelName = "CoarsePermutation" + suffix;
+  permKernel = platform.buildKernel(fileName, kernelName,
+                                         kernelInfo);    
+  // compact kernel
+  fileName   = oklFilePrefix + "CoarseCompact" + suffix + oklFileSuffix;
+  kernelName = "CoarseCompact" + suffix;
+  compactKernel = platform.buildKernel(fileName, kernelName,
+                                         kernelInfo); 
 
 
 }

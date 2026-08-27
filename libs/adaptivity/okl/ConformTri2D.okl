@@ -73,10 +73,9 @@ SOFTWARE.
 
         if(ef >= 0 && ef < Nelements) {
 
-          const dlong sibling = PCS[3*ef+2];
-
           dlong secondChild = -1;
           const dlong efLevel = EToRefLevel[ef];
+          const dlong sibling = PToC[ef*(level+3) + efLevel];
 
           if(efLevel > 0) {
             secondChild =

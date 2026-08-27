@@ -1,0 +1,177 @@
+/*
+
+The MIT License (MIT)
+
+Copyright (c) 2017-2022 Tim Warburton, Noel Chalmers, Jesse Chan, Ali Karakus
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// This first implementation deliberately uses one work item.  It preserves
+// the CPU routine's ordered flag propagation while producing one compact
+// record per parent/sibling pair.  coarseList stores
+// (parent, sibling, interpolation rule, old refinement level).
+@kernel void CoarseCandidateTri2D(
+    const dlong Nelements,
+    const dlong hierarchyStride,
+    @restrict dlong *RefFlag,
+    @restrict const dlong *EToRefLevel,
+    @restrict const dlong *PToC,
+    @restrict const dlong *IntFlag,
+    @restrict const long long int *EToE,
+    @restrict dlong *initialCandidate,
+    @restrict dlong *coarseList,
+    @restrict dlong *NcoarseOut) {
+
+  for(dlong dummy=0; dummy<1; ++dummy; @outer(0)) {
+    for(int t=0; t<1; ++t; @inner(0)) {
+
+      // Remember the candidates present on entry.  Flags introduced by the
+      // closure checks below are intentionally not checked again this pass,
+      // matching the one-pass behavior of CoarsebyID.
+      for(dlong e=0; e<Nelements; ++e) {
+        initialCandidate[e] = (RefFlag[e] == -1) ? 1 : 0;
+      }
+
+      // Canonicalize every request onto the child stored at the parent id.
+      for(dlong e=0; e<Nelements; ++e) {
+        if(initialCandidate[e] == 1) {
+          const dlong childLevel = EToRefLevel[e];
+          const dlong parent = (childLevel > 0)
+                             ? PToC[e*hierarchyStride+0] : -1;
+          const dlong sibling =
+              (parent >= 0 && parent < Nelements)
+              ? PToC[parent*hierarchyStride+childLevel] : -1;
+
+          if(parent >= 0 && parent < Nelements &&
+             sibling >= 0 && sibling < Nelements &&
+             EToRefLevel[parent] == childLevel &&
+             EToRefLevel[sibling] == childLevel) {
+            RefFlag[parent] = -1;
+          } else {
+            RefFlag[e] = 0;
+          }
+        }
+      }
+
+      // Apply the same neighboring-pair closure test used by CoarsebyID.
+      for(dlong request=0; request<Nelements; ++request) {
+        if(initialCandidate[request] == 1) {
+          const dlong childLevel = EToRefLevel[request];
+          const dlong parent = (childLevel > 0)
+                             ? PToC[request*hierarchyStride+0] : -1;
+          const dlong sibling =
+              (parent >= 0 && parent < Nelements)
+              ? PToC[parent*hierarchyStride+childLevel] : -1;
+
+          if(parent >= 0 && parent < Nelements &&
+             sibling >= 0 && sibling < Nelements &&
+             RefFlag[parent] == -1 &&
+             EToRefLevel[parent] == EToRefLevel[sibling]) {
+
+            const dlong id = 3*parent;
+            const dlong siblingId = 3*sibling;
+            dlong neighbor = -1;
+            dlong neighborSibling = -1;
+
+            if(EToE[id+2] == sibling) {
+              neighbor = (dlong)EToE[id+1];
+              neighborSibling = (dlong)EToE[siblingId+2];
+            } else if(EToE[id+1] == sibling) {
+              neighbor = (dlong)EToE[id+2];
+              neighborSibling = (dlong)EToE[siblingId+1];
+            } else {
+              RefFlag[parent] = 0;
+            }
+
+            // A boundary needs no neighboring pair.  For an interior edge,
+            // either mark its matching pair or reject this coarsening pair.
+            if(RefFlag[parent] == -1 && neighbor >= 0) {
+              dlong matchingPair = 0;
+
+              if(neighbor < Nelements &&
+                 neighborSibling >= 0 && neighborSibling < Nelements &&
+                 EToRefLevel[neighbor] == EToRefLevel[neighborSibling]) {
+                const dlong neighborLevel = EToRefLevel[neighbor];
+                const dlong neighborParent =
+                    PToC[neighbor*hierarchyStride+0];
+                const dlong neighborSiblingParent =
+                    PToC[neighborSibling*hierarchyStride+0];
+
+                if((PToC[neighbor*hierarchyStride+neighborLevel] ==
+                    neighborSibling) ||
+                   (PToC[neighborSibling*hierarchyStride+neighborLevel] ==
+                    neighbor)) {
+                  matchingPair = 1;
+
+                  if(neighborParent >= 0 &&
+                     neighborParent < Nelements) {
+                    RefFlag[neighborParent] = -1;
+                  }
+                  if(neighborSiblingParent >= 0 &&
+                     neighborSiblingParent < Nelements) {
+                    RefFlag[neighborSiblingParent] = -1;
+                  }
+                }
+              }
+
+              if(matchingPair == 0) {
+                RefFlag[parent] = 0;
+              }
+            }
+          }
+        }
+      }
+
+      dlong count = 0;
+
+      // Only canonical parents are emitted, so each pair is combined once.
+      for(dlong parent=0; parent<Nelements; ++parent) {
+        const dlong childLevel = EToRefLevel[parent];
+
+        if(RefFlag[parent] == -1 && childLevel > 0 &&
+           PToC[parent*hierarchyStride+0] == parent) {
+          const dlong sibling =
+              PToC[parent*hierarchyStride+childLevel];
+
+          if(sibling >= 0 && sibling < Nelements &&
+             EToRefLevel[sibling] == childLevel) {
+            const dlong rule =
+                IntFlag[parent*hierarchyStride+childLevel-1];
+
+            if(rule == 1 || rule == 3 || rule == 5) {
+              coarseList[4*count+0] = parent;
+              coarseList[4*count+1] = sibling;
+              coarseList[4*count+2] = rule;
+              coarseList[4*count+3] = childLevel;
+              count++;
+            } else {
+              RefFlag[parent] = 0;
+            }
+          } else {
+            RefFlag[parent] = 0;
+          }
+        }
+      }
+
+      NcoarseOut[0] = count;
+    }
+  }
+}

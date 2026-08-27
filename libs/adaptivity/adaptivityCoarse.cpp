@@ -1352,6 +1352,257 @@ void adaptivity_t::CoarsebyID(deviceMemory<dfloat>& o_q,
       }         
 }
 
+void adaptivity_t::CoarseGPU(deviceMemory<dfloat>& o_q,
+                         memory<dfloat>& Q,
+                         memory<dfloat>& Qold,
+                         deviceMemory<dlong>& o_RefFlag,
+                         dlong Ncoarse,dlong level){
+
+  // Store old info & Allocate new arrays
+  
+
+  printf("Ncoarse inside coarsening loop=%d\n",Ncoarse);
+  // Element to vertex & Element to boundary connectivity 
+
+  memory<hlong>EToV_new(16*mesh.Nelements*mesh.Nverts);
+  memory<int>EToB_new(16*mesh.Nelements*mesh.Nverts);
+
+  // Vertex physical coordinates
+  memory<dfloat>EX_new(16*mesh.Nelements*mesh.Nverts);
+  memory<dfloat>EY_new(16*mesh.Nelements*mesh.Nverts);
+
+  memory<dlong>RefFlag_new(16*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>PToC_new(16*mesh.Nelements*(level+3),-1); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>EToRefLevel_new(16*mesh.Nelements,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dlong>IntFlag_new(16*mesh.Nelements*(level+3),0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  memory<dfloat>Q_new(mesh.Nelements*mesh.Np+mesh.totalHaloPairs*mesh.Np,0); // For bisection only!(2 children from 1 parent) for 4 levels of refinement max.
+  
+  // Permutation map
+  dlong perm[16*mesh.Nelements]={};
+
+  // A flag to ommit informations of deleted element
+  hlong Delete_Flag[16*mesh.Nelements]={};
+
+  // A flag to be used in combine kernel, initialized with zero values. 
+  memory<dlong> CombineFlag(16*mesh.Nelements,0);
+
+  // Copy old Element to Vertex Connectivity to the New One
+  //#pragma omp parallel for
+  for (int e = 0; e < mesh.Nelements; ++e)
+  {
+    for (int n = 0; n < 3; ++n)
+    {
+    const dlong id = e*mesh.Nverts+n;
+    EToB_new[id] = mesh.EToB[id];
+    EToV_new[id] = mesh.EToV[id];
+    EX_new[id] = mesh.EX[id]; 
+    EY_new[id] = mesh.EY[id]; 
+    }
+    EToRefLevel_new[e] = EToRefLevel[e];
+    for (int i = 0; i < level+3; ++i)
+    {
+      const dlong id = e*(level+3)+i;
+      PToC_new[id] = PToC[id];
+    }
+  }
+
+  // Determine elements to be coarsened by using Coarse Flag
+  
+  memory<dlong> Coar(Ncoarse*64,0); // Array holds element ids for refining. Holds some extra mem. for 
+                                  // conforming
+//    dlong ii = 0;
+//  for (int e = 0; e < mesh.Nelements; ++e)
+//  {
+//    if (RefFlag[e]==-1)
+//    {
+//      Coar[ii] = e;
+//      ii = ii + 1;
+//    }
+//  }
+
+  const dlong hierarchyStride = level+3;
+  deviceMemory<dlong> o_initialCandidate = platform.reserve<dlong>(mesh.Nelements);
+  deviceMemory<dlong> o_coarseList = platform.reserve<dlong>(4*mesh.Nelements);
+  deviceMemory<long long int> o_DeleteFlag = platform.reserve<long long int>(mesh.Nelements);
+  deviceMemory<dlong> o_NcoarseOut = platform.reserve<dlong>(1);
+
+  deviceMemory<dfloat> o_qold = platform.malloc<dfloat>(Q);
+  deviceMemory<long long int> o_EToV_new = platform.reserve<long long int>(16*mesh.Nelements*mesh.Nverts);
+  deviceMemory<dlong> o_EToB_new = platform.reserve<int>(16*mesh.Nelements*mesh.Nverts);
+  o_EToE = platform.malloc<long long int>(mesh.EToE);
+  o_EToV_new = platform.malloc<long long int>(EToV_new);
+  o_EToV = platform.malloc<long long int>(EToV_new);
+
+  o_EToB_new = platform.malloc<int>(EToB_new);
+  o_EToRefLevel = platform.malloc<dlong>(EToRefLevel);
+  o_EX = platform.malloc<dfloat>(mesh.EX);
+  o_EY = platform.malloc<dfloat>(mesh.EY);
+  deviceMemory<dfloat> o_EX_new = platform.malloc<dfloat>(16*mesh.Nelements*mesh.Nverts);
+  deviceMemory<dfloat> o_EY_new = platform.malloc<dfloat>(16*mesh.Nelements*mesh.Nverts);
+  o_EX_new = platform.malloc<dfloat>(EX_new);
+  o_EY_new = platform.malloc<dfloat>(EY_new);
+
+  memory<dlong> NcoarseOut(1, 0);
+  //deviceMemory<dlong> o_NcoarseOut =platform.malloc<dlong>(NcoarseOut);
+  
+  memory<dlong> checkRef(mesh.Nelements);
+memory<dlong> checkLevel(mesh.Nelements);
+memory<dlong> checkPToC(mesh.Nelements*hierarchyStride);
+//memory<dlong> checkInt(128*mesh.Nelements*(5+3));
+
+o_RefFlag.copyTo(checkRef, mesh.Nelements);
+o_EToRefLevel.copyTo(checkLevel, mesh.Nelements);
+o_PToC.copyTo(checkPToC, mesh.Nelements*hierarchyStride);
+o_IntFlag.copyTo(IntFlag);
+
+dlong marked = 0;
+dlong validHierarchy = 0;
+dlong validRule = 0;
+
+for(dlong e=0; e<mesh.Nelements; ++e) {
+  if(checkRef[e] != -1)
+    continue;
+
+  marked++;
+
+  const dlong L = checkLevel[e];
+  const dlong parent =
+      (L > 0) ? checkPToC[e*hierarchyStride] : -1;
+
+  const dlong sibling =
+      (parent >= 0 && parent < mesh.Nelements)
+      ? checkPToC[parent*hierarchyStride+L] : -1;
+
+  dlong rule = -1;
+  if(parent >= 0 && parent < mesh.Nelements && L > 0)
+    rule = IntFlag[parent*hierarchyStride+L-1];
+
+  const bool hierarchyOK =
+      L > 0 &&
+      parent >= 0 && parent < mesh.Nelements &&
+      sibling >= 0 && sibling < mesh.Nelements &&
+      checkLevel[parent] == L &&
+      checkLevel[sibling] == L;
+
+  if(hierarchyOK)
+    validHierarchy++;
+
+  if(rule == 1 || rule == 3 || rule == 5)
+    validRule++;
+
+  printf("candidate e=%d L=%d parent=%d sibling=%d "
+         "parentL=%d siblingL=%d rule=%d\n",
+         e, L, parent, sibling,
+         parent >= 0 ? checkLevel[parent] : -1,
+         sibling >= 0 ? checkLevel[sibling] : -1,
+         rule);
+}
+
+printf("marked=%d validHierarchy=%d validRule=%d\n",
+       marked, validHierarchy, validRule);
+
+   coarseCandidateKernel(mesh.Nelements,hierarchyStride,o_RefFlag,o_EToRefLevel,
+                  o_PToC,o_IntFlag,o_EToE,o_initialCandidate,
+                  o_coarseList,o_NcoarseOut);
+
+   o_NcoarseOut.copyTo(NcoarseOut);
+
+   const dlong Npairs = NcoarseOut[0];               
+    const dlong nn = Npairs;
+
+    printf("Elements to be coarsened %d \n", nn);
+    // Determine Triangles To be Coarsened
+  hlong del_vertex = 0; // Counts each new_vertex that will be deleted
+  //#pragma omp parallel for
+ // ii = 0;
+ // for (int e = 0; e < mesh.Nelements; ++e)
+ // {
+ //   if (RefFlag[e]==-1)
+ //   {
+ //     Coar[ii] = e;
+ //     ii = ii + 1;
+ //   }
+ // }
+  //printf("Flaged_Elements=%d\n",ii );
+  // Coarsement Loop
+  // Determine ids of new vertices and EToV
+
+  coarseKernel(Npairs,hierarchyStride,o_coarseList,o_q,o_qold,
+         o_RefFlag,o_EToRefLevel,o_PToC,o_IntFlag,
+         o_EX,o_EY,o_EToV,mesh.o_EToB,
+         o_EX_new,o_EY_new,o_EToV_new,o_EToB_new,
+         o_DeleteFlag,o_RM);
+
+// Loop for updating mesh information if coarsening done.
+      if (Ncoarse!=0 && nn!=0)
+      { 
+        printf("inside coarsement GPU\n"); 
+        
+        // Map ids of elements to new ones
+        
+        //memory<dlong> DeleteFlag(mesh.Nelements, 0);
+        //deviceMemory<dlong> o_DeleteFlag = platform.malloc<dlong>(DeleteFlag);
+        deviceMemory<dlong> o_perm = platform.reserve<dlong>(mesh.Nelements);
+        memory<dlong> NelementsOut(1, 0);
+        deviceMemory<dlong> o_NelementsOut = platform.malloc<dlong>(NelementsOut);
+
+        deviceMemory<dfloat> o_qCompact = platform.malloc<dfloat>(Q);
+        deviceMemory<dfloat> o_EXCompact = platform.malloc<dfloat>(mesh.EX);
+        deviceMemory<dfloat> o_EYCompact = platform.malloc<dfloat>(mesh.EY);
+        deviceMemory<long long int> o_EToVCompact = platform.malloc<long long int>(EToV_new);
+        deviceMemory<int> o_EToBCompact = platform.malloc<int>(EToB_new);
+        deviceMemory<dlong> o_RefFlagCompact = platform.reserve<dlong>(mesh.Nelements);
+        deviceMemory<dlong> o_EToRefLevelCompact = platform.malloc<dlong>(EToRefLevel);
+        deviceMemory<dlong> o_PToCCompact = platform.malloc<dlong>(PToC);
+        deviceMemory<dlong> o_IntFlagCompact = platform.malloc<dlong>(IntFlag);
+        
+        permKernel(mesh.Nelements,o_DeleteFlag,o_perm,
+                   o_NelementsOut);  
+
+        compactKernel(mesh.Nelements,hierarchyStride,o_perm,
+                      o_q,o_qold,o_EX_new,o_EY_new,
+                      o_EToV_new,o_EToB_new,o_RefFlag,
+                      o_EToRefLevel,o_PToC,o_IntFlag,
+                      o_qCompact,o_EXCompact,o_EYCompact,
+                      o_EToVCompact,o_EToBCompact,o_RefFlagCompact,o_EToRefLevelCompact,
+                      o_PToCCompact,o_IntFlagCompact);
+
+        o_NelementsOut.copyTo(NelementsOut);
+
+        const dlong newNelements = NelementsOut[0];
+        const dlong nn = mesh.Nelements-newNelements;
+
+        o_EToVCompact.copyTo(EToV_new);
+        o_EToBCompact.copyTo(EToB_new);
+        o_EXCompact.copyTo(mesh.EX);
+        o_EYCompact.copyTo(mesh.EY);
+        o_EToRefLevelCompact.copyTo(EToRefLevel);
+        
+        mesh.EToV = EToV_new;
+        mesh.EToB = EToB_new;
+        o_qCompact.copyTo(Q); 
+       
+        o_RefFlagCompact.copyTo(o_RefFlag);
+        o_PToCCompact.copyTo(o_PToC);
+        o_IntFlagCompact.copyTo(o_IntFlag);
+        
+        mesh.Nelements = newNelements;
+        mesh = mesh.SetupUpdate(nn);
+                            
+        //mesh.Nelements = mesh.Nelements-nn;
+        //mesh.Nnodes = mesh.Nnodes-del_vertex;
+        mesh.o_EToB = platform.malloc<int>(mesh.EToB);
+        printf("first coarsement done!!\n");
+        printf("e_new=%d,Nelements=%d\n",newNelements,mesh.Nelements);
+        printf("Ncoarse inside coarsening loop=%lld\n",nn);
+        printf("del_vertex_count=%lld\n",del_vertex);
+        
+        //mesh.PmlSetup();
+        o_q.copyFrom(Q);
+      }         
+}
+
+
 void adaptivity_t::CoarseGreentoRed(deviceMemory<dfloat>& o_q,
                          memory<dfloat>& Q,
                          memory<dfloat>& Qold,

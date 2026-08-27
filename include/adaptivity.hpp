@@ -341,6 +341,8 @@ void RedLocal(dlong e,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefF
                                                                               dlong RefLevel);                                                                                                                                                                                                                                    
 
   void CoarsebyID(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, dlong Ncoarse,dlong level);
+  void CoarseGPU(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,deviceMemory<dlong>& o_RefFlag, dlong Ncoarse,dlong level);
+  
   void Coarse(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, dlong Ncoarse,dlong level);
   void CoarseRed(deviceMemory<dfloat>& o_q,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefFlag, memory<dlong>& RedFlag,  memory<dlong>& ConfFlag,dlong Ncoarse,dlong level);
   
@@ -374,10 +376,14 @@ void RedLocal(dlong e,memory<dfloat>& Q,memory<dfloat>& Qold,memory<dlong>& RefF
   kernel_t combineKernel;
   kernel_t splitKernel;
   kernel_t candidateKernel;
+  kernel_t coarseCandidateKernel;
   kernel_t assignKernel;
   kernel_t assignconformKernel;
   kernel_t conformKernel;
   kernel_t bisectKernel;
+  kernel_t coarseKernel;
+  kernel_t permKernel;
+  kernel_t compactKernel;
 
 
 };

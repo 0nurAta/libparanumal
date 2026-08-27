@@ -1,0 +1,134 @@
+/*
+
+The MIT License (MIT)
+
+Copyright (c) 2017-2022 Tim Warburton, Noel Chalmers, Jesse Chan, Ali Karakus
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+@kernel void CoarseTri2D(
+    const dlong Npairs,
+    const dlong hierarchyStride,
+    @restrict const dlong *coarseList,
+    @restrict dfloat *Q,
+    @restrict dfloat *Qold,
+    @restrict dlong *RefFlag,
+    @restrict dlong *EToRefLevel,
+    @restrict dlong *PToC,
+    @restrict dlong *IntFlag,
+    @restrict const dfloat *EX,
+    @restrict const dfloat *EY,
+    @restrict const long long int *EToV,
+    @restrict const int *EToB,
+    @restrict dfloat *EX_new,
+    @restrict dfloat *EY_new,
+    @restrict long long int *EToV_new,
+    @restrict int *EToB_new,
+    @restrict dlong *DeleteFlag,
+  @restrict const dfloat *RM) {
+
+  for(dlong i=0; i<Npairs; ++i; @outer(0)) {
+    @shared dfloat parentOld[p_Np];
+    @shared dfloat siblingOld[p_Np];
+
+    for(int n=0; n<p_Np; ++n; @inner(0)) {
+      const dlong parent = coarseList[4*i+0];
+      const dlong sibling = coarseList[4*i+1];
+
+      parentOld[n] = Qold[parent*p_Np+n];
+      siblingOld[n] = Qold[sibling*p_Np+n];
+    }
+
+    @barrier;
+
+    for(int n=0; n<p_Np; ++n; @inner(0)) {
+      const dlong parent = coarseList[4*i+0];
+      const dlong sibling = coarseList[4*i+1];
+      const dlong rule = coarseList[4*i+2];
+      const dlong childLevel = coarseList[4*i+3];
+
+      const dlong id = 3*parent;
+      const dlong siblingId = 3*sibling;
+      const dlong parentQ = parent*p_Np;
+      const dlong siblingQ = sibling*p_Np;
+      const dlong interpolation = rule-1;
+
+      dfloat qParent = 0;
+      dfloat qSibling = 0;
+
+      for(int m=0; m<p_Np; ++m) {
+        const dfloat Rp =
+            RM[2*n*p_Np + m + interpolation*p_Np*p_Np];
+        const dfloat Rs =
+            RM[2*n*p_Np + m + interpolation*p_Np*p_Np + p_Np];
+
+        qParent += Rp*parentOld[m];
+        qSibling += Rs*siblingOld[m];
+      }
+
+      Q[parentQ+n] = qParent+qSibling;
+      Qold[parentQ+n] = Q[parentQ+n];
+
+      if(n == 0) {
+        if(rule == 1) {
+          EToV_new[id+0] = EToV[id+1];
+          EToV_new[id+1] = EToV[siblingId+0];
+          EToV_new[id+2] = EToV[siblingId+1];
+
+          EX_new[id+0] = EX[id+1];
+          EX_new[id+1] = EX[siblingId+0];
+          EX_new[id+2] = EX[siblingId+1];
+
+          EY_new[id+0] = EY[id+1];
+          EY_new[id+1] = EY[siblingId+0];
+          EY_new[id+2] = EY[siblingId+1];
+
+          EToB_new[id+0] = EToB[siblingId+2];
+          EToB_new[id+1] = EToB[siblingId+0];
+          EToB_new[id+2] = EToB[id+0];
+        } else if(rule == 5) {
+          EToV_new[id+2] = EToV[siblingId+0];
+          EX_new[id+2] = EX[siblingId+0];
+          EY_new[id+2] = EY[siblingId+0];
+          EToB_new[id+2] = EToB[id+0];
+        } else if(rule == 3) {
+          EToV_new[id+2] = EToV[siblingId+1];
+          EX_new[id+2] = EX[siblingId+1];
+          EY_new[id+2] = EY[siblingId+1];
+          EToB_new[id+1] = EToB[id+0];
+        }
+
+        // The sibling is removed by the subsequent permutation/compaction.
+        EToB_new[siblingId+0] = 0;
+        EToB_new[siblingId+1] = 0;
+        EToB_new[siblingId+2] = 0;
+
+        EToRefLevel[parent] = childLevel-1;
+        EToRefLevel[sibling] = childLevel-1;
+        RefFlag[parent] = 0;
+        RefFlag[sibling] = 0;
+        DeleteFlag[sibling] = 1;
+
+        PToC[parent*hierarchyStride+childLevel] = -1;
+        IntFlag[parent*hierarchyStride+childLevel-1] = 0;
+      }
+    }
+  }
+}
